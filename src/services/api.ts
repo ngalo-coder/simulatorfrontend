@@ -126,4 +126,38 @@ export const api = {
       throw new ApiError('Failed to connect to the server. Please check your internet connection.');
     }
   },
+
+  // --- SSE streaming for simulation/ask ---
+  streamSimulationAsk(
+    params: { sessionId: string; question: string },
+    onChunk: (chunk: string) => void,
+    onDone: () => void,
+    onError?: (err: any) => void
+  ) {
+    const query = new URLSearchParams(params).toString();
+    const url = `${API_BASE_URL}/api/simulation/ask?${query}`;
+    const eventSource = new EventSource(url);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'chunk') {
+          onChunk(data.content);
+        } else if (data.type === 'done') {
+          eventSource.close();
+          onDone();
+        }
+      } catch (err) {
+        if (onError) onError(err);
+        eventSource.close();
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      if (onError) onError(err);
+      eventSource.close();
+    };
+
+    return () => eventSource.close(); // Return a cleanup function
+  }
 };
