@@ -8,6 +8,7 @@ export class ApiError extends Error {
 }
 
 export const api = {
+  // ✅ Fetch available simulation cases
   async getCases(): Promise<import('../types').PatientCase[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/simulation/cases`, {
@@ -18,21 +19,20 @@ export const api = {
       });
 
       if (!response.ok) {
-        // If the endpoint doesn't exist, return default cases
         if (response.status === 404) {
           return [
             {
-              id: 'VP-ABD-001',
+              id: 'VP-ABD-002',
               title: 'Abdominal Pain Case',
               description: 'Practice taking a focused history for abdominal pain',
               category: 'Gastroenterology',
               difficulty: 'Beginner',
               estimatedTime: '15-20 minutes',
-              tags: ['abdominal pain', 'history taking']
+              tags: ['abdominal pain', 'history taking'],
             }
           ];
         }
-        
+
         const errorData = await response.json().catch(() => ({}));
         throw new ApiError(
           errorData.error || `Server error: ${response.status}`,
@@ -42,46 +42,42 @@ export const api = {
 
       const data = await response.json();
       console.log('Raw cases data from server:', data);
-      
-      // Transform the server response to match our PatientCase interface
-      const cases: import('../types').PatientCase[] = [];
-      
-      // Iterate over the cases object
-      for (const [caseId, caseData] of Object.entries(data)) {
-        const metadata = (caseData as any).case_metadata || {};
-        console.log(`Processing case ${caseId}:`, { caseData, metadata });
-        
-        cases.push({
+
+      // ✅ Updated: handle array of cases
+      const cases: import('../types').PatientCase[] = data.map((caseItem: any) => {
+        const caseId = caseItem.case_id || caseItem.id || caseItem.title || 'unknown';
+
+        return {
           id: caseId,
-          title: metadata.title || caseId,
-          description: metadata.description || 'No description available',
-          category: metadata.category || metadata.specialty || 'General',
-          difficulty: metadata.difficulty || metadata.level || 'Intermediate',
-          estimatedTime: metadata.estimated_time || metadata.duration || '15-20 minutes',
-          tags: metadata.tags || [],
-          specialty: metadata.specialty,
-          level: metadata.level,
-          duration: metadata.duration,
-          learningObjectives: metadata.learning_objectives,
-          clinicalContext: metadata.clinical_context,
-          patientAge: metadata.patient_age,
-          patientGender: metadata.patient_gender,
-          chiefComplaint: metadata.chief_complaint,
-          presentingSymptoms: metadata.presenting_symptoms
-        });
-      }
+          title: caseItem.title || caseId,
+          description: caseItem.description || 'No description available',
+          category: caseItem.category || 'General',
+          difficulty: caseItem.difficulty || 'Intermediate',
+          estimatedTime: caseItem.estimated_duration_min
+            ? `${caseItem.estimated_duration_min} minutes`
+            : '15-20 minutes',
+          tags: caseItem.tags || [],
+          specialty: caseItem.specialty,
+          level: caseItem.level,
+          duration: caseItem.duration,
+          learningObjectives: caseItem.learning_objectives,
+          clinicalContext: caseItem.clinical_context,
+          patientAge: caseItem.patient_age,
+          patientGender: caseItem.patient_gender,
+          chiefComplaint: caseItem.chief_complaint,
+          presentingSymptoms: caseItem.presenting_symptoms
+        };
+      });
 
       console.log('Processed cases:', cases);
       return cases;
     } catch (error) {
       console.error('Error fetching cases:', error);
-      if (error instanceof ApiError) {
-        throw error;
-      }
-      // Return default cases if API fails
+      if (error instanceof ApiError) throw error;
+
       return [
         {
-          id: 'VP-ABD-001',
+          id: 'VP-ABD-002',
           title: 'Abdominal Pain Case',
           description: 'Practice taking a focused history for abdominal pain',
           category: 'Gastroenterology',
@@ -93,6 +89,7 @@ export const api = {
     }
   },
 
+  // ✅ Start simulation session
   async startSimulation(caseId: string): Promise<{ sessionId: string; initialPrompt: string }> {
     console.log('Starting simulation for case:', caseId);
     try {
@@ -120,14 +117,12 @@ export const api = {
       return result;
     } catch (error) {
       console.error('Error starting simulation:', error);
-      if (error instanceof ApiError) {
-        throw error;
-      }
+      if (error instanceof ApiError) throw error;
       throw new ApiError('Failed to connect to the server. Please check your internet connection.');
     }
   },
 
-  // --- SSE streaming for simulation/ask ---
+  // ✅ Stream clinician-patient interaction using SSE
   streamSimulationAsk(
     params: { sessionId: string; question: string },
     onChunk: (chunk: string) => void,
@@ -158,6 +153,6 @@ export const api = {
       eventSource.close();
     };
 
-    return () => eventSource.close(); // Return a cleanup function
+    return () => eventSource.close(); // Cleanup function
   }
 };
