@@ -1,5 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://simulatorbackend.onrender.com';
-
+// const API_BASE_URL = 'http://localhost:5001';
 export class ApiError extends Error {
   constructor(message: string, public status?: number) {
     super(message);
