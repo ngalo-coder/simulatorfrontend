@@ -30,6 +30,8 @@ export const api = {
               difficulty: 'Beginner',
               estimatedTime: '15-20 minutes',
               tags: ['abdominal pain', 'history taking'],
+              programArea: 'Internal Medicine',
+              specializedArea: 'Gastroenterology'
             }
           ];
         }
@@ -46,26 +48,29 @@ export const api = {
 
       const cases: import('../types').PatientCase[] = data.map((caseItem: any) => {
         const caseId = caseItem.case_id || caseItem.id || caseItem.title || 'unknown';
+        const caseMetadata = caseItem.case_metadata || caseItem;
 
         return {
           id: caseId,
-          title: caseItem.title || caseId,
-          description: caseItem.description || 'No description available',
-          category: caseItem.category || 'General',
-          difficulty: caseItem.difficulty || 'Intermediate',
-          estimatedTime: caseItem.estimated_duration_min
-            ? `${caseItem.estimated_duration_min} minutes`
-            : '15-20 minutes',
-          tags: caseItem.tags || [],
-          specialty: caseItem.specialty,
-          level: caseItem.level,
-          duration: caseItem.duration,
-          learningObjectives: caseItem.learning_objectives,
-          clinicalContext: caseItem.clinical_context,
-          patientAge: caseItem.patient_age,
-          patientGender: caseItem.patient_gender,
-          chiefComplaint: caseItem.chief_complaint,
-          presentingSymptoms: caseItem.presenting_symptoms
+          title: caseMetadata.title || caseItem.title || caseId,
+          description: caseMetadata.description || caseItem.description || 'No description available',
+          category: caseMetadata.category || caseItem.category || 'General',
+          difficulty: caseMetadata.difficulty || caseItem.difficulty || 'Intermediate',
+          estimatedTime: caseMetadata.estimated_time || caseMetadata.estimated_duration_min
+            ? `${caseMetadata.estimated_duration_min} minutes`
+            : caseMetadata.duration || '15-20 minutes',
+          tags: caseMetadata.tags || caseItem.tags || [],
+          specialty: caseMetadata.specialty || caseItem.specialty,
+          level: caseMetadata.level || caseItem.level,
+          duration: caseMetadata.duration || caseItem.duration,
+          learningObjectives: caseMetadata.learning_objectives || caseItem.learning_objectives,
+          clinicalContext: caseMetadata.clinical_context || caseItem.clinical_context,
+          patientAge: caseMetadata.patient_age || caseItem.patient_age,
+          patientGender: caseMetadata.patient_gender || caseItem.patient_gender,
+          chiefComplaint: caseMetadata.chief_complaint || caseItem.chief_complaint,
+          presentingSymptoms: caseMetadata.presenting_symptoms || caseItem.presenting_symptoms,
+          programArea: caseMetadata.program_area || caseItem.program_area,
+          specializedArea: caseMetadata.specialized_area || caseItem.specialized_area
         };
       });
 
@@ -83,7 +88,9 @@ export const api = {
           category: 'Gastroenterology',
           difficulty: 'Beginner',
           estimatedTime: '15-20 minutes',
-          tags: ['abdominal pain', 'history taking']
+          tags: ['abdominal pain', 'history taking'],
+          programArea: 'Internal Medicine',
+          specializedArea: 'Gastroenterology'
         }
       ];
     }

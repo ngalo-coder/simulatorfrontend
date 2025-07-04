@@ -54,6 +54,8 @@ export interface PatientCase {
   patientGender?: string;
   chiefComplaint?: string;
   presentingSymptoms?: string[];
+  programArea?: string;
+  specializedArea?: string;
 }
 
 export type AppState = 'selecting_case' | 'chatting' | 'showing_evaluation';

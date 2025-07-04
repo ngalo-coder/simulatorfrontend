@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Stethoscope, Play, Loader2, Clock, BookOpen, AlertCircle, Search, Filter, X, ChevronDown, User, Calendar, Target } from 'lucide-react';
+import { Stethoscope, Play, Loader2, Clock, BookOpen, AlertCircle, Search, Filter, X, ChevronDown, User, Calendar, Target, Building, Microscope } from 'lucide-react';
 import { PatientCase } from '../types';
 import { api } from '../services/api';
 
@@ -14,6 +14,8 @@ interface FilterState {
   searchTerm: string;
   estimatedTimeRange: string;
   specialty: string;
+  programArea: string;
+  specializedArea: string;
 }
 
 const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLoading }) => {
@@ -28,7 +30,9 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
     difficulty: '',
     searchTerm: '',
     estimatedTimeRange: '',
-    specialty: ''
+    specialty: '',
+    programArea: '',
+    specializedArea: ''
   });
 
   useEffect(() => {
@@ -56,12 +60,16 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
     const difficulties = [...new Set(cases.map(c => c.difficulty).filter(Boolean))];
     const timeRanges = [...new Set(cases.map(c => c.estimatedTime || c.duration).filter(Boolean))];
     const specialties = [...new Set(cases.map(c => c.specialty).filter(Boolean))];
+    const programAreas = [...new Set(cases.map(c => c.programArea).filter(Boolean))];
+    const specializedAreas = [...new Set(cases.map(c => c.specializedArea).filter(Boolean))];
     
     return {
       categories: categories.sort(),
       difficulties: ['Beginner', 'Intermediate', 'Advanced'].filter(d => difficulties.includes(d)),
       timeRanges: timeRanges.sort(),
-      specialties: specialties.sort()
+      specialties: specialties.sort(),
+      programAreas: programAreas.sort(),
+      specializedAreas: specializedAreas.sort()
     };
   }, [cases]);
 
@@ -73,7 +81,9 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
         patientCase.description.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         patientCase.id.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         patientCase.tags?.some(tag => tag.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
-        patientCase.chiefComplaint?.toLowerCase().includes(filters.searchTerm.toLowerCase());
+        patientCase.chiefComplaint?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        patientCase.programArea?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        patientCase.specializedArea?.toLowerCase().includes(filters.searchTerm.toLowerCase());
       
       const matchesCategory = !filters.category || patientCase.category === filters.category;
       const matchesDifficulty = !filters.difficulty || patientCase.difficulty === filters.difficulty;
@@ -81,17 +91,20 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
         patientCase.estimatedTime === filters.estimatedTimeRange ||
         patientCase.duration === filters.estimatedTimeRange;
       const matchesSpecialty = !filters.specialty || patientCase.specialty === filters.specialty;
+      const matchesProgramArea = !filters.programArea || patientCase.programArea === filters.programArea;
+      const matchesSpecializedArea = !filters.specializedArea || patientCase.specializedArea === filters.specializedArea;
       
-      return matchesSearch && matchesCategory && matchesDifficulty && matchesTimeRange && matchesSpecialty;
+      return matchesSearch && matchesCategory && matchesDifficulty && matchesTimeRange && 
+             matchesSpecialty && matchesProgramArea && matchesSpecializedArea;
     });
   }, [cases, filters]);
 
-  // Group cases by category or specialty
+  // Group cases by program area or specialty
   const groupedCases = useMemo(() => {
     const groups: { [key: string]: PatientCase[] } = {};
     
     filteredCases.forEach(patientCase => {
-      const groupKey = patientCase.specialty || patientCase.category || 'Other';
+      const groupKey = patientCase.programArea || patientCase.specialty || patientCase.category || 'Other';
       if (!groups[groupKey]) {
         groups[groupKey] = [];
       }
@@ -117,7 +130,9 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
       difficulty: '',
       searchTerm: '',
       estimatedTimeRange: '',
-      specialty: ''
+      specialty: '',
+      programArea: '',
+      specializedArea: ''
     });
   };
 
@@ -221,7 +236,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                       type="text"
-                      placeholder="Search cases by title, description, tags, or symptoms..."
+                      placeholder="Search cases by title, description, tags, symptoms, or program area..."
                       value={filters.searchTerm}
                       onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -252,7 +267,47 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
               {/* Filter Options */}
               {showFilters && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Program Area Filter */}
+                    {filterOptions.programAreas.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                          <Building className="w-4 h-4" />
+                          Program Area
+                        </label>
+                        <select
+                          value={filters.programArea}
+                          onChange={(e) => handleFilterChange('programArea', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">All Program Areas</option>
+                          {filterOptions.programAreas.map(programArea => (
+                            <option key={programArea} value={programArea}>{programArea}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Specialized Area Filter */}
+                    {filterOptions.specializedAreas.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                          <Microscope className="w-4 h-4" />
+                          Specialized Area
+                        </label>
+                        <select
+                          value={filters.specializedArea}
+                          onChange={(e) => handleFilterChange('specializedArea', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">All Specialized Areas</option>
+                          {filterOptions.specializedAreas.map(specializedArea => (
+                            <option key={specializedArea} value={specializedArea}>{specializedArea}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     {/* Specialty Filter */}
                     {filterOptions.specialties.length > 0 && (
                       <div>
@@ -344,7 +399,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
               </p>
             </div>
 
-            {/* Cases Grid - Grouped by Category/Specialty */}
+            {/* Cases Grid - Grouped by Program Area/Category/Specialty */}
             <div className="space-y-6">
               {Object.entries(groupedCases).map(([groupName, groupCases]) => (
                 <div key={groupName} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -383,6 +438,24 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
                               <p className="text-sm text-gray-600 mb-3">
                                 {patientCase.description}
                               </p>
+
+                              {/* Program Area and Specialized Area */}
+                              {(patientCase.programArea || patientCase.specializedArea) && (
+                                <div className="flex items-center gap-2 mb-3 text-xs">
+                                  {patientCase.programArea && (
+                                    <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200">
+                                      <Building className="w-3 h-3" />
+                                      <span>{patientCase.programArea}</span>
+                                    </div>
+                                  )}
+                                  {patientCase.specializedArea && (
+                                    <div className="flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200">
+                                      <Microscope className="w-3 h-3" />
+                                      <span>{patientCase.specializedArea}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
 
                               {/* Chief Complaint */}
                               {patientCase.chiefComplaint && (
@@ -494,6 +567,31 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
                       <h4 className="font-medium text-gray-900 mb-1">{selectedCaseData.title}</h4>
                       <p className="text-sm text-gray-600">{selectedCaseData.description}</p>
                     </div>
+
+                    {/* Program Area and Specialized Area */}
+                    {(selectedCaseData.programArea || selectedCaseData.specializedArea) && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2">Program Classification</h4>
+                        <div className="space-y-2">
+                          {selectedCaseData.programArea && (
+                            <div className="flex items-center gap-2">
+                              <Building className="w-4 h-4 text-blue-600" />
+                              <span className="text-sm text-gray-700">
+                                <span className="font-medium">Program Area:</span> {selectedCaseData.programArea}
+                              </span>
+                            </div>
+                          )}
+                          {selectedCaseData.specializedArea && (
+                            <div className="flex items-center gap-2">
+                              <Microscope className="w-4 h-4 text-purple-600" />
+                              <span className="text-sm text-gray-700">
+                                <span className="font-medium">Specialized Area:</span> {selectedCaseData.specializedArea}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {selectedCaseData.clinicalContext && (
                       <div>
