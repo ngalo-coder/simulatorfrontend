@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Stethoscope, Play, Loader2, Clock, BookOpen, AlertCircle, Search, Filter, X, ChevronDown, User, Calendar, Target, Building, Microscope } from 'lucide-react';
-import { PatientCase } from '../types';
+import { PatientCase, CaseCategories } from '../types';
 import { api } from '../services/api';
 
 interface CaseSelectionScreenProps {
@@ -22,6 +22,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
   const [cases, setCases] = useState<PatientCase[]>([]);
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [loadingCases, setLoadingCases] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   
@@ -35,14 +36,37 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
     specializedArea: ''
   });
 
+  const [caseCategories, setCaseCategories] = useState<CaseCategories>({ program_areas: [], specialized_areas: [] });
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        setLoadingCategories(true);
+        const categories = await api.getCaseCategories();
+        setCaseCategories(categories);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load categories');
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchInitialData();
+  }, []);
+
   useEffect(() => {
     const fetchCases = async () => {
       try {
         setLoadingCases(true);
-        const fetchedCases = await api.getCases();
+        const filtersToApply: { program_area?: string; specialized_area?: string } = {};
+        if (filters.programArea) filtersToApply.program_area = filters.programArea;
+        if (filters.specializedArea) filtersToApply.specialized_area = filters.specializedArea;
+
+        const fetchedCases = await api.getCases(Object.keys(filtersToApply).length > 0 ? filtersToApply : undefined);
         setCases(fetchedCases);
-        if (fetchedCases.length > 0) {
+        if (fetchedCases.length > 0 && !selectedCase) {
           setSelectedCase(fetchedCases[0].id);
+        } else if (fetchedCases.length === 0) {
+          setSelectedCase(null);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load cases');
@@ -52,29 +76,28 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
     };
 
     fetchCases();
-  }, []);
+  }, [filters.programArea, filters.specializedArea]);
 
-  // Extract unique values for filter options
+  // Extract unique values for filter options (excluding program/specialized areas which come from API)
   const filterOptions = useMemo(() => {
     const categories = [...new Set(cases.map(c => c.category).filter(Boolean))];
     const difficulties = [...new Set(cases.map(c => c.difficulty).filter(Boolean))];
     const timeRanges = [...new Set(cases.map(c => c.estimatedTime || c.duration).filter(Boolean))];
     const specialties = [...new Set(cases.map(c => c.specialty).filter(Boolean))];
-    const programAreas = [...new Set(cases.map(c => c.programArea).filter(Boolean))];
-    const specializedAreas = [...new Set(cases.map(c => c.specializedArea).filter(Boolean))];
+    // programAreas and specializedAreas are now from caseCategories state
     
     return {
       categories: categories.sort(),
       difficulties: ['Beginner', 'Intermediate', 'Advanced'].filter(d => difficulties.includes(d)),
       timeRanges: timeRanges.sort(),
       specialties: specialties.sort(),
-      programAreas: programAreas.sort(),
-      specializedAreas: specializedAreas.sort()
+      programAreas: caseCategories.program_areas.sort(),
+      specializedAreas: caseCategories.specialized_areas.sort()
     };
-  }, [cases]);
+  }, [cases, caseCategories]);
 
-  // Filter cases based on current filters
-  const filteredCases = useMemo(() => {
+  // Client-side search filtering (applied on top of server-side filters)
+  const clientFilteredCases = useMemo(() => {
     return cases.filter(patientCase => {
       const matchesSearch = !filters.searchTerm || 
         patientCase.title.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
@@ -82,28 +105,28 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
         patientCase.id.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         patientCase.tags?.some(tag => tag.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
         patientCase.chiefComplaint?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        patientCase.programArea?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        patientCase.specializedArea?.toLowerCase().includes(filters.searchTerm.toLowerCase());
+        patientCase.programArea?.toLowerCase().includes(filters.searchTerm.toLowerCase()) || // Keep for search
+        patientCase.specializedArea?.toLowerCase().includes(filters.searchTerm.toLowerCase()); // Keep for search
       
+      // Category, Difficulty, TimeRange, Specialty filters are still client-side for now
       const matchesCategory = !filters.category || patientCase.category === filters.category;
       const matchesDifficulty = !filters.difficulty || patientCase.difficulty === filters.difficulty;
       const matchesTimeRange = !filters.estimatedTimeRange || 
         patientCase.estimatedTime === filters.estimatedTimeRange ||
         patientCase.duration === filters.estimatedTimeRange;
       const matchesSpecialty = !filters.specialty || patientCase.specialty === filters.specialty;
-      const matchesProgramArea = !filters.programArea || patientCase.programArea === filters.programArea;
-      const matchesSpecializedArea = !filters.specializedArea || patientCase.specializedArea === filters.specializedArea;
+      // ProgramArea and SpecializedArea are handled by server-side filtering via API call
       
-      return matchesSearch && matchesCategory && matchesDifficulty && matchesTimeRange && 
-             matchesSpecialty && matchesProgramArea && matchesSpecializedArea;
+      return matchesSearch && matchesCategory && matchesDifficulty && matchesTimeRange && matchesSpecialty;
     });
   }, [cases, filters]);
+
 
   // Group cases by program area or specialty
   const groupedCases = useMemo(() => {
     const groups: { [key: string]: PatientCase[] } = {};
     
-    filteredCases.forEach(patientCase => {
+    clientFilteredCases.forEach(patientCase => {
       const groupKey = patientCase.programArea || patientCase.specialty || patientCase.category || 'Other';
       if (!groups[groupKey]) {
         groups[groupKey] = [];
@@ -162,7 +185,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
 
   const selectedCaseData = selectedCase ? cases.find(c => c.id === selectedCase) : null;
 
-  if (loadingCases) {
+  if (loadingCases || loadingCategories) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
@@ -269,7 +292,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {/* Program Area Filter */}
-                    {filterOptions.programAreas.length > 0 && (
+                    {caseCategories.program_areas.length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                           <Building className="w-4 h-4" />
@@ -281,7 +304,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
                           <option value="">All Program Areas</option>
-                          {filterOptions.programAreas.map(programArea => (
+                          {caseCategories.program_areas.map(programArea => (
                             <option key={programArea} value={programArea}>{programArea}</option>
                           ))}
                         </select>
@@ -289,7 +312,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
                     )}
 
                     {/* Specialized Area Filter */}
-                    {filterOptions.specializedAreas.length > 0 && (
+                    {caseCategories.specialized_areas.length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                           <Microscope className="w-4 h-4" />
@@ -301,7 +324,8 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
                           <option value="">All Specialized Areas</option>
-                          {filterOptions.specializedAreas.map(specializedArea => (
+                          <option value="null">None / General</option>
+                          {caseCategories.specialized_areas.map(specializedArea => (
                             <option key={specializedArea} value={specializedArea}>{specializedArea}</option>
                           ))}
                         </select>
@@ -390,8 +414,8 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
             {/* Results Summary */}
             <div className="flex justify-between items-center">
               <p className="text-gray-600">
-                Showing {filteredCases.length} of {cases.length} cases
-                {hasActiveFilters && (
+                Showing {clientFilteredCases.length} of {cases.length} cases
+                {(hasActiveFilters || filters.programArea || filters.specializedArea) && (
                   <span className="ml-2 text-blue-600 font-medium">
                     (filtered)
                   </span>
@@ -534,7 +558,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
             </div>
 
             {/* No Results */}
-            {filteredCases.length === 0 && (
+            {clientFilteredCases.length === 0 && (
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search className="w-8 h-8 text-gray-400" />
