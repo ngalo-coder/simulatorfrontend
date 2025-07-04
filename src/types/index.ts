@@ -9,13 +9,17 @@ export interface EvaluationData {
   feedback?: string;
   strengths?: string[];
   areas_for_improvement?: string[];
-  evaluation?: string; // New field for detailed AI evaluation
+  evaluation?: string; // Detailed AI evaluation string
+  history?: Array<{
+    role: string;
+    content: string;
+  }>;
   [key: string]: any;
 }
 
 export interface SessionEndResponse {
   sessionEnded: boolean;
-  evaluation: string; // Changed from 'summary' to 'evaluation'
+  evaluation: string; // Full AI evaluation text
   history: Array<{
     role: string;
     content: string;
@@ -52,4 +56,4 @@ export interface PatientCase {
   presentingSymptoms?: string[];
 }
 
-export type AppState = 'selecting_case' | 'chatting';
+export type AppState = 'selecting_case' | 'chatting' | 'showing_evaluation';

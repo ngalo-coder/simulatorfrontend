@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import CaseSelectionScreen from './components/CaseSelectionScreen';
 import ChatScreen from './components/ChatScreen';
+import EvaluationScreen from './components/EvaluationScreen';
 import ErrorMessage from './components/ErrorMessage';
 import { api } from './services/api';
 import { Message, EvaluationData, AppState } from './types';
@@ -20,6 +21,7 @@ function App() {
     setError(null);
     setCurrentCaseId(caseId);
     setIsSessionActive(false);
+    setEvaluationData(null);
 
     try {
       const response = await api.startSimulation(caseId);
@@ -76,8 +78,7 @@ function App() {
       },
       () => {
         setIsLoading(false);
-        // Check if this was a final response that should end the session
-        // This would be determined by the backend sending a session_end event
+        // Stream completed normally - no automatic session end
       },
       (err) => {
         setIsLoading(false);
@@ -92,13 +93,14 @@ function App() {
           return newMessages;
         });
       },
-      (summary) => {
+      (streamEndSignal) => {
         // Handle automatic session end from backend
+        console.log('Automatic session end signaled by stream:', streamEndSignal);
         setIsLoading(false);
         setIsSessionActive(false);
-        setEvaluationData({
-          evaluation: summary
-        });
+        
+        // Automatically trigger handleEndSession to fetch the full evaluation
+        handleEndSession(true); // Pass true to bypass confirmation
       }
     );
 
@@ -106,28 +108,35 @@ function App() {
     // return cleanup;
   }, [sessionId, isSessionActive]);
 
-  const handleEndSession = useCallback(async () => {
-    if (!sessionId || !isSessionActive) return;
+  const handleEndSession = useCallback(async (bypassConfirmation = false) => {
+    if (!sessionId) {
+      console.error('handleEndSession called without sessionId');
+      return;
+    }
 
-    const confirmed = window.confirm(
-      'Are you sure you want to end this session? You will receive an AI evaluation of your performance.'
-    );
-    
-    if (!confirmed) return;
+    // Only show confirmation if not bypassed by an automatic process AND the session was active from user's perspective
+    if (!bypassConfirmation && isSessionActive) {
+      const confirmed = window.confirm(
+        'Are you sure you want to end this session? You will receive an AI evaluation of your performance.'
+      );
+      if (!confirmed) return;
+    }
 
-    setIsLoading(true);
+    setIsLoading(true); // Indicate loading for fetching evaluation
     setError(null);
 
     try {
-      const response = await api.endSession(sessionId);
-      setIsSessionActive(false);
+      const response = await api.endSession(sessionId); // This fetches the full evaluation
+      setIsSessionActive(false); // Ensure session is marked inactive
       setEvaluationData({
         evaluation: response.evaluation,
         history: response.history
       });
+      setAppState('showing_evaluation'); // Transition to show evaluation
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to end session';
       setError(`Error ending session: ${errorMessage}`);
+      // Stay in current state if evaluation fetching fails
     } finally {
       setIsLoading(false);
     }
@@ -172,6 +181,26 @@ function App() {
     );
   }
 
+  // If showing evaluation, render EvaluationScreen
+  if (appState === 'showing_evaluation' && evaluationData) {
+    return (
+      <div>
+        {error && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
+            <ErrorMessage message={error} onDismiss={handleDismissError} />
+          </div>
+        )}
+        <EvaluationScreen 
+          evaluationData={evaluationData} 
+          onRestart={handleRestart}
+          onBack={handleBack}
+          currentCaseId={currentCaseId}
+        />
+      </div>
+    );
+  }
+
+  // If chatting (and not yet showing evaluation), render ChatScreen
   return (
     <div>
       {error && (
@@ -183,13 +212,13 @@ function App() {
         messages={messages}
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
-        evaluationData={evaluationData}
+        evaluationData={null} // Remove evaluationData from ChatScreen
         onRestart={handleRestart}
         onBack={handleBack}
         currentCaseId={currentCaseId}
         isSessionActive={isSessionActive}
         sessionId={sessionId}
-        onEndSession={handleEndSession}
+        onEndSession={() => handleEndSession(false)} // Manual end session, no bypassConfirmation
       />
     </div>
   );

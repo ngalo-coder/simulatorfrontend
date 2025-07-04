@@ -2,14 +2,13 @@ import React from 'react';
 import { ArrowLeft, User, Activity } from 'lucide-react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import EvaluationModal from './EvaluationModal';
-import { Message, EvaluationData } from '../types';
+import { Message } from '../types';
 
 interface ChatScreenProps {
   messages: Message[];
   onSendMessage: (question: string) => void;
   isLoading: boolean;
-  evaluationData: EvaluationData | null;
+  evaluationData: null; // Always null now - evaluation handled by EvaluationScreen
   onRestart: () => void;
   onBack: () => void;
   currentCaseId?: string | null;
@@ -22,7 +21,6 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   messages,
   onSendMessage,
   isLoading,
-  evaluationData,
   onRestart,
   onBack,
   currentCaseId,
@@ -30,8 +28,6 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   sessionId,
   onEndSession
 }) => {
-  const isSimulationComplete = evaluationData !== null;
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto bg-white shadow-xl min-h-screen flex flex-col">
@@ -56,8 +52,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
                       isSessionActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
                     }`} />
                     <span className="text-sm text-gray-500">
-                      {isSimulationComplete ? 'Session Complete' : 
-                       isSessionActive ? 'Active Session' : 'Session Ended'}
+                      {isSessionActive ? 'Active Session' : 'Session Ended'}
                     </span>
                   </div>
                 </div>
@@ -81,14 +76,6 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
           sessionId={sessionId}
           onEndSession={onEndSession}
         />
-
-        {/* Evaluation Modal */}
-        {evaluationData && (
-          <EvaluationModal 
-            evaluationData={evaluationData} 
-            onRestart={onRestart} 
-          />
-        )}
       </div>
     </div>
   );
