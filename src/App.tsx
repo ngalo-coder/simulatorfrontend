@@ -41,6 +41,40 @@ function App() {
     }
   }, []);
 
+  const handleEndSession = useCallback(async (bypassConfirmation = false) => {
+    if (!sessionId) {
+      console.error('handleEndSession called without sessionId');
+      return;
+    }
+
+    // Only show confirmation if not bypassed by an automatic process AND the session was active from user's perspective
+    if (!bypassConfirmation && isSessionActive) {
+      const confirmed = window.confirm(
+        'Are you sure you want to end this session? You will receive an AI evaluation of your performance.'
+      );
+      if (!confirmed) return;
+    }
+
+    setIsLoading(true); // Indicate loading for fetching evaluation
+    setError(null);
+
+    try {
+      const response = await api.endSession(sessionId); // This fetches the full evaluation
+      setIsSessionActive(false); // Ensure session is marked inactive
+      setEvaluationData({
+        evaluation: response.evaluation,
+        history: response.history
+      });
+      setAppState('showing_evaluation'); // Transition to show evaluation
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to end session';
+      setError(`Error ending session: ${errorMessage}`);
+      // Stay in current state if evaluation fetching fails
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sessionId, isSessionActive]);
+
   const handleSendMessage = useCallback((question: string) => {
     if (!question.trim() || !sessionId || !isSessionActive) return;
 
@@ -106,41 +140,7 @@ function App() {
 
     // Optional: cleanup on unmount or new message
     // return cleanup;
-  }, [sessionId, isSessionActive]);
-
-  const handleEndSession = useCallback(async (bypassConfirmation = false) => {
-    if (!sessionId) {
-      console.error('handleEndSession called without sessionId');
-      return;
-    }
-
-    // Only show confirmation if not bypassed by an automatic process AND the session was active from user's perspective
-    if (!bypassConfirmation && isSessionActive) {
-      const confirmed = window.confirm(
-        'Are you sure you want to end this session? You will receive an AI evaluation of your performance.'
-      );
-      if (!confirmed) return;
-    }
-
-    setIsLoading(true); // Indicate loading for fetching evaluation
-    setError(null);
-
-    try {
-      const response = await api.endSession(sessionId); // This fetches the full evaluation
-      setIsSessionActive(false); // Ensure session is marked inactive
-      setEvaluationData({
-        evaluation: response.evaluation,
-        history: response.history
-      });
-      setAppState('showing_evaluation'); // Transition to show evaluation
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to end session';
-      setError(`Error ending session: ${errorMessage}`);
-      // Stay in current state if evaluation fetching fails
-    } finally {
-      setIsLoading(false);
-    }
-  }, [sessionId, isSessionActive]);
+  }, [sessionId, isSessionActive, handleEndSession]);
 
   const handleRestart = useCallback(() => {
     setAppState('selecting_case');
@@ -212,7 +212,6 @@ function App() {
         messages={messages}
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
-        evaluationData={null} // Remove evaluationData from ChatScreen
         onRestart={handleRestart}
         onBack={handleBack}
         currentCaseId={currentCaseId}

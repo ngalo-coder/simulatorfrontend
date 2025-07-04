@@ -8,7 +8,6 @@ interface ChatScreenProps {
   messages: Message[];
   onSendMessage: (question: string) => void;
   isLoading: boolean;
-  evaluationData: null; // Always null now - evaluation handled by EvaluationScreen
   onRestart: () => void;
   onBack: () => void;
   currentCaseId?: string | null;
