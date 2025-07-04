@@ -13,11 +13,13 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null);
   const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
+  const [isSessionActive, setIsSessionActive] = useState(false);
 
   const handleStartSimulation = useCallback(async (caseId: string) => {
     setIsLoading(true);
     setError(null);
     setCurrentCaseId(caseId);
+    setIsSessionActive(false);
 
     try {
       const response = await api.startSimulation(caseId);
@@ -28,6 +30,7 @@ function App() {
         timestamp: Date.now()
       }]);
       setAppState('chatting');
+      setIsSessionActive(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to start simulation';
       setError(`Failed to start case "${caseId}": ${errorMessage}`);
@@ -37,7 +40,7 @@ function App() {
   }, []);
 
   const handleSendMessage = useCallback((question: string) => {
-    if (!question.trim() || !sessionId) return;
+    if (!question.trim() || !sessionId || !isSessionActive) return;
 
     // Add the user's message to the state immediately
     const userMessage: Message = {
@@ -73,7 +76,8 @@ function App() {
       },
       () => {
         setIsLoading(false);
-        // Optionally: set evaluation data if your backend sends it
+        // Check if this was a final response that should end the session
+        // This would be determined by the backend sending a session_end event
       },
       (err) => {
         setIsLoading(false);
@@ -87,12 +91,41 @@ function App() {
           }
           return newMessages;
         });
+      },
+      (summary) => {
+        // Handle automatic session end from backend
+        setIsLoading(false);
+        setIsSessionActive(false);
+        setEvaluationData({
+          feedback: summary
+        });
       }
     );
 
     // Optional: cleanup on unmount or new message
     // return cleanup;
-  }, [sessionId]);
+  }, [sessionId, isSessionActive]);
+
+  const handleEndSession = useCallback(async () => {
+    if (!sessionId || !isSessionActive) return;
+
+    try {
+      setIsLoading(true);
+      const response = await api.endSession(sessionId);
+      
+      if (response.sessionEnded) {
+        setIsSessionActive(false);
+        setEvaluationData({
+          feedback: response.summary
+        });
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to end session';
+      setError(`Failed to end session: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sessionId, isSessionActive]);
 
   const handleRestart = useCallback(() => {
     setAppState('selecting_case');
@@ -102,6 +135,7 @@ function App() {
     setError(null);
     setIsLoading(false);
     setCurrentCaseId(null);
+    setIsSessionActive(false);
   }, []);
 
   const handleBack = useCallback(() => {
@@ -112,6 +146,7 @@ function App() {
     setError(null);
     setIsLoading(false);
     setCurrentCaseId(null);
+    setIsSessionActive(false);
   }, []);
 
   const handleDismissError = useCallback(() => {
@@ -141,11 +176,14 @@ function App() {
       <ChatScreen
         messages={messages}
         onSendMessage={handleSendMessage}
+        onEndSession={handleEndSession}
         isLoading={isLoading}
         evaluationData={evaluationData}
         onRestart={handleRestart}
         onBack={handleBack}
         currentCaseId={currentCaseId}
+        isSessionActive={isSessionActive}
+        sessionId={sessionId}
       />
     </div>
   );

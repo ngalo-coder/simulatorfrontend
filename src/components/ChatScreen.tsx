@@ -8,21 +8,27 @@ import { Message, EvaluationData } from '../types';
 interface ChatScreenProps {
   messages: Message[];
   onSendMessage: (question: string) => void;
+  onEndSession: () => void;
   isLoading: boolean;
   evaluationData: EvaluationData | null;
   onRestart: () => void;
   onBack: () => void;
   currentCaseId?: string | null;
+  isSessionActive: boolean;
+  sessionId: string | null;
 }
 
 const ChatScreen: React.FC<ChatScreenProps> = ({
   messages,
   onSendMessage,
+  onEndSession,
   isLoading,
   evaluationData,
   onRestart,
   onBack,
-  currentCaseId
+  currentCaseId,
+  isSessionActive,
+  sessionId
 }) => {
   const isSimulationComplete = evaluationData !== null;
 
@@ -46,9 +52,11 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
                 <div>
                   <h1 className="font-semibold text-gray-900">Virtual Patient</h1>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    <div className={`w-2 h-2 rounded-full ${
+                      isSessionActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+                    }`} />
                     <span className="text-sm text-gray-500">
-                      {isSimulationComplete ? 'Simulation Complete' : 'Active Session'}
+                      {isSimulationComplete ? 'Session Complete' : isSessionActive ? 'Active Session' : 'Session Ended'}
                     </span>
                   </div>
                 </div>
@@ -66,8 +74,11 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 
         {/* Input */}
         <MessageInput 
-          onSendMessage={onSendMessage} 
-          isDisabled={isLoading || isSimulationComplete} 
+          onSendMessage={onSendMessage}
+          onEndSession={onEndSession}
+          isDisabled={isLoading || !isSessionActive}
+          isSessionActive={isSessionActive}
+          sessionId={sessionId}
         />
 
         {/* Evaluation Modal */}

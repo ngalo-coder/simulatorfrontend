@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Award, CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
+import { Award, CheckCircle, AlertCircle, RotateCcw, FileText } from 'lucide-react';
 import { EvaluationData } from '../types';
 
 interface EvaluationModalProps {
@@ -8,6 +8,8 @@ interface EvaluationModalProps {
 }
 
 const EvaluationModal: React.FC<EvaluationModalProps> = ({ evaluationData, onRestart }) => {
+  const hasFullEvaluation = evaluationData.overall_score !== undefined;
+  
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
@@ -26,17 +28,23 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({ evaluationData, onRes
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-full">
-                <Award className="w-6 h-6 text-blue-600" />
+              <div className={`p-2 rounded-full ${hasFullEvaluation ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                {hasFullEvaluation ? (
+                  <Award className="w-6 h-6 text-blue-600" />
+                ) : (
+                  <FileText className="w-6 h-6 text-gray-600" />
+                )}
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Simulation Complete</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {hasFullEvaluation ? 'Simulation Complete' : 'Session Summary'}
+              </h2>
             </div>
           </div>
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Overall Score */}
-          {evaluationData.overall_score && (
+          {/* Overall Score - only show if available */}
+          {hasFullEvaluation && evaluationData.overall_score && (
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 {getScoreIcon(evaluationData.overall_score)}
@@ -50,13 +58,15 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({ evaluationData, onRes
 
           {/* Feedback */}
           {evaluationData.feedback && (
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 mb-2">Overall Feedback</h3>
+            <div className={`rounded-lg p-4 ${hasFullEvaluation ? 'bg-blue-50' : 'bg-gray-50'}`}>
+              <h3 className="font-semibold text-gray-900 mb-2">
+                {hasFullEvaluation ? 'Overall Feedback' : 'Session Summary'}
+              </h3>
               <p className="text-gray-700 leading-relaxed">{evaluationData.feedback}</p>
             </div>
           )}
 
-          {/* Strengths */}
+          {/* Strengths - only show if available */}
           {evaluationData.strengths && evaluationData.strengths.length > 0 && (
             <div className="bg-green-50 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -74,7 +84,7 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({ evaluationData, onRes
             </div>
           )}
 
-          {/* Areas for Improvement */}
+          {/* Areas for Improvement - only show if available */}
           {evaluationData.areas_for_improvement && evaluationData.areas_for_improvement.length > 0 && (
             <div className="bg-yellow-50 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -97,6 +107,8 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({ evaluationData, onRes
             if (['overall_score', 'feedback', 'strengths', 'areas_for_improvement'].includes(key)) {
               return null;
             }
+            if (!value) return null;
+            
             return (
               <div key={key} className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-2 capitalize">

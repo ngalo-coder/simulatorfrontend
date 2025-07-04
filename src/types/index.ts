@@ -12,6 +12,12 @@ export interface EvaluationData {
   [key: string]: any;
 }
 
+export interface SessionEndResponse {
+  sessionEnded: boolean;
+  summary: string;
+  history: any[];
+}
+
 export interface SimulationStartResponse {
   sessionId: string;
   initialPrompt: string;
@@ -22,25 +28,6 @@ export interface SimulationAskResponse {
   isFinal: boolean;
   evaluation?: EvaluationData;
 }
-
-// export interface PatientCase {
-//   id: string;
-//   title: string;
-//   description: string;
-//   category?: string;
-//   difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
-//   estimatedTime?: string;
-//   tags?: string[];
-//   specialty?: string;
-//   level?: string;
-//   duration?: string;
-//   learningObjectives?: string[];
-//   clinicalContext?: string;
-//   patientAge?: string | number;
-//   patientGender?: string;
-//   chiefComplaint?: string;
-//   presentingSymptoms?: string[];
-// }
 
 export interface PatientCase {
   id: string;

@@ -121,11 +121,44 @@ export const api = {
     }
   },
 
+  async endSession(sessionId: string): Promise<import('../types').SessionEndResponse> {
+    console.log('Ending session:', sessionId);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/simulation/end`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      console.log('End session response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('End session error:', errorData);
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('End session result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error ending session:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to end session. Please check your internet connection.');
+    }
+  },
+
   streamSimulationAsk(
     params: { sessionId: string; question: string },
     onChunk: (chunk: string) => void,
     onDone: () => void,
-    onError?: (err: any) => void
+    onError?: (err: any) => void,
+    onSessionEnd?: (summary: string) => void
   ) {
     const query = new URLSearchParams(params).toString();
     const url = `${API_BASE_URL}/api/simulation/ask?${query}`;
@@ -139,6 +172,11 @@ export const api = {
         } else if (data.type === 'done') {
           eventSource.close();
           onDone();
+        } else if (data.type === 'session_end') {
+          if (onSessionEnd) {
+            onSessionEnd(data.summary);
+          }
+          eventSource.close();
         }
       } catch (err) {
         if (onError) onError(err);
