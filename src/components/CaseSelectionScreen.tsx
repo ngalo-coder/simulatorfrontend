@@ -135,7 +135,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
     });
     
     return groups;
-  }, [filteredCases]);
+  }, [clientFilteredCases]);
 
   const handleStart = () => {
     if (selectedCase) {
