@@ -14,6 +14,7 @@ function App() {
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null);
   const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
   const [isSessionActive, setIsSessionActive] = useState(false);
+  const [isEndingSession, setIsEndingSession] = useState(false);
 
   const handleStartSimulation = useCallback(async (caseId: string) => {
     setIsLoading(true);
@@ -97,7 +98,7 @@ function App() {
         setIsLoading(false);
         setIsSessionActive(false);
         setEvaluationData({
-          feedback: summary
+          evaluation: summary
         });
       }
     );
@@ -107,25 +108,28 @@ function App() {
   }, [sessionId, isSessionActive]);
 
   const handleEndSession = useCallback(async () => {
-    if (!sessionId || !isSessionActive) return;
+    if (!sessionId || !isSessionActive || isEndingSession) return;
 
     try {
-      setIsLoading(true);
+      setIsEndingSession(true);
+      setError(null);
+      
       const response = await api.endSession(sessionId);
       
       if (response.sessionEnded) {
         setIsSessionActive(false);
         setEvaluationData({
-          feedback: response.summary
+          evaluation: response.evaluation,
+          history: response.history
         });
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to end session';
       setError(`Failed to end session: ${errorMessage}`);
     } finally {
-      setIsLoading(false);
+      setIsEndingSession(false);
     }
-  }, [sessionId, isSessionActive]);
+  }, [sessionId, isSessionActive, isEndingSession]);
 
   const handleRestart = useCallback(() => {
     setAppState('selecting_case');
@@ -136,6 +140,7 @@ function App() {
     setIsLoading(false);
     setCurrentCaseId(null);
     setIsSessionActive(false);
+    setIsEndingSession(false);
   }, []);
 
   const handleBack = useCallback(() => {
@@ -147,6 +152,7 @@ function App() {
     setIsLoading(false);
     setCurrentCaseId(null);
     setIsSessionActive(false);
+    setIsEndingSession(false);
   }, []);
 
   const handleDismissError = useCallback(() => {
@@ -177,13 +183,14 @@ function App() {
         messages={messages}
         onSendMessage={handleSendMessage}
         onEndSession={handleEndSession}
-        isLoading={isLoading}
+        isLoading={isLoading || isEndingSession}
         evaluationData={evaluationData}
         onRestart={handleRestart}
         onBack={handleBack}
         currentCaseId={currentCaseId}
         isSessionActive={isSessionActive}
         sessionId={sessionId}
+        isEndingSession={isEndingSession}
       />
     </div>
   );

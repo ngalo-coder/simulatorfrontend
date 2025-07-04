@@ -124,7 +124,7 @@ export const api = {
   async endSession(sessionId: string): Promise<import('../types').SessionEndResponse> {
     console.log('Ending session:', sessionId);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/simulation/end`, {
+      const response = await fetch(`${API_BASE_URL}/end`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

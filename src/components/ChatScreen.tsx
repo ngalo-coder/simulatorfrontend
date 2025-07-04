@@ -16,6 +16,7 @@ interface ChatScreenProps {
   currentCaseId?: string | null;
   isSessionActive: boolean;
   sessionId: string | null;
+  isEndingSession: boolean;
 }
 
 const ChatScreen: React.FC<ChatScreenProps> = ({
@@ -28,7 +29,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   onBack,
   currentCaseId,
   isSessionActive,
-  sessionId
+  sessionId,
+  isEndingSession
 }) => {
   const isSimulationComplete = evaluationData !== null;
 
@@ -56,7 +58,9 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
                       isSessionActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
                     }`} />
                     <span className="text-sm text-gray-500">
-                      {isSimulationComplete ? 'Session Complete' : isSessionActive ? 'Active Session' : 'Session Ended'}
+                      {isEndingSession ? 'Generating Evaluation...' : 
+                       isSimulationComplete ? 'Session Complete' : 
+                       isSessionActive ? 'Active Session' : 'Session Ended'}
                     </span>
                   </div>
                 </div>
@@ -76,9 +80,10 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
         <MessageInput 
           onSendMessage={onSendMessage}
           onEndSession={onEndSession}
-          isDisabled={isLoading || !isSessionActive}
+          isDisabled={isLoading || !isSessionActive || isEndingSession}
           isSessionActive={isSessionActive}
           sessionId={sessionId}
+          isEndingSession={isEndingSession}
         />
 
         {/* Evaluation Modal */}

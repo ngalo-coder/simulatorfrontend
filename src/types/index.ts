@@ -9,13 +9,17 @@ export interface EvaluationData {
   feedback?: string;
   strengths?: string[];
   areas_for_improvement?: string[];
+  evaluation?: string; // New field for detailed AI evaluation
   [key: string]: any;
 }
 
 export interface SessionEndResponse {
   sessionEnded: boolean;
-  summary: string;
-  history: any[];
+  evaluation: string; // Changed from 'summary' to 'evaluation'
+  history: Array<{
+    role: string;
+    content: string;
+  }>;
 }
 
 export interface SimulationStartResponse {

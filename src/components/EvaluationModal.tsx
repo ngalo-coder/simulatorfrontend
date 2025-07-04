@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, CheckCircle, AlertCircle, RotateCcw, FileText } from 'lucide-react';
+import { Award, CheckCircle, AlertCircle, RotateCcw, FileText, Download } from 'lucide-react';
 import { EvaluationData } from '../types';
 
 interface EvaluationModalProps {
@@ -9,6 +9,7 @@ interface EvaluationModalProps {
 
 const EvaluationModal: React.FC<EvaluationModalProps> = ({ evaluationData, onRestart }) => {
   const hasFullEvaluation = evaluationData.overall_score !== undefined;
+  const hasDetailedEvaluation = evaluationData.evaluation !== undefined;
   
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -22,9 +23,32 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({ evaluationData, onRes
     return <AlertCircle className="w-6 h-6 text-red-600" />;
   };
 
+  const downloadEvaluation = () => {
+    const content = evaluationData.evaluation || evaluationData.feedback || 'No evaluation available';
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `simulation-evaluation-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Format the evaluation text to preserve line breaks
+  const formatEvaluationText = (text: string) => {
+    return text.split('\n').map((line, index) => (
+      <React.Fragment key={index}>
+        {line}
+        {index < text.split('\n').length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -36,9 +60,19 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({ evaluationData, onRes
                 )}
               </div>
               <h2 className="text-2xl font-bold text-gray-900">
-                {hasFullEvaluation ? 'Simulation Complete' : 'Session Summary'}
+                {hasDetailedEvaluation ? 'AI Performance Evaluation' : hasFullEvaluation ? 'Simulation Complete' : 'Session Summary'}
               </h2>
             </div>
+            {hasDetailedEvaluation && (
+              <button
+                onClick={downloadEvaluation}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                title="Download Evaluation"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+            )}
           </div>
         </div>
 
@@ -56,8 +90,23 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({ evaluationData, onRes
             </div>
           )}
 
-          {/* Feedback */}
-          {evaluationData.feedback && (
+          {/* Detailed AI Evaluation */}
+          {hasDetailedEvaluation && (
+            <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Award className="w-5 h-5 text-blue-600" />
+                Detailed Performance Analysis
+              </h3>
+              <div className="bg-white rounded-lg p-4 border border-blue-100">
+                <pre className="text-gray-700 leading-relaxed whitespace-pre-wrap font-sans text-sm">
+                  {formatEvaluationText(evaluationData.evaluation)}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {/* Fallback Feedback */}
+          {!hasDetailedEvaluation && evaluationData.feedback && (
             <div className={`rounded-lg p-4 ${hasFullEvaluation ? 'bg-blue-50' : 'bg-gray-50'}`}>
               <h3 className="font-semibold text-gray-900 mb-2">
                 {hasFullEvaluation ? 'Overall Feedback' : 'Session Summary'}
@@ -102,9 +151,32 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({ evaluationData, onRes
             </div>
           )}
 
+          {/* Session History - if available */}
+          {evaluationData.history && evaluationData.history.length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-gray-600" />
+                Session History ({evaluationData.history.length} exchanges)
+              </h3>
+              <div className="max-h-40 overflow-y-auto space-y-2">
+                {evaluationData.history.slice(0, 5).map((exchange: any, index: number) => (
+                  <div key={index} className="text-xs bg-white p-2 rounded border">
+                    <span className="font-medium text-blue-600">{exchange.role}:</span>
+                    <span className="text-gray-700 ml-2">{exchange.content.substring(0, 100)}...</span>
+                  </div>
+                ))}
+                {evaluationData.history.length > 5 && (
+                  <p className="text-xs text-gray-500 text-center">
+                    ... and {evaluationData.history.length - 5} more exchanges
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Additional evaluation data */}
           {Object.entries(evaluationData).map(([key, value]) => {
-            if (['overall_score', 'feedback', 'strengths', 'areas_for_improvement'].includes(key)) {
+            if (['overall_score', 'feedback', 'evaluation', 'strengths', 'areas_for_improvement', 'history'].includes(key)) {
               return null;
             }
             if (!value) return null;
