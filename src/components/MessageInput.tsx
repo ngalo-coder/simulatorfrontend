@@ -1,20 +1,23 @@
 import React, { useState, useRef } from 'react';
-import { Send, Mic } from 'lucide-react';
+import { Send, Mic, Square } from 'lucide-react';
 
 interface MessageInputProps {
   onSendMessage: (question: string) => void;
   isDisabled: boolean;
   isSessionActive: boolean;
   sessionId: string | null;
+  onEndSession: () => Promise<void>;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({ 
   onSendMessage, 
   isDisabled, 
   isSessionActive,
-  sessionId
+  sessionId,
+  onEndSession
 }) => {
   const [input, setInput] = useState('');
+  const [isEndingSession, setIsEndingSession] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -42,6 +45,17 @@ const MessageInput: React.FC<MessageInputProps> = ({
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    }
+  };
+
+  const handleEndSession = async () => {
+    setIsEndingSession(true);
+    try {
+      await onEndSession();
+    } catch (error) {
+      console.error('Error ending session:', error);
+    } finally {
+      setIsEndingSession(false);
     }
   };
 
@@ -85,6 +99,19 @@ const MessageInput: React.FC<MessageInputProps> = ({
           </div>
           
           <div className="flex gap-2">
+            {/* End Session Button */}
+            {isSessionActive && sessionId && (
+              <button
+                type="button"
+                onClick={handleEndSession}
+                disabled={isDisabled || isEndingSession}
+                className="flex-shrink-0 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 shadow-lg"
+                title="End Session & Get Evaluation"
+              >
+                <Square className="w-5 h-5" />
+              </button>
+            )}
+
             {/* Send Button */}
             <button
               type="submit"

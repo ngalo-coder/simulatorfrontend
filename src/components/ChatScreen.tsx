@@ -15,6 +15,7 @@ interface ChatScreenProps {
   currentCaseId?: string | null;
   isSessionActive: boolean;
   sessionId: string | null;
+  onEndSession: () => Promise<void>;
 }
 
 const ChatScreen: React.FC<ChatScreenProps> = ({
@@ -26,7 +27,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   onBack,
   currentCaseId,
   isSessionActive,
-  sessionId
+  sessionId,
+  onEndSession
 }) => {
   const isSimulationComplete = evaluationData !== null;
 
@@ -77,6 +79,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
           isDisabled={isLoading || !isSessionActive}
           isSessionActive={isSessionActive}
           sessionId={sessionId}
+          onEndSession={onEndSession}
         />
 
         {/* Evaluation Modal */}

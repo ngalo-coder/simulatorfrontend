@@ -106,6 +106,33 @@ function App() {
     // return cleanup;
   }, [sessionId, isSessionActive]);
 
+  const handleEndSession = useCallback(async () => {
+    if (!sessionId || !isSessionActive) return;
+
+    const confirmed = window.confirm(
+      'Are you sure you want to end this session? You will receive an AI evaluation of your performance.'
+    );
+    
+    if (!confirmed) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.endSession(sessionId);
+      setIsSessionActive(false);
+      setEvaluationData({
+        evaluation: response.evaluation,
+        history: response.history
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to end session';
+      setError(`Error ending session: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sessionId, isSessionActive]);
+
   const handleRestart = useCallback(() => {
     setAppState('selecting_case');
     setSessionId(null);
@@ -162,6 +189,7 @@ function App() {
         currentCaseId={currentCaseId}
         isSessionActive={isSessionActive}
         sessionId={sessionId}
+        onEndSession={handleEndSession}
       />
     </div>
   );
