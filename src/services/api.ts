@@ -10,9 +10,17 @@ export class ApiError extends Error {
 }
 
 export const api = {
-  async getCases(): Promise<import('../types').PatientCase[]> {
+  async getCases(filters?: { program_area?: string; specialized_area?: string }): Promise<import('../types').PatientCase[]> {
+    let url = `${API_BASE_URL}/api/simulation/cases`;
+    if (filters && (filters.program_area || filters.specialized_area)) {
+      const queryParams = new URLSearchParams();
+      if (filters.program_area) queryParams.append('program_area', filters.program_area);
+      if (filters.specialized_area) queryParams.append('specialized_area', filters.specialized_area);
+      url += `?${queryParams.toString()}`;
+    }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/simulation/cases`, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -197,5 +205,29 @@ export const api = {
     };
 
     return () => eventSource.close(); // Cleanup function
+  },
+
+  async getCaseCategories(): Promise<import('../types').CaseCategories> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/simulation/case-categories`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Error fetching case categories:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to fetch case categories. Please check your internet connection.');
+    }
   }
 };
