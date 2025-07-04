@@ -1,5 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://simulatorbackend.onrender.com';
-// const API_BASE_URL = 'http://localhost:5001';
+// api.ts
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 export class ApiError extends Error {
   constructor(message: string, public status?: number) {
     super(message);
@@ -8,7 +9,6 @@ export class ApiError extends Error {
 }
 
 export const api = {
-  // ✅ Fetch available simulation cases
   async getCases(): Promise<import('../types').PatientCase[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/simulation/cases`, {
@@ -43,7 +43,6 @@ export const api = {
       const data = await response.json();
       console.log('Raw cases data from server:', data);
 
-      // ✅ Updated: handle array of cases
       const cases: import('../types').PatientCase[] = data.map((caseItem: any) => {
         const caseId = caseItem.case_id || caseItem.id || caseItem.title || 'unknown';
 
@@ -74,7 +73,7 @@ export const api = {
     } catch (error) {
       console.error('Error fetching cases:', error);
       if (error instanceof ApiError) throw error;
-
+      
       return [
         {
           id: 'VP-ABD-002',
@@ -89,7 +88,6 @@ export const api = {
     }
   },
 
-  // ✅ Start simulation session
   async startSimulation(caseId: string): Promise<{ sessionId: string; initialPrompt: string }> {
     console.log('Starting simulation for case:', caseId);
     try {
@@ -122,7 +120,6 @@ export const api = {
     }
   },
 
-  // ✅ Stream clinician-patient interaction using SSE
   streamSimulationAsk(
     params: { sessionId: string; question: string },
     onChunk: (chunk: string) => void,
