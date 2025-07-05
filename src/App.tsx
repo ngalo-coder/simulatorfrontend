@@ -228,12 +228,17 @@ function App() {
     // Main application content for authenticated users
     return (
       <div className="flex flex-col min-h-screen">
-        <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
-          <h1 className="text-xl">Medical Case Simulator</h1>
+        <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex justify-between items-center shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+              <span className="text-xl font-bold">K</span>
+            </div>
+            <h1 className="text-xl font-bold">Kuiga</h1>
+          </div>
           {isLoggedIn && (
             <button
               onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
             >
               Logout
             </button>
@@ -241,7 +246,7 @@ function App() {
         </header>
         <main className="flex-grow">
           {error && (
-            <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4 mt-4"> {/* Adjusted top for header */}
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4 mt-4"> {/* Adjusted top for header */}
               <ErrorMessage message={error} onDismiss={handleDismissError} />
             </div>
           )}
