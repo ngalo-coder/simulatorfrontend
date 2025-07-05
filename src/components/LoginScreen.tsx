@@ -72,8 +72,8 @@ const LoginScreen: React.FC = () => {
               <Stethoscope className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">Virtual Patient Simulator</h1>
-              <p className="text-blue-100">Medical Education Excellence</p>
+              <h1 className="text-3xl font-bold text-white">Kuiga</h1>
+              <p className="text-blue-100">Virtual Patient Simulator</p>
             </div>
           </div>
           
@@ -108,7 +108,7 @@ const LoginScreen: React.FC = () => {
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Stethoscope className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Virtual Patient Simulator</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Kuiga</h1>
             <p className="text-gray-600">Sign in to continue your medical education</p>
           </div>
 

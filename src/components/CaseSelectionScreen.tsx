@@ -596,7 +596,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-4">
                             <h3 className="text-xl font-bold text-gray-900">{selectedCaseData.title}</h3>
-                            <span className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full border">
+                            <span className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full">
                               {selectedCaseData.id}
                             </span>
                           </div>
@@ -617,6 +617,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
                                 {selectedCaseData.specializedArea && (
                                   <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-purple-200">
                                     <Microscope className="w-4 h-4 text-purple-600" />
+                                
                                     <span className="text-sm font-medium text-gray-700">{selectedCaseData.specializedArea}</span>
                                   </div>
                                 )}
