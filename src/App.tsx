@@ -1,14 +1,23 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import CaseSelectionScreen from './components/CaseSelectionScreen';
 import ChatScreen from './components/ChatScreen';
 import EvaluationScreen from './components/EvaluationScreen';
 import ErrorMessage from './components/ErrorMessage';
+import RegistrationScreen from './components/RegistrationScreen';
+import LoginScreen from './components/LoginScreen';
 import { api } from './services/api';
 import { Message, EvaluationData, AppState } from './types';
+import { useAuth } from './contexts/AuthContext'; // Import useAuth
+
+// Removed the local AuthState interface and initialAuthState function, as this is now handled by AuthContext
 
 function App() {
+  const { isLoggedIn, logout, isLoading: isAuthLoading } = useAuth(); // Add logout from useAuth
+
+  // App state related to simulation flow
   const [appState, setAppState] = useState<AppState>('selecting_case');
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [simulationSessionId, setSimulationSessionId] = useState<string | null>(null); // Renamed to avoid conflict if any
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +34,7 @@ function App() {
 
     try {
       const response = await api.startSimulation(caseId);
-      setSessionId(response.sessionId);
+      setSimulationSessionId(response.sessionId);
       setMessages([{
         sender: 'patient',
         text: response.initialPrompt,
@@ -42,8 +51,8 @@ function App() {
   }, []);
 
   const handleEndSession = useCallback(async (bypassConfirmation = false) => {
-    if (!sessionId) {
-      console.error('handleEndSession called without sessionId');
+    if (!simulationSessionId) {
+      console.error('handleEndSession called without simulationSessionId');
       return;
     }
 
@@ -59,7 +68,7 @@ function App() {
     setError(null);
 
     try {
-      const response = await api.endSession(sessionId); // This fetches the full evaluation
+      const response = await api.endSession(simulationSessionId); // This fetches the full evaluation
       setIsSessionActive(false); // Ensure session is marked inactive
       setEvaluationData({
         evaluation: response.evaluation,
@@ -73,10 +82,10 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, isSessionActive]);
+  }, [simulationSessionId, isSessionActive]);
 
   const handleSendMessage = useCallback((question: string) => {
-    if (!question.trim() || !sessionId || !isSessionActive) return;
+    if (!question.trim() || !simulationSessionId || !isSessionActive) return;
 
     // Add the user's message to the state immediately
     const userMessage: Message = {
@@ -98,7 +107,7 @@ function App() {
 
     let aiResponse = '';
     const cleanup = api.streamSimulationAsk(
-      { sessionId, question },
+      { sessionId: simulationSessionId, question }, // Use simulationSessionId
       (chunk) => {
         aiResponse += chunk;
         setMessages(prev => {
@@ -140,11 +149,11 @@ function App() {
 
     // Optional: cleanup on unmount or new message
     // return cleanup;
-  }, [sessionId, isSessionActive, handleEndSession]);
+  }, [simulationSessionId, isSessionActive, handleEndSession]);
 
   const handleRestart = useCallback(() => {
     setAppState('selecting_case');
-    setSessionId(null);
+    setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
     setError(null);
@@ -155,7 +164,7 @@ function App() {
 
   const handleBack = useCallback(() => {
     setAppState('selecting_case');
-    setSessionId(null);
+    setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
     setError(null);
@@ -168,58 +177,112 @@ function App() {
     setError(null);
   }, []);
 
-  if (appState === 'selecting_case') {
-    return (
-      <div>
-        {error && (
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
-            <ErrorMessage message={error} onDismiss={handleDismissError} />
-          </div>
-        )}
-        <CaseSelectionScreen onStart={handleStartSimulation} isLoading={isLoading} />
-      </div>
-    );
-  }
+  const handleLogout = () => {
+    logout(); // Call logout from AuthContext
+    // AppContent's useEffect will handle navigation to /login
+    // Reset any app-specific states if necessary
+    setAppState('selecting_case');
+    setSimulationSessionId(null);
+    setMessages([]);
+    setEvaluationData(null);
+    setCurrentCaseId(null);
+    setIsSessionActive(false);
+    setError(null);
+  };
 
-  // If showing evaluation, render EvaluationScreen
-  if (appState === 'showing_evaluation' && evaluationData) {
-    return (
-      <div>
-        {error && (
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
-            <ErrorMessage message={error} onDismiss={handleDismissError} />
-          </div>
-        )}
-        <EvaluationScreen 
-          evaluationData={evaluationData} 
-          onRestart={handleRestart}
-          onBack={handleBack}
-          currentCaseId={currentCaseId}
-        />
-      </div>
-    );
-  }
+  // This component will wrap the main application logic and manage routing
+  const AppContent: React.FC = () => {
+    const navigate = useNavigate(); // Hook for navigation
 
-  // If chatting (and not yet showing evaluation), render ChatScreen
+    // Effect to redirect if not logged in, or set initial app state
+    useEffect(() => {
+      if (!isAuthLoading && !isLoggedIn) { // Check isAuthLoading
+        // If not logged in and not on register/login, redirect to login
+        if (window.location.pathname !== '/register' && window.location.pathname !== '/login') {
+          navigate('/login');
+        }
+      } else if (!isAuthLoading && isLoggedIn) {
+        // If logged in and on login/register, redirect to home
+        if (window.location.pathname === '/login' || window.location.pathname === '/register') {
+          navigate('/');
+        }
+      }
+    }, [isLoggedIn, isAuthLoading, navigate]);
+
+    if (isAuthLoading) {
+      return <div>Loading...</div>; // Or a proper loading spinner
+    }
+
+    if (!isLoggedIn) {
+      // Routes for unauthenticated users
+      return (
+        <Routes>
+          <Route path="/login" element={<LoginScreen />} />
+          <Route path="/register" element={<RegistrationScreen />} />
+          {/* Redirect any other unauthenticated access to login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      );
+    }
+
+    // Main application content for authenticated users
+    return (
+      <div className="flex flex-col min-h-screen">
+        <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
+          <h1 className="text-xl">Medical Case Simulator</h1>
+          {isLoggedIn && (
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Logout
+            </button>
+          )}
+        </header>
+        <main className="flex-grow">
+          {error && (
+            <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4 mt-4"> {/* Adjusted top for header */}
+              <ErrorMessage message={error} onDismiss={handleDismissError} />
+            </div>
+          )}
+          <Routes>
+            <Route path="/" element={
+              appState === 'selecting_case' ? (
+                <CaseSelectionScreen onStart={handleStartSimulation} isLoading={isLoading || isAuthLoading} /> // Pass auth loading state
+              ) : appState === 'chatting' ? (
+                <ChatScreen
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                onRestart={handleRestart}
+                onBack={handleBack}
+                currentCaseId={currentCaseId}
+                isSessionActive={isSessionActive}
+                sessionId={simulationSessionId} // Use simulationSessionId
+                onEndSession={() => handleEndSession(false)}
+              />
+            ) : appState === 'showing_evaluation' && evaluationData ? (
+              <EvaluationScreen
+                evaluationData={evaluationData}
+                onRestart={handleRestart}
+                onBack={handleBack}
+                currentCaseId={currentCaseId}
+              />
+            ) : (
+              <Navigate to="/" replace /> // Fallback, should ideally not be hit if appState is managed well
+            )
+          }/>
+          {/* Add other authenticated routes here if needed */}
+          <Route path="*" element={<Navigate to="/" replace />} /> {/* Redirect unknown paths to home */}
+        </Routes>
+      </>
+    );
+  };
+
   return (
-    <div>
-      {error && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-4">
-          <ErrorMessage message={error} onDismiss={handleDismissError} />
-        </div>
-      )}
-      <ChatScreen
-        messages={messages}
-        onSendMessage={handleSendMessage}
-        isLoading={isLoading}
-        onRestart={handleRestart}
-        onBack={handleBack}
-        currentCaseId={currentCaseId}
-        isSessionActive={isSessionActive}
-        sessionId={sessionId}
-        onEndSession={() => handleEndSession(false)} // Manual end session, no bypassConfirmation
-      />
-    </div>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 
