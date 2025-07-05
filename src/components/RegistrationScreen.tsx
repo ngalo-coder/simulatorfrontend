@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import { api, ApiError } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const RegistrationScreen: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -9,7 +9,7 @@ const RegistrationScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { login } = useAuth(); // Use login from AuthContext for auto-login
+  const { login } = useAuth();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,17 +28,14 @@ const RegistrationScreen: React.FC = () => {
 
     try {
       const response = await api.post('/auth/register', { username, email, password });
-      // Assuming the API returns a JWT token and user info upon successful registration
-      const { token, user } = response.data;
+      const { token, user } = response;
 
-      // Auto-login the user by updating auth context
       login(token, user);
 
-      // Redirect to the main application page (e.g., dashboard or case selection)
       navigate('/');
     } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
+      if (err instanceof ApiError) {
+        setError(err.message);
       } else {
         setError('Registration failed. Please try again.');
       }

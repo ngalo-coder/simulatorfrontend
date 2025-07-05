@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import { api, ApiError } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { login } = useAuth(); // Use login from AuthContext
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,15 +21,14 @@ const LoginScreen: React.FC = () => {
 
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token, user } = response.data;
+      const { token, user } = response;
 
-      login(token, user); // Update auth state using context
+      login(token, user);
 
-      navigate('/'); // Navigate to home
-      // No need for window.location.reload() as context update should trigger re-render
+      navigate('/');
     } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
+      if (err instanceof ApiError) {
+        setError(err.message);
       } else {
         setError('Login failed. Please check your credentials and try again.');
       }
