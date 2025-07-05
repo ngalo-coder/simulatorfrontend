@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Send, Mic, Square } from 'lucide-react';
+import { Send, Mic, Square, Zap, Brain, AlertTriangle } from 'lucide-react';
 
 interface MessageInputProps {
   onSendMessage: (question: string) => void;
@@ -59,10 +59,39 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  const quickQuestions = [
+    "Can you tell me more about your symptoms?",
+    "When did this pain first start?",
+    "Have you experienced this before?",
+    "Are you taking any medications?",
+    "Do you have any allergies?"
+  ];
+
   return (
-    <div className="border-t border-gray-200 bg-white">
-      <div className="p-4">
-        <form onSubmit={handleSubmit} className="flex items-end gap-3">
+    <div className="bg-gradient-to-r from-gray-50 to-white border-t border-gray-200">
+      {/* Quick Questions Bar */}
+      {isSessionActive && input.length === 0 && (
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-semibold text-gray-700">Quick Questions</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {quickQuestions.map((question, index) => (
+              <button
+                key={index}
+                onClick={() => setInput(question)}
+                className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-lg border border-blue-200 transition-all duration-200 hover:scale-105"
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="p-6">
+        <form onSubmit={handleSubmit} className="flex items-end gap-4">
           <div className="flex-1">
             <div className="relative">
               <textarea
@@ -72,43 +101,59 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 onKeyPress={handleKeyPress}
                 placeholder={
                   isSessionActive 
-                    ? "Type your question for the patient..." 
+                    ? "Ask your next clinical question..." 
                     : "Session has ended. Start a new session to continue."
                 }
                 disabled={isDisabled || !isSessionActive}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
-                style={{ minHeight: '48px', maxHeight: '120px' }}
+                className="w-full px-5 py-4 pr-14 border-2 border-gray-200 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-200 bg-white shadow-sm"
+                style={{ minHeight: '56px', maxHeight: '120px' }}
                 rows={1}
               />
               <button
                 type="button"
-                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-4 top-4 text-gray-400 hover:text-blue-600 transition-colors disabled:hover:text-gray-400"
                 disabled={isDisabled || !isSessionActive}
+                title="Voice input (coming soon)"
               >
                 <Mic className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex justify-between items-center mt-1">
-              <p className="text-xs text-gray-500">
-                {isSessionActive ? "Press Enter to send, Shift+Enter for new line" : "Session inactive"}
-              </p>
+            
+            <div className="flex justify-between items-center mt-2">
+              <div className="flex items-center gap-4">
+                <p className="text-xs text-gray-500">
+                  {isSessionActive ? "Press Enter to send, Shift+Enter for new line" : "Session inactive"}
+                </p>
+                {isSessionActive && (
+                  <div className="flex items-center gap-1 text-emerald-600">
+                    <Zap className="w-3 h-3" />
+                    <span className="text-xs font-medium">Live</span>
+                  </div>
+                )}
+              </div>
               <p className="text-xs text-gray-400">
                 {input.length}/500
               </p>
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {/* End Session Button */}
             {isSessionActive && sessionId && (
               <button
                 type="button"
                 onClick={handleEndSession}
                 disabled={isDisabled || isEndingSession}
-                className="flex-shrink-0 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 shadow-lg"
+                className="flex-shrink-0 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white p-4 rounded-2xl transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 shadow-lg group"
                 title="End Session & Get Evaluation"
               >
-                <Square className="w-5 h-5" />
+                {isEndingSession ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <Square className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                )}
               </button>
             )}
 
@@ -116,12 +161,23 @@ const MessageInput: React.FC<MessageInputProps> = ({
             <button
               type="submit"
               disabled={isDisabled || !input.trim() || !isSessionActive}
-              className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 shadow-lg"
+              className="flex-shrink-0 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white p-4 rounded-2xl transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 shadow-lg group"
+              title="Send Message"
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-5 h-5 group-hover:scale-110 transition-transform" />
             </button>
           </div>
         </form>
+
+        {/* Session Status */}
+        {!isSessionActive && (
+          <div className="mt-4 flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-3 rounded-xl border border-amber-200">
+            <AlertTriangle className="w-5 h-5" />
+            <span className="text-sm font-medium">
+              Session has ended. You can review your evaluation or start a new case.
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
