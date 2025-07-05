@@ -274,8 +274,9 @@ function App() {
           }/>
           {/* Add other authenticated routes here if needed */}
           <Route path="*" element={<Navigate to="/" replace />} /> {/* Redirect unknown paths to home */}
-        </Routes>
-      </>
+          </Routes>
+        </main>
+      </div>
     );
   };
 
