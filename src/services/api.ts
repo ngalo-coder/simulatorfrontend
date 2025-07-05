@@ -1,6 +1,45 @@
 // api.ts
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://simulatorbackend.onrender.com'
-// 'http://localhost:5001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://simulatorbackend.onrender.com';
+// const API_BASE_URL = 'http://localhost:5001'; // For local testing
+
+// Function to get the auth token from localStorage
+const getAuthToken = (): string | null => {
+  try {
+    return localStorage.getItem('authToken');
+  } catch (e) {
+    console.error("Error accessing localStorage for authToken", e);
+    return null;
+  }
+};
+
+// Centralized fetch function to include Authorization header and handle 401
+const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const token = getAuthToken();
+  const headers = new Headers(options.headers || {});
+
+  if (token) {
+    headers.append('Authorization', `Bearer ${token}`);
+  }
+  headers.append('Content-Type', 'application/json'); // Ensure Content-Type is set
+
+  const response = await fetch(url, { ...options, headers });
+
+  if (response.status === 401) {
+    // Handle unauthorized access: e.g., clear token, redirect to login
+    console.error('Unauthorized access - 401');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    // Consider a more robust way to trigger logout, e.g., via AuthContext or event
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login'; // Force redirect
+    }
+    // Throw an error to stop further processing in the calling function
+    throw new ApiError('Unauthorized: Please login again.', 401);
+  }
+
+  return response;
+};
+
 
 export class ApiError extends Error {
   constructor(message: string, public status?: number) {
@@ -20,12 +59,7 @@ export const api = {
     }
 
     try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await authenticatedFetch(url, { method: 'GET' });
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -107,11 +141,8 @@ export const api = {
   async startSimulation(caseId: string): Promise<{ sessionId: string; initialPrompt: string }> {
     console.log('Starting simulation for case:', caseId);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/simulation/start`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/start`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ caseId }),
       });
 
@@ -139,11 +170,8 @@ export const api = {
   async endSession(sessionId: string): Promise<import('../types').SessionEndResponse> {
     console.log('Ending session:', sessionId);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/simulation/end`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/end`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ sessionId }),
       });
 
@@ -176,7 +204,18 @@ export const api = {
     onSessionEnd?: (summary: string) => void
   ) {
     const query = new URLSearchParams(params).toString();
-    const url = `${API_BASE_URL}/api/simulation/ask?${query}`;
+    let url = `${API_BASE_URL}/api/simulation/ask?${query}`;
+
+    // For EventSource, token needs to be passed as a query parameter if backend supports it,
+    // or the backend needs to handle session/cookie based auth for EventSource.
+    // If your backend expects a Bearer token for EventSource via query param (e.g., 'token'), use:
+    const token = getAuthToken();
+    if (token) {
+      // Assuming backend can accept token via query param named 'token' or 'access_token'
+      // This is NOT standard for Bearer tokens but sometimes used for EventSource
+      url += `&token=${encodeURIComponent(token)}`;
+    }
+
     const eventSource = new EventSource(url);
 
     eventSource.onmessage = (event) => {
@@ -209,11 +248,8 @@ export const api = {
 
   async getCaseCategories(): Promise<import('../types').CaseCategories> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/simulation/case-categories`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/case-categories`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -228,6 +264,30 @@ export const api = {
       console.error('Error fetching case categories:', error);
       if (error instanceof ApiError) throw error;
       throw new ApiError('Failed to fetch case categories. Please check your internet connection.');
+    }
+  },
+
+  // Add post method for convenience, using authenticatedFetch
+  async post(endpoint: string, body: any): Promise<any> {
+    const url = `${API_BASE_URL}/api${endpoint}`; // Assuming all API endpoints are under /api
+    try {
+      const response = await authenticatedFetch(url, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.message || errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+      return response.json();
+    } catch (error) {
+      console.error(`Error POST ${endpoint}:`, error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(`Failed to POST to ${endpoint}.`);
     }
   }
 };
