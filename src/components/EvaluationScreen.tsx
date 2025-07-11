@@ -22,23 +22,50 @@ import {
 } from 'lucide-react';
 import { EvaluationData } from '../types';
 
+import { PerformanceMetrics, MetricsData } from '../types';
+import { api } from '../services/api'; // Import api service
+
 interface EvaluationScreenProps {
   evaluationData: EvaluationData;
   onRestart: () => void;
   onBack: () => void;
   currentCaseId?: string | null;
+  sessionId: string | null; // Add sessionId
 }
 
 const EvaluationScreen: React.FC<EvaluationScreenProps> = ({ 
   evaluationData, 
   onRestart, 
   onBack,
-  currentCaseId 
+  currentCaseId,
+  sessionId // Add sessionId
 }) => {
+  const [performanceMetrics, setPerformanceMetrics] = React.useState<PerformanceMetrics | null>(null);
+  const [metricsError, setMetricsError] = React.useState<string | null>(null);
+  const [isLoadingMetrics, setIsLoadingMetrics] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (sessionId) {
+      setIsLoadingMetrics(true);
+      setMetricsError(null);
+      api.getPerformanceMetrics(sessionId)
+        .then(data => {
+          setPerformanceMetrics(data);
+        })
+        .catch(err => {
+          console.error("Failed to fetch performance metrics:", err);
+          setMetricsError(err.message || "Failed to load detailed metrics.");
+        })
+        .finally(() => {
+          setIsLoadingMetrics(false);
+        });
+    }
+  }, [sessionId]);
+
   const downloadEvaluation = () => {
-    const content = evaluationData.evaluation || 'No evaluation available';
+    const content = performanceMetrics?.raw_evaluation_text || evaluationData.evaluation || 'No evaluation available';
     const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `simulation-evaluation-${currentCaseId || 'session'}-${timestamp}.txt`;
+    const filename = `simulation-evaluation-${currentCaseId || performanceMetrics?.case_ref?.case_metadata?.case_id || 'session'}-${timestamp}.txt`;
     
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -72,16 +99,59 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  // Mock score for demonstration (you can extract this from evaluation text if available)
-  const mockScore = 85;
-  const getScoreConfig = (score: number) => {
-    if (score >= 90) return { color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200', icon: Trophy, label: 'Excellent' };
-    if (score >= 80) return { color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', icon: Medal, label: 'Very Good' };
-    if (score >= 70) return { color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', icon: Star, label: 'Good' };
-    return { color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200', icon: Target, label: 'Needs Improvement' };
+  // Helper to format metric keys into readable names
+  const formatMetricName = (key: string): string => {
+    return key
+      .replace(/_/g, ' ')
+      .replace(/rating$/, '')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+      .trim();
   };
 
-  const scoreConfig = getScoreConfig(mockScore);
+  // Helper to get styling for ratings
+  const getRatingConfig = (rating?: string) => {
+    const normalizedRating = rating?.toLowerCase() || '';
+    if (normalizedRating.includes('excellent') || normalizedRating.includes('very good') || normalizedRating.includes('strong')) return { color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200', icon: Trophy };
+    if (normalizedRating.includes('good') || normalizedRating.includes('satisfactory') || normalizedRating.includes('reached')) return { color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', icon: Medal };
+    if (normalizedRating.includes('fair') || normalizedRating.includes('adequate')) return { color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', icon: Star };
+    if (normalizedRating.includes('needs improvement') || normalizedRating.includes('poor') || normalizedRating.includes('not reached')) return { color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200', icon: AlertCircle };
+    return { color: 'text-gray-600', bgColor: 'bg-gray-50', borderColor: 'border-gray-200', icon: Target };
+  };
+
+  const renderMetricItem = (key: string, value?: string) => {
+    if (!value) return null;
+    const ratingConfig = getRatingConfig(value);
+    const displayName = formatMetricName(key);
+
+    // Special handling for overall_diagnosis_accuracy
+    if (key === 'overall_diagnosis_accuracy') {
+      return (
+        <div key={key} className={`text-center p-6 rounded-2xl border-2 ${ratingConfig.bgColor} ${ratingConfig.borderColor} shadow-sm`}>
+          <div className={`w-12 h-12 ${ratingConfig.bgColor} rounded-full flex items-center justify-center mx-auto mb-3 border ${ratingConfig.borderColor}`}>
+            {React.createElement(ratingConfig.icon, { className: `w-6 h-6 ${ratingConfig.color}` })}
+          </div>
+          <h3 className="font-semibold text-gray-900 mb-1">{displayName}</h3>
+          <p className={`text-2xl font-bold ${ratingConfig.color}`}>{value}</p>
+        </div>
+      );
+    }
+
+    // Standard display for other ratings
+    return (
+      <div key={key} className={`p-5 rounded-2xl border-l-4 ${ratingConfig.borderColor} ${ratingConfig.bgColor} shadow-sm`}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-800 text-md">{displayName}</h3>
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${ratingConfig.color} ${ratingConfig.bgColor} border ${ratingConfig.borderColor}`}>
+            {React.createElement(ratingConfig.icon, { className: "w-4 h-4" })}
+            <span>{value}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -156,67 +226,82 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="xl:col-span-3 space-y-8">
-            {/* Performance Score Card */}
-            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-8 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-2">Performance Overview</h2>
-                    <p className="text-blue-100">Your clinical history-taking assessment</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-4xl font-bold mb-1">{mockScore}%</div>
-                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white bg-opacity-20 border border-white border-opacity-30`}>
-                      {React.createElement(scoreConfig.icon, { className: "w-5 h-5" })}
-                      <span className="font-semibold">{scoreConfig.label}</span>
-                    </div>
-                  </div>
+            {/* Structured Performance Metrics */}
+            {isLoadingMetrics && (
+              <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 text-center">
+                <div className="flex justify-center items-center">
+                  <Clock className="w-6 h-6 text-blue-500 animate-spin mr-2" />
+                  <p className="text-lg text-gray-700">Loading performance metrics...</p>
                 </div>
               </div>
-              
-              <div className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="text-center p-6 bg-emerald-50 rounded-2xl border border-emerald-200">
-                    <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Brain className="w-6 h-6 text-emerald-600" />
+            )}
+            {metricsError && (
+              <div className="bg-red-50 rounded-3xl shadow-xl border border-red-200 p-8 text-center">
+                <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                <p className="text-lg text-red-700">Error loading metrics: {metricsError}</p>
+              </div>
+            )}
+            {performanceMetrics && (
+              <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-8 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold mb-1">Performance Metrics</h2>
+                      <p className="text-blue-100">Detailed breakdown of your session performance.</p>
                     </div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Clinical Reasoning</h3>
-                    <p className="text-2xl font-bold text-emerald-600">A+</p>
-                  </div>
-                  
-                  <div className="text-center p-6 bg-blue-50 rounded-2xl border border-blue-200">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Heart className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Communication</h3>
-                    <p className="text-2xl font-bold text-blue-600">A</p>
-                  </div>
-                  
-                  <div className="text-center p-6 bg-amber-50 rounded-2xl border border-amber-200">
-                    <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Zap className="w-6 h-6 text-amber-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Efficiency</h3>
-                    <p className="text-2xl font-bold text-amber-600">B+</p>
+                    {performanceMetrics.case_ref?.case_metadata?.title && (
+                       <span className="bg-white bg-opacity-20 px-3 py-1.5 rounded-lg text-sm font-medium">
+                         {performanceMetrics.case_ref.case_metadata.title}
+                       </span>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* AI Performance Analysis */}
-            {evaluationData.evaluation && (
+                <div className="p-8 space-y-6">
+                  {/* Evaluation Summary */}
+                  {performanceMetrics.evaluation_summary && (
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-100 shadow">
+                       <h3 className="text-xl font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5" />
+                        Evaluation Summary
+                      </h3>
+                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap font-sans text-sm">
+                        {performanceMetrics.evaluation_summary}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Overall Diagnosis Accuracy (if present) */}
+                  {performanceMetrics.metrics?.overall_diagnosis_accuracy && (
+                    <div className="pt-2 pb-4">
+                     {renderMetricItem('overall_diagnosis_accuracy', performanceMetrics.metrics.overall_diagnosis_accuracy)}
+                    </div>
+                  )}
+
+                  {/* Other Metric Ratings */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {Object.entries(performanceMetrics.metrics)
+                      .filter(([key]) => key !== 'overall_diagnosis_accuracy') // Already rendered
+                      .map(([key, value]) => renderMetricItem(key, value))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* AI Performance Analysis (Raw Text) */}
+            {(performanceMetrics?.raw_evaluation_text || evaluationData.evaluation) && (
               <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
                 <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6 text-white">
                   <h2 className="text-xl font-bold flex items-center gap-3">
                     <Sparkles className="w-6 h-6" />
-                    AI Performance Analysis
+                    Detailed AI Evaluation
                   </h2>
-                  <p className="text-purple-100 mt-1">Detailed feedback from our advanced AI evaluator</p>
+                  <p className="text-purple-100 mt-1">The full textual analysis of the session.</p>
                 </div>
                 <div className="p-8">
                   <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border-2 border-gray-100">
                     <pre className="text-gray-800 leading-relaxed whitespace-pre-wrap font-sans text-sm overflow-x-auto">
-                      {evaluationData.evaluation}
+                      {performanceMetrics?.raw_evaluation_text || evaluationData.evaluation}
                     </pre>
                   </div>
                 </div>
