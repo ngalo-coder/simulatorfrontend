@@ -28,6 +28,7 @@ function App() {
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null);
   const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
   const [isSessionActive, setIsSessionActive] = useState(false);
+  const [streamingMessageIndex, setStreamingMessageIndex] = useState<number | undefined>(undefined);
 
   const handleSelectProgramArea = useCallback((programArea: string) => {
     setSelectedProgramArea(programArea);
@@ -101,6 +102,9 @@ function App() {
   const handleSendMessage = useCallback((question: string) => {
     if (!question.trim() || !simulationSessionId || !isSessionActive) return;
 
+    // Clear any previous streaming state
+    setStreamingMessageIndex(undefined);
+
     // Add the user's message to the state immediately
     const userMessage: Message = {
       sender: 'clinician',
@@ -115,7 +119,12 @@ function App() {
       timestamp: Date.now()
     };
 
-    setMessages(prev => [...prev, userMessage, patientPlaceholder]);
+    const newMessages = [...messages, userMessage, patientPlaceholder];
+    setMessages(newMessages);
+    
+    // Set streaming index to the patient placeholder message
+    setStreamingMessageIndex(newMessages.length - 1);
+    
     setIsLoading(true);
     setError(null);
 
@@ -135,10 +144,12 @@ function App() {
       },
       () => {
         setIsLoading(false);
+        setStreamingMessageIndex(undefined);
         // Stream completed normally - no automatic session end
       },
       (err) => {
         setIsLoading(false);
+        setStreamingMessageIndex(undefined);
         setError('Communication error: ' + (err?.message || 'Unknown error'));
         // Remove the placeholder message
         setMessages(prev => {
@@ -154,6 +165,7 @@ function App() {
         // Handle automatic session end from backend
         console.log('Automatic session end signaled by stream:', streamEndSignal);
         setIsLoading(false);
+        setStreamingMessageIndex(undefined);
         setIsSessionActive(false);
         
         // Automatically trigger handleEndSession to fetch the full evaluation
@@ -163,7 +175,7 @@ function App() {
 
     // Optional: cleanup on unmount or new message
     // return cleanup;
-  }, [simulationSessionId, isSessionActive, handleEndSession]);
+  }, [simulationSessionId, isSessionActive, handleEndSession, messages]);
 
   const handleRestart = useCallback(() => {
     setAppState('selecting_program');
@@ -175,6 +187,7 @@ function App() {
     setIsLoading(false);
     setCurrentCaseId(null);
     setIsSessionActive(false);
+    setStreamingMessageIndex(undefined);
   }, []);
 
   const handleBack = useCallback(() => {
@@ -187,6 +200,7 @@ function App() {
     setIsLoading(false);
     setCurrentCaseId(null);
     setIsSessionActive(false);
+    setStreamingMessageIndex(undefined);
   }, []);
 
   const handleDismissError = useCallback(() => {
@@ -205,6 +219,7 @@ function App() {
     setCurrentCaseId(null);
     setIsSessionActive(false);
     setError(null);
+    setStreamingMessageIndex(undefined);
   };
 
   // This component will wrap the main application logic and manage routing

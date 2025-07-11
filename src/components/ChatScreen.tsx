@@ -63,42 +63,42 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <div className="max-w-5xl mx-auto bg-white shadow-2xl min-h-screen flex flex-col rounded-t-3xl overflow-hidden border border-gray-200">
+      <div className="max-w-7xl mx-auto bg-white shadow-2xl min-h-screen flex flex-col lg:rounded-3xl lg:my-6 overflow-hidden border border-gray-200">
         {/* Enhanced Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 shadow-lg">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 lg:p-8 shadow-lg lg:rounded-t-3xl">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 lg:gap-6">
               <button
                 onClick={onBack}
-                className="p-3 hover:bg-white hover:bg-opacity-20 rounded-xl transition-all duration-200 group"
+                className="p-3 lg:p-4 hover:bg-white hover:bg-opacity-20 rounded-xl transition-all duration-200 group"
                 title="Back to Case Selection"
               >
-                <ArrowLeft className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <ArrowLeft className="w-5 h-5 lg:w-6 lg:h-6 group-hover:scale-110 transition-transform" />
               </button>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 lg:gap-6">
                 <div className="relative">
-                  <div className="w-14 h-14 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white border-opacity-30">
-                    <User className="w-7 h-7 text-white" />
+                  <div className="w-14 h-14 lg:w-16 lg:h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white border-opacity-30">
+                    <User className="w-7 h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
                   {isSessionActive && (
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />
                   )}
                 </div>
                 
                 <div>
-                  <h1 className="text-xl font-bold mb-1">Virtual Patient</h1>
-                  <div className="flex items-center gap-3">
+                  <h1 className="text-xl lg:text-2xl font-bold mb-1">Virtual Patient</h1>
+                  <div className="flex items-center gap-3 lg:gap-4">
                     <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
                       <div className={`w-2 h-2 rounded-full ${isSessionActive ? 'bg-emerald-500' : 'bg-gray-400'} ${statusConfig.pulse ? 'animate-pulse' : ''}`} />
-                      <span className={`text-sm font-medium ${statusConfig.color}`}>
+                      <span className={`text-sm lg:text-base font-medium ${statusConfig.color}`}>
                         {statusConfig.text}
                       </span>
                     </div>
                     
                     <div className="flex items-center gap-2 text-blue-100">
-                      <MessageCircle className="w-4 h-4" />
-                      <span className="text-sm font-medium">
+                      <MessageCircle className="w-4 h-4 lg:w-5 lg:h-5" />
+                      <span className="text-sm lg:text-base font-medium">
                         {messages.length} exchanges
                       </span>
                     </div>
@@ -109,10 +109,10 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
             
             <div className="text-right">
               <div className="flex items-center gap-2 text-blue-100 mb-1">
-                <Activity className="w-4 h-4" />
-                <span className="text-sm font-medium">Case ID</span>
+                <Activity className="w-4 h-4 lg:w-5 lg:h-5" />
+                <span className="text-sm lg:text-base font-medium">Case ID</span>
               </div>
-              <span className="text-lg font-bold bg-white bg-opacity-20 px-3 py-1 rounded-lg">
+              <span className="text-lg lg:text-xl font-bold bg-white bg-opacity-20 px-3 py-1 lg:px-4 lg:py-2 rounded-lg">
                 {currentCaseId || 'VP-001'}
               </span>
             </div>
@@ -120,32 +120,32 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
         </div>
 
         {/* Session Info Bar */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 px-6 py-4">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 px-6 lg:px-8 py-4 lg:py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 lg:gap-8">
               <div className="flex items-center gap-2 text-blue-700">
-                <Stethoscope className="w-5 h-5" />
-                <span className="font-semibold">Clinical History Taking Session</span>
+                <Stethoscope className="w-5 h-5 lg:w-6 lg:h-6" />
+                <span className="font-semibold text-base lg:text-lg">Clinical History Taking Session</span>
               </div>
               
               <div className="flex items-center gap-2 text-blue-600">
-                <Clock className="w-4 h-4" />
-                <span className="text-sm font-medium">
+                <Clock className="w-4 h-4 lg:w-5 lg:h-5" />
+                <span className="text-sm lg:text-base font-medium">
                   Started {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 lg:gap-6">
               <div className="flex items-center gap-2 text-blue-600">
-                <Brain className="w-4 h-4" />
-                <span className="text-sm font-medium">AI-Powered Patient</span>
+                <Brain className="w-4 h-4 lg:w-5 lg:h-5" />
+                <span className="text-sm lg:text-base font-medium">AI-Powered Patient</span>
               </div>
               
               {isSessionActive && (
                 <div className="flex items-center gap-2 bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200">
-                  <Zap className="w-4 h-4" />
-                  <span className="text-sm font-semibold">Live Session</span>
+                  <Zap className="w-4 h-4 lg:w-5 lg:h-5" />
+                  <span className="text-sm lg:text-base font-semibold">Live Session</span>
                 </div>
               )}
             </div>
@@ -154,7 +154,11 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 
         {/* Messages Area */}
         <div className="flex-1 bg-gradient-to-b from-gray-50 to-white">
-          <MessageList messages={messages} isLoading={isLoading} />
+          <MessageList 
+            messages={messages} 
+            isLoading={isLoading}
+            streamingMessageId={messages.length > 0 && messages[messages.length - 1]?.sender === 'patient' && messages[messages.length - 1]?.text === '' ? messages.length - 1 : undefined}
+          />
         </div>
 
         {/* Enhanced Input Area */}

@@ -1,13 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { User, UserCheck, Loader2, Stethoscope, Brain, Clock } from 'lucide-react';
+import { User, UserCheck, Loader2, Stethoscope, Brain, Clock, MessageCircle } from 'lucide-react';
 import { Message } from '../types';
 
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
+  streamingMessageId?: number; // Add prop to track which message is streaming
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, streamingMessageId }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -16,7 +17,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages, isLoading, streamingMessageId]);
 
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -33,7 +34,9 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
       {messages.map((message, index) => (
         <div
           key={index}
-          className={`flex ${message.sender === 'clinician' ? 'justify-end' : 'justify-start'} animate-fade-in`}
+          className={`flex ${message.sender === 'clinician' ? 'justify-end' : 'justify-start'} ${
+            streamingMessageId === index ? 'animate-fade-in' : 'animate-slide-up'
+          }`}
         >
           <div className={`flex items-start gap-4 max-w-[85%] ${message.sender === 'clinician' ? 'flex-row-reverse' : 'flex-row'}`}>
             {/* Enhanced Avatar */}
@@ -70,9 +73,19 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
               </div>
 
               {/* Message content */}
-              <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
-                {message.text}
+              <p className={`text-sm leading-relaxed whitespace-pre-wrap font-medium ${
+                streamingMessageId === index && message.text === '' ? 'min-h-[1.25rem]' : ''
+              }`}>
+                {message.text || (streamingMessageId === index ? '' : message.text)}
               </p>
+              
+              {/* Streaming indicator */}
+              {streamingMessageId === index && message.text === '' && (
+                <div className="flex items-center gap-2 text-gray-500 animate-pulse">
+                  <MessageCircle className="w-4 h-4" />
+                  <span className="text-xs">Patient is thinking...</span>
+                </div>
+              )}
 
               {/* Message footer */}
               <div className={`flex items-center gap-2 mt-3 pt-2 border-t ${
@@ -107,7 +120,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
       ))}
 
       {/* Enhanced Loading indicator */}
-      {isLoading && (
+      {isLoading && streamingMessageId === undefined && (
         <div className="flex justify-start animate-fade-in">
           <div className="flex items-start gap-4 max-w-[85%]">
             <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-2 border-emerald-300 flex items-center justify-center shadow-lg">
@@ -121,9 +134,9 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
               
               <div className="flex items-center gap-3">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                 </div>
                 <span className="text-sm text-gray-600 font-medium">Patient is responding...</span>
               </div>
