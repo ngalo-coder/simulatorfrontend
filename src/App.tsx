@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import CaseSelectionScreen from './components/CaseSelectionScreen';
+import ProgramAreaSelection from './components/ProgramAreaSelection';
+import PatientQueueScreen from './components/PatientQueueScreen';
 import ChatScreen from './components/ChatScreen';
 import EvaluationScreen from './components/EvaluationScreen';
 import ErrorMessage from './components/ErrorMessage';
@@ -12,11 +13,14 @@ import { useAuth } from './contexts/AuthContext'; // Import useAuth
 
 // Removed the local AuthState interface and initialAuthState function, as this is now handled by AuthContext
 
+type AppState = 'selecting_program' | 'selecting_patient' | 'chatting' | 'showing_evaluation';
+
 function App() {
   const { isLoggedIn, logout, isLoading: isAuthLoading } = useAuth(); // Add logout from useAuth
 
   // App state related to simulation flow
-  const [appState, setAppState] = useState<AppState>('selecting_case');
+  const [appState, setAppState] = useState<AppState>('selecting_program');
+  const [selectedProgramArea, setSelectedProgramArea] = useState<string | null>(null);
   const [simulationSessionId, setSimulationSessionId] = useState<string | null>(null); // Renamed to avoid conflict if any
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +28,16 @@ function App() {
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null);
   const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
   const [isSessionActive, setIsSessionActive] = useState(false);
+
+  const handleSelectProgramArea = useCallback((programArea: string) => {
+    setSelectedProgramArea(programArea);
+    setAppState('selecting_patient');
+  }, []);
+
+  const handleBackToProgramSelection = useCallback(() => {
+    setSelectedProgramArea(null);
+    setAppState('selecting_program');
+  }, []);
 
   const handleStartSimulation = useCallback(async (caseId: string) => {
     setIsLoading(true);
@@ -152,7 +166,8 @@ function App() {
   }, [simulationSessionId, isSessionActive, handleEndSession]);
 
   const handleRestart = useCallback(() => {
-    setAppState('selecting_case');
+    setAppState('selecting_program');
+    setSelectedProgramArea(null);
     setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
@@ -163,7 +178,8 @@ function App() {
   }, []);
 
   const handleBack = useCallback(() => {
-    setAppState('selecting_case');
+    setAppState('selecting_program');
+    setSelectedProgramArea(null);
     setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
@@ -181,7 +197,8 @@ function App() {
     logout(); // Call logout from AuthContext
     // AppContent's useEffect will handle navigation to /login
     // Reset any app-specific states if necessary
-    setAppState('selecting_case');
+    setAppState('selecting_program');
+    setSelectedProgramArea(null);
     setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
@@ -252,8 +269,18 @@ function App() {
           )}
           <Routes>
             <Route path="/" element={
-              appState === 'selecting_case' ? (
-                <CaseSelectionScreen onStart={handleStartSimulation} isLoading={isLoading || isAuthLoading} /> // Pass auth loading state
+              appState === 'selecting_program' ? (
+                <ProgramAreaSelection 
+                  onSelectProgramArea={handleSelectProgramArea} 
+                  isLoading={isLoading || isAuthLoading} 
+                />
+              ) : appState === 'selecting_patient' ? (
+                <PatientQueueScreen
+                  programArea={selectedProgramArea!}
+                  onBack={handleBackToProgramSelection}
+                  onStartCase={handleStartSimulation}
+                  isLoading={isLoading}
+                />
               ) : appState === 'chatting' ? (
                 <ChatScreen
                 messages={messages}

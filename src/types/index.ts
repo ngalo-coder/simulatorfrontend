@@ -63,6 +63,4 @@ export type AppState = 'selecting_case' | 'chatting' | 'showing_evaluation';
 export interface CaseCategories {
   program_areas: string[];
   specialized_areas: string[];
-}
-
 export * from './performanceMetrics'; // Export PerformanceMetrics types
