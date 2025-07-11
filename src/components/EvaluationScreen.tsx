@@ -309,8 +309,8 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
                   {/* Other Metric Ratings */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {Object.entries(performanceMetrics.metrics)
-                      .filter(([key]) => key !== 'overall_diagnosis_accuracy') // Already rendered
-                      .map(([key, value]) => renderMetricItem(key, value))}
+                      .filter(([key]) => key !== 'overall_diagnosis_accuracy' && key !== 'overall_score' && key !== 'performance_label')
+                      .map(([key, value]) => renderMetricItem(key, value as string))}
                   </div>
                 </div>
               </div>
