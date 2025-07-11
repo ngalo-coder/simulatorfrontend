@@ -246,11 +246,11 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-8 text-white">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-2xl font-bold mb-1">Performance Metrics</h2>
-                      <p className="text-blue-100">Detailed breakdown of your session performance.</p>
+                      <h2 className="text-2xl font-bold mb-1">Performance Report</h2>
+                      <p className="text-blue-100">Your clinical history-taking assessment.</p>
                     </div>
-                    {performanceMetrics.case_ref?.case_metadata?.title && (
-                       <span className="bg-white bg-opacity-20 px-3 py-1.5 rounded-lg text-sm font-medium">
+                     {performanceMetrics.case_ref?.case_metadata?.title && (
+                       <span className="bg-white bg-opacity-20 px-3 py-1.5 rounded-lg text-sm font-medium shadow">
                          {performanceMetrics.case_ref.case_metadata.title}
                        </span>
                     )}
@@ -258,6 +258,26 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
                 </div>
 
                 <div className="p-8 space-y-6">
+                  {/* Performance Overview Score & Label */}
+                  {performanceMetrics.metrics?.overall_score !== undefined && performanceMetrics.metrics?.performance_label && (
+                    <div className={`bg-white rounded-2xl shadow-lg border-l-8 ${getRatingConfig(performanceMetrics.metrics.performance_label).borderColor} p-6 mb-8`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-800 mb-1">Overall Performance</h3>
+                          <p className={`text-3xl font-bold ${getRatingConfig(performanceMetrics.metrics.performance_label).color}`}>
+                            {performanceMetrics.metrics.overall_score}%
+                          </p>
+                        </div>
+                        <div className="text-right">
+                           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-lg font-semibold ${getRatingConfig(performanceMetrics.metrics.performance_label).color} ${getRatingConfig(performanceMetrics.metrics.performance_label).bgColor} border-2 ${getRatingConfig(performanceMetrics.metrics.performance_label).borderColor}`}>
+                            {React.createElement(getRatingConfig(performanceMetrics.metrics.performance_label).icon, { className: "w-6 h-6" })}
+                            <span>{performanceMetrics.metrics.performance_label}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Evaluation Summary */}
                   {performanceMetrics.evaluation_summary && (
                     <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-100 shadow">
@@ -271,9 +291,17 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
                     </div>
                   )}
 
+                  {/* Detailed Metrics Title */}
+                  <div className="pt-4">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                      Detailed Metric Ratings
+                    </h3>
+                  </div>
+
                   {/* Overall Diagnosis Accuracy (if present) */}
                   {performanceMetrics.metrics?.overall_diagnosis_accuracy && (
-                    <div className="pt-2 pb-4">
+                    <div className="pb-2"> {/* Adjusted padding */}
                      {renderMetricItem('overall_diagnosis_accuracy', performanceMetrics.metrics.overall_diagnosis_accuracy)}
                     </div>
                   )}
