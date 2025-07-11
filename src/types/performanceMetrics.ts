@@ -20,7 +20,9 @@ export interface MetricsData {
   overall_impression_rating?: string;
   clinical_urgency_rating?: string;
   overall_diagnosis_accuracy?: string;
-  [key: string]: string | undefined; // For any other dynamic rating fields
+  overall_score?: number; // Added overall score
+  performance_label?: string; // Added performance label
+  [key: string]: string | number | undefined; // For any other dynamic rating fields, allow number for score
 }
 
 export interface PerformanceMetrics {
