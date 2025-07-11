@@ -138,6 +138,34 @@ export const api = {
     }
   },
 
+  async getPerformanceMetrics(sessionId: string): Promise<import('../types').PerformanceMetrics> {
+    console.log('Fetching performance metrics for session:', sessionId);
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/performance-metrics/session/${sessionId}`, {
+        method: 'GET',
+      });
+
+      console.log('Performance metrics response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Performance metrics error:', errorData);
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Performance metrics result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching performance metrics:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to fetch performance metrics. Please check your internet connection.');
+    }
+  },
+
   async startSimulation(caseId: string): Promise<{ sessionId: string; initialPrompt: string }> {
     console.log('Starting simulation for case:', caseId);
     try {

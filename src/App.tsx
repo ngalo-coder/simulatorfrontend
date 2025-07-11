@@ -272,6 +272,7 @@ function App() {
                 onRestart={handleRestart}
                 onBack={handleBack}
                 currentCaseId={currentCaseId}
+                sessionId={simulationSessionId} // Pass simulationSessionId
               />
             ) : (
               <Navigate to="/" replace /> // Fallback, should ideally not be hit if appState is managed well
