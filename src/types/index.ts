@@ -66,3 +66,4 @@ export interface CaseCategories {
   specialized_areas: string[];
 }
 export * from './performanceMetrics'; // Export PerformanceMetrics types
+export * from './clinicianProgress'; // Export ClinicianProgress types

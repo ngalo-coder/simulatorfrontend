@@ -8,6 +8,7 @@ import EvaluationScreen from './components/EvaluationScreen';
 import ErrorMessage from './components/ErrorMessage';
 import RegistrationScreen from './components/RegistrationScreen';
 import LoginScreen from './components/LoginScreen';
+import ClinicianDashboard from './components/ClinicianDashboard';
 import { api } from './services/api';
 import { Message, EvaluationData } from './types';
 import { useAuth } from './contexts/AuthContext'; // Import useAuth
@@ -284,12 +285,20 @@ function App() {
             <h1 className="text-xl font-bold">Simuatech</h1>
           </div>
           {isLoggedIn && (
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-            >
-              Logout
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                Logout
+              </button>
+            </div>
           )}
         </header>
         <main className="flex-grow">
@@ -344,6 +353,8 @@ function App() {
               <Navigate to="/" replace /> // Fallback, should ideally not be hit if appState is managed well
             )
           }/>
+          {/* Dashboard route */}
+          <Route path="/dashboard" element={<ClinicianDashboard />} />
           {/* Add other authenticated routes here if needed */}
           <Route path="*" element={<Navigate to="/" replace />} /> {/* Redirect unknown paths to home */}
           </Routes>

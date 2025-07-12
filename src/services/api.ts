@@ -324,5 +324,105 @@ export const api = {
       if (error instanceof ApiError) throw error;
       throw new ApiError(`Failed to POST to ${endpoint}.`);
     }
+  },
+
+  // Add get method for convenience, using authenticatedFetch
+  async get(endpoint: string): Promise<any> {
+    const url = `${API_BASE_URL}/api${endpoint}`; // Assuming all API endpoints are under /api
+    try {
+      const response = await authenticatedFetch(url, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.message || errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+      return response.json();
+    } catch (error) {
+      console.error(`Error GET ${endpoint}:`, error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(`Failed to GET from ${endpoint}.`);
+    }
+  },
+
+  // Clinician Progress Endpoints
+  async fetchClinicianProgress(userId: string): Promise<import('../types').ClinicianProgressResponse> {
+    console.log('Fetching clinician progress for user:', userId);
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/progress/${userId}`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Clinician progress result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching clinician progress:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to fetch clinician progress. Please check your internet connection.');
+    }
+  },
+
+  async fetchProgressRecommendations(userId: string): Promise<import('../types').ProgressRecommendation> {
+    console.log('Fetching progress recommendations for user:', userId);
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/progress/recommendations/${userId}`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Progress recommendations result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching progress recommendations:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to fetch progress recommendations. Please check your internet connection.');
+    }
+  },
+
+  async updateProgressAfterCase(data: { userId: string, caseId: string, performanceMetricsId: string }): Promise<any> {
+    console.log('Updating clinician progress after case completion:', data);
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/progress/update`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Progress update result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error updating clinician progress:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to update clinician progress. Please check your internet connection.');
+    }
   }
 };
