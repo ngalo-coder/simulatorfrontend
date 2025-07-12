@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Search, Stethoscope, Eye, Brain, Heart, Lungs, Bone } from 'lucide-react';
+import { ArrowLeft, Search, Stethoscope, Eye, Brain, Heart, Wind, Bone } from 'lucide-react';
 import { api } from '../services/api';
 
 const specialtyIcons = {
@@ -9,7 +9,7 @@ const specialtyIcons = {
   'Obstetrics and Gynaecology': Stethoscope,
   'Ophthalmology': Eye,
   'Neurology': Brain,
-  'Pulmonology': Lungs,
+  'Pulmonology': Wind,
   // Add more specialty-to-icon mappings as needed
 };
 
