@@ -25,6 +25,7 @@ interface ChatScreenProps {
   isSessionActive: boolean;
   sessionId: string | null;
   onEndSession: () => Promise<void>;
+  streamingMessageIndex?: number; // Add prop for streaming message index
 }
 
 const ChatScreen: React.FC<ChatScreenProps> = ({
@@ -36,7 +37,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   currentCaseId,
   isSessionActive,
   sessionId,
-  onEndSession
+  onEndSession,
+  streamingMessageIndex
 }) => {
   const getSessionStatusConfig = () => {
     if (isSessionActive) {
@@ -154,10 +156,10 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 
         {/* Messages Area */}
         <div className="flex-1 bg-gradient-to-b from-gray-50 to-white">
-          <MessageList 
-            messages={messages} 
+          <MessageList
+            messages={messages}
             isLoading={isLoading}
-            streamingMessageId={messages.length > 0 && messages[messages.length - 1]?.sender === 'patient' && messages[messages.length - 1]?.text === '' ? messages.length - 1 : undefined}
+            streamingMessageId={streamingMessageIndex}
           />
         </div>
 

@@ -9,6 +9,7 @@ import ErrorMessage from './components/ErrorMessage';
 import RegistrationScreen from './components/RegistrationScreen';
 import LoginScreen from './components/LoginScreen';
 import ClinicianDashboard from './components/ClinicianDashboard';
+import AdminDashboard from './components/AdminDashboard';
 import { api } from './services/api';
 import { Message, EvaluationData } from './types';
 import { useAuth } from './contexts/AuthContext'; // Import useAuth
@@ -158,11 +159,16 @@ function App() {
       },
       () => {
         setIsLoading(false);
-        setStreamingMessageIndex(undefined);
+        // Keep streamingMessageIndex set for a short time after completion
+        // to allow the typing animation to finish
+        setTimeout(() => {
+          setStreamingMessageIndex(undefined);
+        }, 500);
         // Stream completed normally - no automatic session end
       },
       (err) => {
         setIsLoading(false);
+        // Clear streaming index immediately on error
         setStreamingMessageIndex(undefined);
         setError('Communication error: ' + (err?.message || 'Unknown error'));
         // Remove the placeholder message
@@ -242,6 +248,7 @@ function App() {
   // This component will wrap the main application logic and manage routing
   const AppContent: React.FC = () => {
     const navigate = useNavigate(); // Hook for navigation
+    const { currentUser } = useAuth(); // Get currentUser from auth context
 
     // Effect to redirect if not logged in, or set initial app state
     useEffect(() => {
@@ -292,6 +299,15 @@ function App() {
               >
                 Dashboard
               </button>
+              {/* Show Admin Dashboard button only for users with admin role */}
+              {currentUser?.role === 'admin' && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                >
+                  Admin
+                </button>
+              )}
               <button
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
@@ -340,6 +356,7 @@ function App() {
                 isSessionActive={isSessionActive}
                 sessionId={simulationSessionId} // Use simulationSessionId
                 onEndSession={() => handleEndSession(false)}
+                streamingMessageIndex={streamingMessageIndex}
               />
             ) : appState === 'showing_evaluation' && evaluationData ? (
               <EvaluationScreen
@@ -353,8 +370,9 @@ function App() {
               <Navigate to="/" replace /> // Fallback, should ideally not be hit if appState is managed well
             )
           }/>
-          {/* Dashboard route */}
+          {/* Dashboard routes */}
           <Route path="/dashboard" element={<ClinicianDashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           {/* Add other authenticated routes here if needed */}
           <Route path="*" element={<Navigate to="/" replace />} /> {/* Redirect unknown paths to home */}
           </Routes>

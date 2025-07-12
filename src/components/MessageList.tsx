@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { User, UserCheck, Loader2, Stethoscope, Brain, Clock, MessageCircle } from 'lucide-react';
 import { Message } from '../types';
+import TypingEffect from './TypingEffect';
 
 interface MessageListProps {
   messages: Message[];
@@ -76,16 +77,19 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, streamin
               <p className={`text-sm leading-relaxed whitespace-pre-wrap font-medium ${
                 streamingMessageId === index && message.text === '' ? 'min-h-[1.25rem]' : ''
               }`}>
-                {message.text || (streamingMessageId === index ? '' : message.text)}
+                {message.sender === 'patient' && streamingMessageId === index ? (
+                  message.text !== '' ? (
+                    <TypingEffect text={message.text} typingSpeed={25} />
+                  ) : (
+                    <div className="flex items-center gap-2 text-gray-500 animate-pulse">
+                      <MessageCircle className="w-4 h-4" />
+                      <span className="text-xs">Patient is thinking...</span>
+                    </div>
+                  )
+                ) : (
+                  message.text
+                )}
               </p>
-              
-              {/* Streaming indicator */}
-              {streamingMessageId === index && message.text === '' && (
-                <div className="flex items-center gap-2 text-gray-500 animate-pulse">
-                  <MessageCircle className="w-4 h-4" />
-                  <span className="text-xs">Patient is thinking...</span>
-                </div>
-              )}
 
               {/* Message footer */}
               <div className={`flex items-center gap-2 mt-3 pt-2 border-t ${

@@ -424,5 +424,184 @@ export const api = {
       if (error instanceof ApiError) throw error;
       throw new ApiError('Failed to update clinician progress. Please check your internet connection.');
     }
+  },
+
+  // Admin Dashboard Endpoints
+  async fetchSystemStats(): Promise<any> {
+    console.log('Fetching system statistics');
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/stats`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('System stats result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching system stats:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to fetch system statistics. Please check your internet connection.');
+    }
+  },
+
+  async fetchUsers(): Promise<any> {
+    console.log('Fetching users');
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Users result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to fetch users. Please check your internet connection.');
+    }
+  },
+
+  async fetchAdminCases(): Promise<any> {
+    console.log('Fetching all cases for admin');
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/cases`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Admin cases result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching admin cases:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to fetch cases. Please check your internet connection.');
+    }
+  },
+
+  async deleteUser(userId: string): Promise<any> {
+    console.log('Deleting user:', userId);
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Delete user result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to delete user. Please check your internet connection.');
+    }
+  },
+
+  async deleteCase(caseId: string): Promise<any> {
+    console.log('Deleting case:', caseId);
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/cases/${caseId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Delete case result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error deleting case:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to delete case. Please check your internet connection.');
+    }
+  },
+
+  // Admin User Management
+  async createAdminUser(userData: { username: string, email: string, password: string }): Promise<any> {
+    console.log('Creating admin user');
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/admin`, {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Create admin user result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error creating admin user:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to create admin user. Please check your internet connection.');
+    }
+  },
+
+  async updateUserRole(userId: string, role: 'user' | 'admin'): Promise<any> {
+    console.log('Updating user role:', userId, role);
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({ role }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Update user role result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to update user role. Please check your internet connection.');
+    }
   }
 };
