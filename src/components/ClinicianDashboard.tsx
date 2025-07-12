@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { fetchClinicianProgress, fetchProgressRecommendations } from '../services/api';
+import { api } from '../services/api';
 import {
   Box,
   Card,
@@ -85,12 +85,12 @@ const ClinicianDashboard: React.FC = () => {
           setLoading(true);
           
           // Fetch progress data
-          const progressData = await fetchClinicianProgress(currentUser._id);
+          const progressData = await api.fetchClinicianProgress(currentUser._id);
           setProgress(progressData.progress);
           setRecentMetrics(progressData.recentMetrics || []);
           
           // Fetch recommendations
-          const recommendationsData = await fetchProgressRecommendations(currentUser._id);
+          const recommendationsData = await api.fetchProgressRecommendations(currentUser._id);
           setRecommendations(recommendationsData);
           
           setLoading(false);
