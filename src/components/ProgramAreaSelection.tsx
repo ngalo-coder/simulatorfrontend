@@ -137,17 +137,17 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
               <Stethoscope className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">Kuiga</h1>
-              <p className="text-blue-600 font-medium">Virtual Patient Simulator</p>
+              <h1 className="text-4xl font-bold text-gray-900">Simuatech</h1>
+              <p className="text-blue-600 font-medium">Where virtual patients build real clinicians</p>
             </div>
           </div>
           
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Select Your Program Area
+              From virtual patients to confident clinical practice
             </h2>
             <p className="text-xl text-gray-600 leading-relaxed">
-              Choose your medical specialty to access relevant virtual patient cases and begin your clinical training journey.
+              Master clinical skills with AI. Choose your medical specialty to access relevant virtual patient cases and begin your clinical training journey.
             </p>
           </div>
         </div>

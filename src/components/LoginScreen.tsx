@@ -72,17 +72,17 @@ const LoginScreen: React.FC = () => {
               <Stethoscope className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">Kuiga</h1>
-              <p className="text-blue-100">Virtual Patient Simulator</p>
+              <h1 className="text-3xl font-bold text-white">Simuatech</h1>
+              <p className="text-blue-100">Where virtual patients build real clinicians</p>
             </div>
           </div>
           
           <div className="mb-12">
             <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
-              Master Clinical History-Taking with AI
+              From virtual patients to confident clinical practice
             </h2>
             <p className="text-xl text-blue-100 leading-relaxed">
-              Practice with realistic virtual patients, receive instant feedback, and accelerate your medical education journey.
+              Master clinical skills with AI-powered virtual patients, receive instant feedback, and accelerate your medical education journey.
             </p>
           </div>
 
@@ -109,7 +109,8 @@ const LoginScreen: React.FC = () => {
               <Stethoscope className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Kuiga</h1>
-            <p className="text-gray-600">Sign in to continue your medical education</p>
+            <h1 className="text-2xl font-bold text-gray-900">Simuatech</h1>
+            <p className="text-gray-600">Where virtual patients build real clinicians</p>
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8">

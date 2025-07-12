@@ -263,9 +263,9 @@ function App() {
         <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex justify-between items-center shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-              <span className="text-xl font-bold">K</span>
+              <span className="text-xl font-bold">S</span>
             </div>
-            <h1 className="text-xl font-bold">Kuiga</h1>
+            <h1 className="text-xl font-bold">Simuatech</h1>
           </div>
           {isLoggedIn && (
             <button
