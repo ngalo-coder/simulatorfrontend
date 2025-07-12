@@ -28,6 +28,7 @@ import { api } from '../services/api';
 
 interface PatientQueueScreenProps {
   programArea: string;
+  specialty: string;
   onBack: () => void;
   onStartCase: (caseId: string) => void;
   isLoading: boolean;
@@ -35,6 +36,7 @@ interface PatientQueueScreenProps {
 
 const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
   programArea,
+  specialty,
   onBack,
   onStartCase,
   isLoading
@@ -50,7 +52,7 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
     const fetchCases = async () => {
       setLoadingCases(true);
       try {
-        const data = await api.getCases({ program_area: programArea });
+        const data = await api.getCases({ program_area: programArea, specialized_area: specialty });
         setCases(data);
         setFilteredCases(data);
       } catch (error) {
@@ -92,7 +94,7 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
     };
 
     fetchCases();
-  }, [programArea]);
+  }, [programArea, specialty]);
 
   useEffect(() => {
     let filtered = cases;
@@ -178,7 +180,11 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
               
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Patient Queue</h1>
-                <p className="text-blue-600 font-medium">{programArea}</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-blue-600 font-medium">{programArea}</span>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-indigo-600 font-medium">{specialty}</span>
+                </div>
               </div>
             </div>
             

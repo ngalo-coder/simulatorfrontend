@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import ProgramAreaSelection from './components/ProgramAreaSelection';
+import SpecialtySelection from './components/SpecialtySelection';
 import PatientQueueScreen from './components/PatientQueueScreen';
 import ChatScreen from './components/ChatScreen';
 import EvaluationScreen from './components/EvaluationScreen';
@@ -19,8 +20,9 @@ function App() {
   const { isLoggedIn, logout, isLoading: isAuthLoading } = useAuth(); // Add logout from useAuth
 
   // App state related to simulation flow
-  const [appState, setAppState] = useState<AppState>('selecting_program');
+  const [appState, setAppState] = useState<'selecting_program' | 'selecting_specialty' | 'selecting_patient' | 'chatting' | 'showing_evaluation'>('selecting_program');
   const [selectedProgramArea, setSelectedProgramArea] = useState<string | null>(null);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [simulationSessionId, setSimulationSessionId] = useState<string | null>(null); // Renamed to avoid conflict if any
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,12 +34,23 @@ function App() {
 
   const handleSelectProgramArea = useCallback((programArea: string) => {
     setSelectedProgramArea(programArea);
+    setAppState('selecting_specialty');
+  }, []);
+
+  const handleSelectSpecialty = useCallback((specialty: string) => {
+    setSelectedSpecialty(specialty);
     setAppState('selecting_patient');
   }, []);
 
   const handleBackToProgramSelection = useCallback(() => {
     setSelectedProgramArea(null);
+    setSelectedSpecialty(null);
     setAppState('selecting_program');
+  }, []);
+
+  const handleBackToSpecialtySelection = useCallback(() => {
+    setSelectedSpecialty(null);
+    setAppState('selecting_specialty');
   }, []);
 
   const handleStartSimulation = useCallback(async (caseId: string) => {
@@ -180,6 +193,7 @@ function App() {
   const handleRestart = useCallback(() => {
     setAppState('selecting_program');
     setSelectedProgramArea(null);
+    setSelectedSpecialty(null);
     setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
@@ -193,6 +207,7 @@ function App() {
   const handleBack = useCallback(() => {
     setAppState('selecting_program');
     setSelectedProgramArea(null);
+    setSelectedSpecialty(null);
     setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
@@ -213,6 +228,7 @@ function App() {
     // Reset any app-specific states if necessary
     setAppState('selecting_program');
     setSelectedProgramArea(null);
+    setSelectedSpecialty(null);
     setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
@@ -289,10 +305,18 @@ function App() {
                   onSelectProgramArea={handleSelectProgramArea} 
                   isLoading={isLoading || isAuthLoading} 
                 />
+              ) : appState === 'selecting_specialty' ? (
+                <SpecialtySelection
+                  programArea={selectedProgramArea!}
+                  onBack={handleBackToProgramSelection}
+                  onSelectSpecialty={handleSelectSpecialty}
+                  isLoading={isLoading}
+                />
               ) : appState === 'selecting_patient' ? (
                 <PatientQueueScreen
                   programArea={selectedProgramArea!}
-                  onBack={handleBackToProgramSelection}
+                  specialty={selectedSpecialty!}
+                  onBack={handleBackToSpecialtySelection}
                   onStartCase={handleStartSimulation}
                   isLoading={isLoading}
                 />
