@@ -49,12 +49,15 @@ export class ApiError extends Error {
 }
 
 export const api = {
-  async getCases(filters?: { program_area?: string }): Promise<import('../types').PatientCase[]> {
+  async getCases(filters?: { program_area?: string, specialty?: string }): Promise<import('../types').PatientCase[]> {
     let url = `${API_BASE_URL}/api/simulation/cases`;
-    if (filters && filters.program_area) {
+    if (filters) {
       const queryParams = new URLSearchParams();
       if (filters.program_area) queryParams.append('program_area', filters.program_area);
-      url += `?${queryParams.toString()}`;
+      if (filters.specialty) queryParams.append('specialty', filters.specialty);
+      if (queryParams.toString()) {
+        url += `?${queryParams.toString()}`;
+      }
     }
 
     try {
@@ -273,9 +276,14 @@ export const api = {
     return () => eventSource.close(); // Cleanup function
   },
 
-  async getCaseCategories(): Promise<import('../types').CaseCategories> {
+  async getCaseCategories(filters?: { program_area?: string }): Promise<import('../types').CaseCategories> {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/case-categories`, {
+      let url = `${API_BASE_URL}/api/simulation/case-categories`;
+      if (filters && filters.program_area) {
+        url += `?program_area=${encodeURIComponent(filters.program_area)}`;
+      }
+      
+      const response = await authenticatedFetch(url, {
         method: 'GET',
       });
 

@@ -28,6 +28,7 @@ import { api } from '../services/api';
 
 interface PatientQueueScreenProps {
   programArea: string;
+  specialty: string;
   onBack: () => void;
   onStartCase: (caseId: string) => void;
   isLoading: boolean;
@@ -35,6 +36,7 @@ interface PatientQueueScreenProps {
 
 const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
   programArea,
+  specialty,
   onBack,
   onStartCase,
   isLoading
@@ -50,7 +52,7 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
     const fetchCases = async () => {
       setLoadingCases(true);
       try {
-        const data = await api.getCases({ program_area: programArea });
+        const data = await api.getCases({ program_area: programArea, specialty: specialty });
         setCases(data);
         setFilteredCases(data);
       } catch (error) {
@@ -92,7 +94,7 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
     };
 
     fetchCases();
-  }, [programArea]);
+  }, [programArea, specialty]);
 
   useEffect(() => {
     let filtered = cases;
@@ -171,10 +173,14 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
               <button
                 onClick={onBack}
                 className="p-3 hover:bg-gray-100 rounded-2xl transition-all duration-200 group"
-                title="Back to Program Areas"
+                title="Back to Specialty Selection"
               >
                 <ArrowLeft className="w-6 h-6 group-hover:scale-110 transition-transform" />
               </button>
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-500">Program: {programArea}</span>
+                <span className="text-sm text-gray-500">Specialty: {specialty}</span>
+              </div>
             </div>
             
             <div className="flex items-center gap-4">

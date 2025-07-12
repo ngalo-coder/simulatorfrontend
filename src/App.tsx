@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import ProgramAreaSelection from './components/ProgramAreaSelection';
+import SpecialtySelection from './components/SpecialtySelection';
 import PatientQueueScreen from './components/PatientQueueScreen';
 import ChatScreen from './components/ChatScreen';
 import EvaluationScreen from './components/EvaluationScreen';
@@ -8,17 +9,19 @@ import ErrorMessage from './components/ErrorMessage';
 import RegistrationScreen from './components/RegistrationScreen';
 import LoginScreen from './components/LoginScreen';
 import { api } from './services/api';
-import { Message, EvaluationData, AppState } from './types';
+import { Message, EvaluationData } from './types';
 import { useAuth } from './contexts/AuthContext'; // Import useAuth
 
-type AppState = 'selecting_program' | 'selecting_patient' | 'chatting' | 'showing_evaluation';
+// Define local AppState type for this component
+type AppStateType = 'selecting_program' | 'selecting_specialty' | 'selecting_patient' | 'chatting' | 'showing_evaluation';
 
 function App() {
   const { isLoggedIn, logout, isLoading: isAuthLoading } = useAuth(); // Add logout from useAuth
 
   // App state related to simulation flow
-  const [appState, setAppState] = useState<AppState>('selecting_program');
+  const [appState, setAppState] = useState<AppStateType>('selecting_program');
   const [selectedProgramArea, setSelectedProgramArea] = useState<string | null>(null);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [simulationSessionId, setSimulationSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,13 +33,25 @@ function App() {
 
   const handleSelectProgramArea = useCallback((programArea: string) => {
     setSelectedProgramArea(programArea);
+    setAppState('selecting_specialty');
+  }, []);
+
+  const handleSelectSpecialty = useCallback((specialty: string) => {
+    setSelectedSpecialty(specialty);
     setAppState('selecting_patient');
   }, []);
 
   const handleBackToProgramSelection = useCallback(() => {
     setSelectedProgramArea(null);
+    setSelectedSpecialty(null);
     setAppState('selecting_program');
   }, []);
+
+  const handleBackToSpecialtySelection = useCallback(() => {
+    setSelectedSpecialty(null);
+    setAppState('selecting_specialty');
+  }, []);
+
 
   const handleStartSimulation = useCallback(async (caseId: string) => {
     setIsLoading(true);
@@ -178,6 +193,7 @@ function App() {
   const handleRestart = useCallback(() => {
     setAppState('selecting_program');
     setSelectedProgramArea(null);
+    setSelectedSpecialty(null);
     setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
@@ -191,6 +207,7 @@ function App() {
   const handleBack = useCallback(() => {
     setAppState('selecting_program');
     setSelectedProgramArea(null);
+    setSelectedSpecialty(null);
     setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
@@ -211,6 +228,7 @@ function App() {
     // Reset any app-specific states if necessary
     setAppState('selecting_program');
     setSelectedProgramArea(null);
+    setSelectedSpecialty(null);
     setSimulationSessionId(null);
     setMessages([]);
     setEvaluationData(null);
@@ -283,14 +301,22 @@ function App() {
           <Routes>
             <Route path="/" element={
               appState === 'selecting_program' ? (
-                <ProgramAreaSelection 
-                  onSelectProgramArea={handleSelectProgramArea} 
-                  isLoading={isLoading || isAuthLoading} 
+                <ProgramAreaSelection
+                  onSelectProgramArea={handleSelectProgramArea}
+                  isLoading={isLoading || isAuthLoading}
+                />
+              ) : appState === 'selecting_specialty' ? (
+                <SpecialtySelection
+                  programArea={selectedProgramArea!}
+                  onSelectSpecialty={handleSelectSpecialty}
+                  onBack={handleBackToProgramSelection}
+                  isLoading={isLoading}
                 />
               ) : appState === 'selecting_patient' ? (
                 <PatientQueueScreen
                   programArea={selectedProgramArea!}
-                  onBack={handleBackToProgramSelection}
+                  specialty={selectedSpecialty!}
+                  onBack={handleBackToSpecialtySelection}
                   onStartCase={handleStartSimulation}
                   isLoading={isLoading}
                 />
