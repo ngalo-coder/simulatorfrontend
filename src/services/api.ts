@@ -49,12 +49,11 @@ export class ApiError extends Error {
 }
 
 export const api = {
-  async getCases(filters?: { program_area?: string; specialized_area?: string }): Promise<import('../types').PatientCase[]> {
+  async getCases(filters?: { program_area?: string }): Promise<import('../types').PatientCase[]> {
     let url = `${API_BASE_URL}/api/simulation/cases`;
-    if (filters && (filters.program_area || filters.specialized_area)) {
+    if (filters && filters.program_area) {
       const queryParams = new URLSearchParams();
       if (filters.program_area) queryParams.append('program_area', filters.program_area);
-      if (filters.specialized_area) queryParams.append('specialized_area', filters.specialized_area);
       url += `?${queryParams.toString()}`;
     }
 
