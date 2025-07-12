@@ -174,8 +174,7 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
                 title="Back to Program Areas"
               >
                 <ArrowLeft className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                </div>
-              </div>
+              </button>
             </div>
             
             <div className="flex items-center gap-4">
