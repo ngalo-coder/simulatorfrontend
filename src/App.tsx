@@ -11,17 +11,15 @@ import { api } from './services/api';
 import { Message, EvaluationData, AppState } from './types';
 import { useAuth } from './contexts/AuthContext'; // Import useAuth
 
-// Removed the local AuthState interface and initialAuthState function, as this is now handled by AuthContext
-
 type AppState = 'selecting_program' | 'selecting_patient' | 'chatting' | 'showing_evaluation';
 
 function App() {
   const { isLoggedIn, logout, isLoading: isAuthLoading } = useAuth(); // Add logout from useAuth
 
   // App state related to simulation flow
-  const [appState, setAppState] = useState<'selecting_program' | 'selecting_patient' | 'chatting' | 'showing_evaluation'>('selecting_program');
+  const [appState, setAppState] = useState<AppState>('selecting_program');
   const [selectedProgramArea, setSelectedProgramArea] = useState<string | null>(null);
-  const [simulationSessionId, setSimulationSessionId] = useState<string | null>(null); // Renamed to avoid conflict if any
+  const [simulationSessionId, setSimulationSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

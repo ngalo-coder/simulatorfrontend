@@ -169,7 +169,7 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
         {/* Program Areas Grid */}
         <div className="flex justify-center">
           <div className="w-full max-w-6xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 lg:gap-6 mb-8 lg:mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {filteredAreas.map((area, index) => {
             const IconComponent = programAreaIcons[area] || Stethoscope;
             const colorClass = programAreaColors[area] || 'from-blue-500 to-blue-600';
@@ -180,7 +180,7 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
                 key={area}
                 onClick={() => handleSelectArea(area)}
                 disabled={isLoading}
-                className={`group relative bg-white rounded-2xl lg:rounded-3xl shadow-lg border-2 transition-all duration-300 hover:shadow-2xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed p-6 lg:p-8 text-left ${
+                className={`group relative bg-white rounded-3xl shadow-lg border-2 transition-all duration-300 hover:shadow-2xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed p-8 text-left ${
                   isSelected 
                     ? 'border-blue-500 ring-4 ring-blue-200 scale-105' 
                     : 'border-gray-200 hover:border-blue-300'
@@ -188,28 +188,28 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className={`w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br ${colorClass} rounded-2xl lg:rounded-3xl flex items-center justify-center mb-4 lg:mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <IconComponent className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
+                  <div className={`w-20 h-20 bg-gradient-to-br ${colorClass} rounded-3xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <IconComponent className="w-10 h-10 text-white" />
                   </div>
                   
-                  <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-2 lg:mb-3 group-hover:text-blue-600 transition-colors leading-tight">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors leading-tight">
                     {area}
                   </h3>
                   
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-3 lg:mb-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                     <Users className="w-4 h-4" />
                     <span>Multiple Cases</span>
                   </div>
                   
                   <div className="flex items-center gap-2 text-blue-600 font-semibold group-hover:gap-3 transition-all duration-200">
-                    <span className="text-sm lg:text-base">Select Area</span>
-                    <ChevronRight className="w-4 h-4 lg:w-5 lg:h-5 group-hover:translate-x-1 transition-transform" />
+                    <span className="text-base">Select Area</span>
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
 
                 {isSelected && (
-                  <div className="absolute inset-0 bg-blue-500 bg-opacity-10 rounded-2xl lg:rounded-3xl flex items-center justify-center">
-                    <div className="w-6 h-6 lg:w-8 lg:h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  <div className="absolute inset-0 bg-blue-500 bg-opacity-10 rounded-3xl flex items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 )}
               </button>

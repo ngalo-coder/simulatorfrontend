@@ -174,12 +174,6 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
                 title="Back to Program Areas"
               >
                 <ArrowLeft className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              </button>
-              
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Patient Queue</h1>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-blue-600 font-medium">{programArea}</span>
                 </div>
               </div>
             </div>
