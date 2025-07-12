@@ -346,7 +346,7 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
                       Conversation History
                     </h2>
                     <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">
-                      {evaluationData.history.length} exchanges
+                      {Math.floor(evaluationData.history.length / 2)} exchanges
                     </span>
                   </div>
                   <p className="text-teal-100 mt-1">Complete record of your clinical interview</p>
@@ -411,7 +411,7 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
                   {evaluationData.history && (
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
                       <span className="text-sm text-gray-600 font-medium">Total Exchanges</span>
-                      <span className="text-sm font-bold text-gray-900">{evaluationData.history.length}</span>
+                      <span className="text-sm font-bold text-gray-900">{Math.floor(evaluationData.history.length / 2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center py-3 border-b border-gray-100">

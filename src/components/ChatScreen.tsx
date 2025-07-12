@@ -99,7 +99,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
                     <div className="flex items-center gap-2 text-blue-100">
                       <MessageCircle className="w-4 h-4 lg:w-5 lg:h-5" />
                       <span className="text-sm lg:text-base font-medium">
-                        {messages.length} exchanges
+                        {Math.floor(messages.length / 2)} exchanges
                       </span>
                     </div>
                   </div>
