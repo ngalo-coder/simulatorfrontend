@@ -101,8 +101,8 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
 
     if (searchTerm) {
       filtered = filtered.filter(case_ =>
-        case_.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        case_.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        case_.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        case_.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         case_.chiefComplaint?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
