@@ -57,37 +57,6 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
         setFilteredCases(data);
       } catch (error) {
         console.error('Failed to fetch cases:', error);
-        // Fallback mock data
-        const mockCases: PatientCase[] = [
-          {
-            id: 'VP-001',
-            title: 'Chest Pain Evaluation',
-            description: 'A 45-year-old male presents with acute chest pain',
-            category: 'Cardiology',
-            difficulty: 'Intermediate',
-            estimatedTime: '20-25 minutes',
-            tags: ['chest pain', 'cardiology', 'emergency'],
-            patientAge: 45,
-            patientGender: 'Male',
-            chiefComplaint: 'Chest pain for 2 hours',
-            presentingSymptoms: ['Chest pain', 'Shortness of breath', 'Sweating']
-          },
-          {
-            id: 'VP-002',
-            title: 'Abdominal Pain Assessment',
-            description: 'A 28-year-old female with severe abdominal pain',
-            category: 'Gastroenterology',
-            difficulty: 'Beginner',
-            estimatedTime: '15-20 minutes',
-            tags: ['abdominal pain', 'gastroenterology'],
-            patientAge: 28,
-            patientGender: 'Female',
-            chiefComplaint: 'Severe abdominal pain',
-            presentingSymptoms: ['Abdominal pain', 'Nausea', 'Vomiting']
-          }
-        ];
-        setCases(mockCases);
-        setFilteredCases(mockCases);
       } finally {
         setLoadingCases(false);
       }
