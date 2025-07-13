@@ -74,7 +74,10 @@ export const api = {
       const data = await response.json();
       console.log('Raw cases data from server:', data);
 
-      const cases: import('../types').PatientCase[] = data.map((caseItem: any) => {
+      // Check if the response has a 'cases' property and use it
+      const caseList = Array.isArray(data) ? data : data.cases || [];
+
+      const cases: import('../types').PatientCase[] = caseList.map((caseItem: any) => {
         const caseId = caseItem.case_id || caseItem.id || caseItem.title || 'unknown';
         const caseMetadata = caseItem.case_metadata || caseItem;
 
