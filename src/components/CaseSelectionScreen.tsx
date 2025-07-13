@@ -150,8 +150,8 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
   const clientFilteredCases = useMemo(() => {
     return cases.filter(patientCase => {
       const matchesSearch = !filters.searchTerm || 
-        patientCase.title.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        patientCase.description.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        patientCase.title?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        patientCase.description?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         patientCase.id.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         patientCase.tags?.some(tag => tag.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
         patientCase.chiefComplaint?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
