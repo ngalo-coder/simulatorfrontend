@@ -105,7 +105,7 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
     'Anesthesiology': 'from-emerald-500 to-emerald-600'
   };
 
-  const filteredAreas = categories?.program_areas.filter(area =>
+  const filteredAreas = categories?.program_areas.filter(Boolean).filter(area =>
     area.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
