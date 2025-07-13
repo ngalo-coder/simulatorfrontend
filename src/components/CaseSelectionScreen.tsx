@@ -94,9 +94,10 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
     const fetchCases = async () => {
       try {
         setLoadingCases(true);
-        const filtersToApply: { program_area?: string; specialized_area?: string } = {};
+        const filtersToApply: { program_area?: string; specialized_area?: string, specialty?: string } = {};
         if (filters.programArea) filtersToApply.program_area = filters.programArea;
         if (filters.specializedArea) filtersToApply.specialized_area = filters.specializedArea;
+        if (filters.specialty) filtersToApply.specialty = filters.specialty;
 
         const fetchedCases = await api.getCases(Object.keys(filtersToApply).length > 0 ? filtersToApply : undefined);
 
@@ -126,7 +127,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
     };
 
     fetchCases();
-  }, [filters.programArea, filters.specializedArea, isQueueModeActive]);
+  }, [filters.programArea, filters.specializedArea, filters.specialty, isQueueModeActive]);
 
   // Extract unique values for filter options
   const filterOptions = useMemo(() => {
