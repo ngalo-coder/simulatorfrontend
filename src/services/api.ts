@@ -64,22 +64,6 @@ export const api = {
       const response = await authenticatedFetch(url, { method: 'GET' });
 
       if (!response.ok) {
-        if (response.status === 404) {
-          return [
-            {
-              id: 'VP-ABD-002',
-              title: 'Abdominal Pain Case',
-              description: 'Practice taking a focused history for abdominal pain',
-              category: 'Gastroenterology',
-              difficulty: 'Beginner',
-              estimatedTime: '15-20 minutes',
-              tags: ['abdominal pain', 'history taking'],
-              programArea: 'Internal Medicine',
-              specializedArea: 'Gastroenterology'
-            }
-          ];
-        }
-
         const errorData = await response.json().catch(() => ({}));
         throw new ApiError(
           errorData.error || `Server error: ${response.status}`,
@@ -123,20 +107,7 @@ export const api = {
     } catch (error) {
       console.error('Error fetching cases:', error);
       if (error instanceof ApiError) throw error;
-      
-      return [
-        {
-          id: 'VP-ABD-002',
-          title: 'Abdominal Pain Case',
-          description: 'Practice taking a focused history for abdominal pain',
-          category: 'Gastroenterology',
-          difficulty: 'Beginner',
-          estimatedTime: '15-20 minutes',
-          tags: ['abdominal pain', 'history taking'],
-          programArea: 'Internal Medicine',
-          specializedArea: 'Gastroenterology'
-        }
-      ];
+      throw new ApiError('Failed to fetch cases. Please check your internet connection.');
     }
   },
 
