@@ -323,6 +323,30 @@ export const api = {
     }
   },
 
+  // Add patch method for convenience, using authenticatedFetch
+  async patch(endpoint: string, body: any): Promise<any> {
+    const url = `${API_BASE_URL}${endpoint}`; // Assuming all API endpoints are under /api
+    try {
+      const response = await authenticatedFetch(url, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.message || errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+      return response.json();
+    } catch (error) {
+      console.error(`Error PATCH ${endpoint}:`, error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(`Failed to PATCH to ${endpoint}.`);
+    }
+  },
+
   // Clinician Progress Endpoints
   async fetchClinicianProgress(userId: string): Promise<import('../types').ClinicianProgressResponse> {
     console.log('Fetching clinician progress for user:', userId);
