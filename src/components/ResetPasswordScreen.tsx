@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 const ResetPasswordScreen: React.FC = () => {
