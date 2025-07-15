@@ -42,7 +42,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = (token: string, user: any) => {
     localStorage.setItem('authToken', token);
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    if (user) {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('currentUser');
+    }
     setAuthState({ token, currentUser: user, isLoggedIn: true });
   };
 
