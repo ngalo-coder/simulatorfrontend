@@ -99,7 +99,7 @@ const RegistrationScreen: React.FC = () => {
           
           <div className="mb-12">
             <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
-              From virtual patients to confident clinical practice
+              Where Virtual Patients Build Real Clinicians
             </h2>
             <p className="text-xl text-purple-100 leading-relaxed">
               Master clinical skills with AI-powered virtual patients and join thousands of medical students advancing their careers.
@@ -127,8 +127,7 @@ const RegistrationScreen: React.FC = () => {
           <div className="lg:hidden text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Stethoscope className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">Kuiga</h1>
+            </div>            
             <h1 className="text-2xl font-bold text-gray-900">Simuatech</h1>
             <p className="text-gray-600">Where virtual patients build real clinicians</p>
           </div>

@@ -79,7 +79,7 @@ const LoginScreen: React.FC = () => {
           
           <div className="mb-12">
             <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
-              From virtual patients to confident clinical practice
+              Where Virtual Patients Build Real Clinicians
             </h2>
             <p className="text-xl text-blue-100 leading-relaxed">
               Master clinical skills with AI-powered virtual patients, receive instant feedback, and accelerate your medical education journey.

@@ -144,7 +144,7 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
           
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              From virtual patients to confident clinical practice
+              Where Virtual Patients Build Real Clinicians
             </h2>
             <p className="text-xl text-gray-600 leading-relaxed">
               Master clinical skills with AI. Choose your medical specialty to access relevant virtual patient cases and begin your clinical training journey.
