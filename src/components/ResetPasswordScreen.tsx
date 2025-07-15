@@ -12,6 +12,7 @@ const ResetPasswordScreen: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
+  const { login } = useAuth();
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,9 +39,11 @@ const ResetPasswordScreen: React.FC = () => {
     }
 
     try {
-      await api.post('/api/auth/reset-password', { token, password });
+      const response = await api.patch(`/api/auth/reset-password/${token}`, { password });
       setMessage('Your password has been reset successfully. You can now log in with your new password.');
-      setTimeout(() => navigate('/login'), 5000);
+      const { token: newToken, user } = response.data;
+      login(newToken, user);
+      setTimeout(() => navigate('/'), 5000);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
