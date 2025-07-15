@@ -64,22 +64,6 @@ export const api = {
       const response = await authenticatedFetch(url, { method: 'GET' });
 
       if (!response.ok) {
-        if (response.status === 404) {
-          return [
-            {
-              id: 'VP-ABD-002',
-              title: 'Abdominal Pain Case',
-              description: 'Practice taking a focused history for abdominal pain',
-              category: 'Gastroenterology',
-              difficulty: 'Beginner',
-              estimatedTime: '15-20 minutes',
-              tags: ['abdominal pain', 'history taking'],
-              programArea: 'Internal Medicine',
-              specializedArea: 'Gastroenterology'
-            }
-          ];
-        }
-
         const errorData = await response.json().catch(() => ({}));
         throw new ApiError(
           errorData.error || `Server error: ${response.status}`,
@@ -90,7 +74,10 @@ export const api = {
       const data = await response.json();
       console.log('Raw cases data from server:', data);
 
-      const cases: import('../types').PatientCase[] = data.map((caseItem: any) => {
+      // Check if the response has a 'cases' property and use it
+      const caseList = Array.isArray(data) ? data : data.cases || [];
+
+      const cases: import('../types').PatientCase[] = caseList.map((caseItem: any) => {
         const caseId = caseItem.case_id || caseItem.id || caseItem.title || 'unknown';
         const caseMetadata = caseItem.case_metadata || caseItem;
 
@@ -123,20 +110,7 @@ export const api = {
     } catch (error) {
       console.error('Error fetching cases:', error);
       if (error instanceof ApiError) throw error;
-      
-      return [
-        {
-          id: 'VP-ABD-002',
-          title: 'Abdominal Pain Case',
-          description: 'Practice taking a focused history for abdominal pain',
-          category: 'Gastroenterology',
-          difficulty: 'Beginner',
-          estimatedTime: '15-20 minutes',
-          tags: ['abdominal pain', 'history taking'],
-          programArea: 'Internal Medicine',
-          specializedArea: 'Gastroenterology'
-        }
-      ];
+      throw new ApiError('Failed to fetch cases. Please check your internet connection.');
     }
   },
 
@@ -304,7 +278,7 @@ export const api = {
 
   // Add post method for convenience, using authenticatedFetch
   async post(endpoint: string, body: any): Promise<any> {
-    const url = `${API_BASE_URL}/api${endpoint}`; // Assuming all API endpoints are under /api
+    const url = `${API_BASE_URL}${endpoint}`; // Assuming all API endpoints are under /api
     try {
       const response = await authenticatedFetch(url, {
         method: 'POST',
@@ -328,7 +302,7 @@ export const api = {
 
   // Add get method for convenience, using authenticatedFetch
   async get(endpoint: string): Promise<any> {
-    const url = `${API_BASE_URL}/api${endpoint}`; // Assuming all API endpoints are under /api
+    const url = `${API_BASE_URL}${endpoint}`; // Assuming all API endpoints are under /api
     try {
       const response = await authenticatedFetch(url, {
         method: 'GET',
@@ -346,6 +320,30 @@ export const api = {
       console.error(`Error GET ${endpoint}:`, error);
       if (error instanceof ApiError) throw error;
       throw new ApiError(`Failed to GET from ${endpoint}.`);
+    }
+  },
+
+  // Add patch method for convenience, using authenticatedFetch
+  async patch(endpoint: string, body: any): Promise<any> {
+    const url = `${API_BASE_URL}${endpoint}`; // Assuming all API endpoints are under /api
+    try {
+      const response = await authenticatedFetch(url, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.message || errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+      return response.json();
+    } catch (error) {
+      console.error(`Error PATCH ${endpoint}:`, error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(`Failed to PATCH to ${endpoint}.`);
     }
   },
 

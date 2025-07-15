@@ -8,6 +8,8 @@ import EvaluationScreen from './components/EvaluationScreen';
 import ErrorMessage from './components/ErrorMessage';
 import RegistrationScreen from './components/RegistrationScreen';
 import LoginScreen from './components/LoginScreen';
+import ForgotPasswordScreen from './components/ForgotPasswordScreen';
+import ResetPasswordScreen from './components/ResetPasswordScreen';
 import ClinicianDashboard from './components/ClinicianDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import { api } from './services/api';
@@ -275,6 +277,8 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/register" element={<RegistrationScreen />} />
+          <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordScreen />} />
           {/* Redirect any other unauthenticated access to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

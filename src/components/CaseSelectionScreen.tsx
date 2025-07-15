@@ -94,9 +94,10 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
     const fetchCases = async () => {
       try {
         setLoadingCases(true);
-        const filtersToApply: { program_area?: string; specialized_area?: string } = {};
+        const filtersToApply: { program_area?: string; specialized_area?: string, specialty?: string } = {};
         if (filters.programArea) filtersToApply.program_area = filters.programArea;
         if (filters.specializedArea) filtersToApply.specialized_area = filters.specializedArea;
+        if (filters.specialty) filtersToApply.specialty = filters.specialty;
 
         const fetchedCases = await api.getCases(Object.keys(filtersToApply).length > 0 ? filtersToApply : undefined);
 
@@ -126,7 +127,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
     };
 
     fetchCases();
-  }, [filters.programArea, filters.specializedArea, isQueueModeActive]);
+  }, [filters.programArea, filters.specializedArea, filters.specialty, isQueueModeActive]);
 
   // Extract unique values for filter options
   const filterOptions = useMemo(() => {
@@ -150,8 +151,8 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
   const clientFilteredCases = useMemo(() => {
     return cases.filter(patientCase => {
       const matchesSearch = !filters.searchTerm || 
-        patientCase.title.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        patientCase.description.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        patientCase.title?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        patientCase.description?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         patientCase.id.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         patientCase.tags?.some(tag => tag.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
         patientCase.chiefComplaint?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||

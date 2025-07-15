@@ -55,7 +55,7 @@ const RegistrationScreen: React.FC = () => {
     }
 
     try {
-      const response = await api.post('/auth/register', { username, email, password });
+      const response = await api.post('/api/auth/register', { username, email, password });
       const { token, user } = response;
 
       login(token, user);
