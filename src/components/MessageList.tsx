@@ -136,14 +136,16 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, streamin
                 <span className="text-xs font-semibold uppercase tracking-wide">Virtual Patient</span>
               </div>
               
-              <div className="flex items-center gap-3">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                </div>
-                <span className="text-sm text-gray-600 font-medium">Patient is responding...</span>
+             <div className="flex items-center gap-3">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
               </div>
+              <span className="text-sm text-emerald-600 font-bold">
+                Thanks for your time. Wait for your Evaluation...
+              </span>
+            </div>
 
               {/* Loading message tail */}
               <div className="absolute top-4 left-0 transform -translate-x-2">
