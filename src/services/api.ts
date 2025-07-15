@@ -278,7 +278,7 @@ export const api = {
 
   // Add post method for convenience, using authenticatedFetch
   async post(endpoint: string, body: any): Promise<any> {
-    const url = `${API_BASE_URL}/api${endpoint}`; // Assuming all API endpoints are under /api
+    const url = `${API_BASE_URL}${endpoint}`; // Assuming all API endpoints are under /api
     try {
       const response = await authenticatedFetch(url, {
         method: 'POST',
@@ -302,7 +302,7 @@ export const api = {
 
   // Add get method for convenience, using authenticatedFetch
   async get(endpoint: string): Promise<any> {
-    const url = `${API_BASE_URL}/api${endpoint}`; // Assuming all API endpoints are under /api
+    const url = `${API_BASE_URL}${endpoint}`; // Assuming all API endpoints are under /api
     try {
       const response = await authenticatedFetch(url, {
         method: 'GET',
