@@ -28,10 +28,12 @@ import {
   ArrowRight,
   Grid3X3,
   List,
-  Shuffle
+  Shuffle,
+  HelpCircle
 } from 'lucide-react';
 import { PatientCase, CaseCategories } from '../types';
 import { api } from '../services/api';
+import Instructions from './Instructions';
 
 interface CaseSelectionScreenProps {
   onStart: (caseId: string) => void;
@@ -56,6 +58,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showInstructions, setShowInstructions] = useState(false);
   
   const [filters, setFilters] = useState<FilterState>({
     category: '',
@@ -321,6 +324,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {showInstructions && <Instructions onClose={() => setShowInstructions(false)} />}
       <div className="max-w-7xl mx-auto p-6">
         {/* Enhanced Header */}
         <div className="text-center mb-12">
@@ -330,6 +334,13 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Virtual Patient Simulator
           </h1>
+          <button
+            onClick={() => setShowInstructions(true)}
+            className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-full shadow-md hover:bg-blue-50 transition-all"
+          >
+            <HelpCircle className="w-5 h-5" />
+            <span className="font-semibold">How to Use</span>
+          </button>
           <p className="text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto mb-6">
             Master clinical history-taking with AI-powered virtual patients. 
             Practice, learn, and excel in your medical education journey.
