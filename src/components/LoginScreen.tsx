@@ -37,7 +37,7 @@ const LoginScreen: React.FC = () => {
     }
 
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/api/auth/login', { email, password });
       const { token, user } = response;
 
       login(token, user);
@@ -190,6 +190,13 @@ const LoginScreen: React.FC = () => {
 
             <div className="mt-8 text-center">
               <p className="text-gray-600">
+                <button
+                  onClick={() => navigate('/forgot-password')}
+                  className="font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  Forgot Password?
+                </button>
+                {' | '}
                 Don't have an account?{' '}
                 <button
                   onClick={() => navigate('/register')}

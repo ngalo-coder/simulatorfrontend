@@ -308,7 +308,7 @@ const AdminDashboard: React.FC = () => {
       } else {
         // Regular user creation would go here
         // This is a placeholder for future implementation
-        await api.post('/auth/register', {
+        await api.post('/api/auth/register', {
           username: newUser.username,
           email: newUser.email,
           password: newUser.password
