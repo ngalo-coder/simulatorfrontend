@@ -298,7 +298,13 @@ function App() {
           {isLoggedIn && (
             <div className="flex gap-3">
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => {
+                  if (currentUser?.role === 'admin') {
+                    navigate('/admin');
+                  } else {
+                    navigate('/dashboard');
+                  }
+                }}
                 className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
               >
                 Dashboard
