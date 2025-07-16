@@ -627,5 +627,30 @@ export const api = {
       if (error instanceof ApiError) throw error;
       throw new ApiError('Failed to update case. Please check your internet connection.');
     }
+  },
+
+  async fetchUsersWithScores(): Promise<any> {
+    console.log('Fetching users with scores');
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/scores`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Users with scores result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching users with scores:', error);
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Failed to fetch users with scores. Please check your internet connection.');
+    }
   }
 };

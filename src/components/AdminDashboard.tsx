@@ -46,7 +46,8 @@ import {
   Settings, 
   Refresh,
   Delete,
-  Add
+  Add,
+  Scoreboard
 } from '@mui/icons-material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
@@ -132,6 +133,7 @@ const AdminDashboard: React.FC = () => {
   const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [cases, setCases] = useState<CaseData[]>([]);
+  const [usersWithScores, setUsersWithScores] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string, type: 'user' | 'case' } | null>(null);
   const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
@@ -221,6 +223,14 @@ const AdminDashboard: React.FC = () => {
               averageScore: Math.floor(Math.random() * 40) + 60
             }));
             setCases(casesData);
+          }
+
+          // Fetch users with scores
+          try {
+            const usersWithScoresData = await api.fetchUsersWithScores();
+            setUsersWithScores(usersWithScoresData);
+          } catch (error) {
+            console.error('Error fetching users with scores:', error);
           }
           
           setLoading(false);
@@ -478,6 +488,13 @@ const AdminDashboard: React.FC = () => {
     },
   ];
 
+  const scoresColumns: GridColDef[] = [
+    { field: 'name', headerName: 'Name', flex: 1 },
+    { field: 'email', headerName: 'Email', flex: 1 },
+    { field: 'averageScore', headerName: 'Average Score', width: 150 },
+    { field: 'casesCompleted', headerName: 'Cases Completed', width: 150 },
+  ];
+
   const caseColumns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 100 },
     { field: 'title', headerName: 'Title', flex: 1 },
@@ -561,7 +578,8 @@ const AdminDashboard: React.FC = () => {
           <Tab icon={<Dashboard />} label="Overview" {...a11yProps(0)} />
           <Tab icon={<People />} label="Users" {...a11yProps(1)} />
           <Tab icon={<Assignment />} label="Cases" {...a11yProps(2)} />
-          <Tab icon={<Settings />} label="Settings" {...a11yProps(3)} />
+          <Tab icon={<Scoreboard />} label="Scores" {...a11yProps(3)} />
+          <Tab icon={<Settings />} label="Settings" {...a11yProps(4)} />
         </Tabs>
       </Box>
 
@@ -778,8 +796,24 @@ const AdminDashboard: React.FC = () => {
         </Paper>
       </TabPanel>
 
-      {/* Settings Tab */}
+      {/* Scores Tab */}
       <TabPanel value={tabValue} index={3}>
+        <Typography variant="h5">
+          User Scores
+        </Typography>
+        <Paper sx={{ height: 600, width: '100%' }}>
+          <DataGrid
+            rows={usersWithScores}
+            columns={scoresColumns}
+            pageSizeOptions={[10, 25, 50]}
+            checkboxSelection
+            disableRowSelectionOnClick
+          />
+        </Paper>
+      </TabPanel>
+
+      {/* Settings Tab */}
+      <TabPanel value={tabValue} index={4}>
         <Typography variant="h5" gutterBottom>
           System Settings
         </Typography>
