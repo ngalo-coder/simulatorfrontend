@@ -146,6 +146,9 @@ const AdminDashboard: React.FC = () => {
   const [editCaseDialogOpen, setEditCaseDialogOpen] = useState(false);
   const [caseToEdit, setCaseToEdit] = useState<CaseData | null>(null);
   const [editedCaseData, setEditedCaseData] = useState({ programArea: '', specialty: '' });
+  const [editCaseDialogOpen, setEditCaseDialogOpen] = useState(false);
+  const [caseToEdit, setCaseToEdit] = useState<CaseData | null>(null);
+  const [editedCaseData, setEditedCaseData] = useState({ programArea: '', specialty: '' });
   const [casePaginationModel, setCasePaginationModel] = useState({
     pageSize: 10,
     page: 0,
@@ -387,6 +390,48 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleEditClick = (caseData: CaseData) => {
+    setCaseToEdit(caseData);
+    setEditedCaseData({
+      programArea: caseData.programArea,
+      specialty: caseData.specialty,
+    });
+    setEditCaseDialogOpen(true);
+  };
+
+  const handleEditCaseClose = () => {
+    setEditCaseDialogOpen(false);
+    setCaseToEdit(null);
+  };
+
+  const handleEditedCaseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditedCaseData({
+      ...editedCaseData,
+      [name]: value,
+    });
+  };
+
+  const handleUpdateCase = async () => {
+    if (caseToEdit) {
+      try {
+        setLoading(true);
+        await api.updateCase(caseToEdit.id, editedCaseData);
+
+        // Refresh case list
+        const casesData = await api.fetchAdminCases();
+        setCases(casesData);
+
+        handleEditCaseClose();
+      } catch (error) {
+        console.error('Error updating case:', error);
+        alert('Failed to update case. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const handleUpdateUserRole = async (userId: string, newRole: 'user' | 'admin') => {
     try {
       setLoading(true);
@@ -474,16 +519,27 @@ const AdminDashboard: React.FC = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 120,
+      width: 180,
       renderCell: (params) => (
-        <Button
-          variant="outlined"
-          color="error"
-          size="small"
-          onClick={() => handleDeleteClick(params.row.id, 'user')}
-        >
-          <Delete fontSize="small" />
-        </Button>
+        <>
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            onClick={() => handleEditClick(params.row)}
+            sx={{ mr: 1 }}
+          >
+            Edit
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            onClick={() => handleDeleteClick(params.row.id, 'case')}
+          >
+            <Delete fontSize="small" />
+          </Button>
+        </>
       ),
     },
   ];
@@ -942,6 +998,51 @@ const AdminDashboard: React.FC = () => {
             disabled={!newUser.username || !newUser.email || !newUser.password}
           >
             Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Case Dialog */}
+      <Dialog
+        open={editCaseDialogOpen}
+        onClose={handleEditCaseClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Edit Case</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            name="programArea"
+            label="Program Area"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={editedCaseData.programArea}
+            onChange={handleEditedCaseChange}
+            sx={{ mb: 2, mt: 1 }}
+          />
+          <TextField
+            margin="dense"
+            name="specialty"
+            label="Specialty"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={editedCaseData.specialty}
+            onChange={handleEditedCaseChange}
+            sx={{ mb: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditCaseClose}>Cancel</Button>
+          <Button
+            onClick={handleUpdateCase}
+            color="primary"
+            variant="contained"
+          >
+            Update
           </Button>
         </DialogActions>
       </Dialog>
