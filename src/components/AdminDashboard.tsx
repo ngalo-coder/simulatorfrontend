@@ -143,12 +143,6 @@ const AdminDashboard: React.FC = () => {
     pageSize: 10,
     page: 0,
   });
-  const [editCaseDialogOpen, setEditCaseDialogOpen] = useState(false);
-  const [caseToEdit, setCaseToEdit] = useState<CaseData | null>(null);
-  const [editedCaseData, setEditedCaseData] = useState({ programArea: '', specialty: '' });
-  const [editCaseDialogOpen, setEditCaseDialogOpen] = useState(false);
-  const [caseToEdit, setCaseToEdit] = useState<CaseData | null>(null);
-  const [editedCaseData, setEditedCaseData] = useState({ programArea: '', specialty: '' });
   const [casePaginationModel, setCasePaginationModel] = useState({
     pageSize: 10,
     page: 0,
@@ -370,47 +364,6 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  const handleUpdateCase = async () => {
-    if (caseToEdit) {
-      try {
-        setLoading(true);
-        await api.updateCase(caseToEdit.id, editedCaseData);
-
-        // Refresh case list
-        const casesData = await api.fetchAdminCases();
-        setCases(casesData);
-
-        handleEditCaseClose();
-      } catch (error) {
-        console.error('Error updating case:', error);
-        alert('Failed to update case. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
-  const handleEditClick = (caseData: CaseData) => {
-    setCaseToEdit(caseData);
-    setEditedCaseData({
-      programArea: caseData.programArea,
-      specialty: caseData.specialty,
-    });
-    setEditCaseDialogOpen(true);
-  };
-
-  const handleEditCaseClose = () => {
-    setEditCaseDialogOpen(false);
-    setCaseToEdit(null);
-  };
-
-  const handleEditedCaseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setEditedCaseData({
-      ...editedCaseData,
-      [name]: value,
-    });
-  };
 
   const handleUpdateCase = async () => {
     if (caseToEdit) {
