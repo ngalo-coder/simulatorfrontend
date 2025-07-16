@@ -125,7 +125,7 @@ interface CaseData {
 }
 
 const AdminDashboard: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
@@ -151,9 +151,8 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     const loadAdminData = async () => {
-      if (currentUser && currentUser.role === 'admin') {
+      if (!isAuthLoading && currentUser && currentUser.role === 'admin') {
         try {
-          setLoading(true);
           
           // Fetch system stats
           try {
@@ -233,7 +232,7 @@ const AdminDashboard: React.FC = () => {
     };
 
     loadAdminData();
-  }, [currentUser]);
+  }, [currentUser, isAuthLoading]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -534,7 +533,7 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
-  if (loading) {
+  if (loading || isAuthLoading) {
     return (
       <Container sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
         <CircularProgress />
