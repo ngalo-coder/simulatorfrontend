@@ -260,12 +260,21 @@ function App() {
           navigate('/login');
         }
       } else if (!isAuthLoading && isLoggedIn) {
-        // If logged in and on login/register, redirect to home
+        // If logged in and on login/register, redirect based on role
         if (window.location.pathname === '/login' || window.location.pathname === '/register') {
-          navigate('/');
+          // If user is admin, redirect to admin dashboard
+          if (currentUser?.role === 'admin') {
+            navigate('/admin');
+          } else {
+            // For regular users, redirect to home
+            navigate('/');
+          }
+        } else if (window.location.pathname === '/' && currentUser?.role === 'admin') {
+          // If admin user is at home route, redirect to admin dashboard
+          navigate('/admin');
         }
       }
-    }, [isLoggedIn, isAuthLoading, navigate]);
+    }, [isLoggedIn, isAuthLoading, navigate, currentUser]);
 
     if (isAuthLoading) {
       return <div>Loading...</div>; // Or a proper loading spinner

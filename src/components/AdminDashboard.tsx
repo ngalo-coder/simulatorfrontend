@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { api } from '../services/api';
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { api } from "../services/api";
 import {
   Box,
   Button,
@@ -24,8 +24,8 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
-} from '@mui/material';
+  MenuItem,
+} from "@mui/material";
 import {
   BarChart,
   Bar,
@@ -37,19 +37,19 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
-} from 'recharts';
-import { 
-  Dashboard, 
-  People, 
-  Assignment, 
-  Settings, 
+  Cell,
+} from "recharts";
+import {
+  Dashboard,
+  People,
+  Assignment,
+  Settings,
   Refresh,
   Delete,
   Add,
-  Scoreboard
-} from '@mui/icons-material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+  Scoreboard,
+} from "@mui/icons-material";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -68,11 +68,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`admin-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -80,7 +76,7 @@ function TabPanel(props: TabPanelProps) {
 function a11yProps(index: number) {
   return {
     id: `admin-tab-${index}`,
-    'aria-controls': `admin-tabpanel-${index}`,
+    "aria-controls": `admin-tabpanel-${index}`,
   };
 }
 
@@ -134,11 +130,42 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [cases, setCases] = useState<CaseData[]>([]);
   const [usersWithScores, setUsersWithScores] = useState([]);
+
+  // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{ id: string, type: 'user' | 'case' } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{
+    id: string;
+    type: "user" | "case";
+  } | null>(null);
+
+  // Create user dialog state
   const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ username: '', email: '', password: '', role: 'user' });
-  const [createUserError, setCreateUserError] = useState('');
+  const [newUser, setNewUser] = useState({
+    username: "",
+    email: "",
+    password: "",
+    role: "user",
+  });
+  const [createUserError, setCreateUserError] = useState("");
+
+  // Edit case dialog state
+  const [editCaseDialogOpen, setEditCaseDialogOpen] = useState(false);
+  const [caseToEdit, setCaseToEdit] = useState<CaseData | null>(null);
+  const [editedCaseData, setEditedCaseData] = useState<{
+    programArea: string;
+    specialty: string;
+  }>({
+    programArea: "",
+    specialty: "",
+  });
+  const [availableProgramAreas, setAvailableProgramAreas] = useState<string[]>(
+    []
+  );
+  const [availableSpecialties, setAvailableSpecialties] = useState<string[]>(
+    []
+  );
+
+  // Pagination state
   const [userPaginationModel, setUserPaginationModel] = useState({
     pageSize: 10,
     page: 0,
@@ -150,15 +177,14 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     const loadAdminData = async () => {
-      if (!isAuthLoading && currentUser && currentUser.role === 'admin') {
+      if (!isAuthLoading && currentUser && currentUser.role === "admin") {
         try {
-          
           // Fetch system stats
           try {
             const statsData = await api.fetchSystemStats();
             setSystemStats(statsData);
           } catch (error) {
-            console.error('Error fetching system stats:', error);
+            console.error("Error fetching system stats:", error);
             // Fallback to simulated data if API fails
             const statsData = {
               totalUsers: 125,
@@ -168,56 +194,84 @@ const AdminDashboard: React.FC = () => {
               casesByDifficulty: {
                 Beginner: 400,
                 Intermediate: 400,
-                Advanced: 200
+                Advanced: 200,
               },
               casesByProgramArea: {
                 "Basic Program": 600,
-                "Specialty Program": 400
+                "Specialty Program": 400,
               },
               usersByRole: {
                 Admin: 5,
                 Clinician: 100,
-                Instructor: 20
-              }
+                Instructor: 20,
+              },
             };
             setSystemStats(statsData);
           }
-          
+
           // Fetch users
           try {
             const usersData = await api.fetchUsers();
-            setUsers(usersData);
+            console.log("Users data from API:", usersData);
+            
+            // Map the API response to the expected format for the DataGrid
+            const formattedUsers = usersData.map((user: any) => ({
+              id: user.id || user._id,
+              name: user.name || user.username,
+              email: user.email,
+              role: user.role,
+              createdAt: user.createdAt,
+              lastLogin: user.lastLogin || user.createdAt, // Use createdAt as fallback if lastLogin doesn't exist
+              casesCompleted: user.casesCompleted || 0 // Default to 0 if not provided
+            }));
+            
+            setUsers(formattedUsers);
           } catch (error) {
-            console.error('Error fetching users:', error);
+            console.error("Error fetching users:", error);
             // Fallback to simulated data if API fails
             const usersData = Array.from({ length: 50 }, (_, i) => ({
               id: `user-${i + 1}`,
               name: `User ${i + 1}`,
               email: `user${i + 1}@example.com`,
-              role: i < 5 ? 'Admin' : (i < 25 ? 'Clinician' : 'Instructor'),
-              createdAt: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-              lastLogin: new Date(Date.now() - Math.random() * 1000000000).toISOString(),
-              casesCompleted: Math.floor(Math.random() * 50)
+              role: i < 5 ? "Admin" : i < 25 ? "Clinician" : "Instructor",
+              createdAt: new Date(
+                Date.now() - Math.random() * 10000000000
+              ).toISOString(),
+              lastLogin: new Date(
+                Date.now() - Math.random() * 1000000000
+              ).toISOString(),
+              casesCompleted: Math.floor(Math.random() * 50),
             }));
             setUsers(usersData);
           }
-          
+
           // Fetch cases
           try {
             const casesData = await api.fetchAdminCases();
             setCases(casesData);
           } catch (error) {
-            console.error('Error fetching cases:', error);
+            console.error("Error fetching cases:", error);
             // Fallback to simulated data if API fails
             const casesData = Array.from({ length: 50 }, (_, i) => ({
               id: `VP-${i + 1}`,
               title: `Case ${i + 1}`,
-              programArea: Math.random() > 0.5 ? 'Basic Program' : 'Specialty Program',
-              specialty: ['Internal Medicine', 'Surgery', 'Pediatrics', 'Ophthalmology', 'ENT'][Math.floor(Math.random() * 5)],
-              difficulty: ['Beginner', 'Intermediate', 'Advanced'][Math.floor(Math.random() * 3)],
-              createdAt: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
+              programArea:
+                Math.random() > 0.5 ? "Basic Program" : "Specialty Program",
+              specialty: [
+                "Internal Medicine",
+                "Surgery",
+                "Pediatrics",
+                "Ophthalmology",
+                "ENT",
+              ][Math.floor(Math.random() * 5)],
+              difficulty: ["Beginner", "Intermediate", "Advanced"][
+                Math.floor(Math.random() * 3)
+              ],
+              createdAt: new Date(
+                Date.now() - Math.random() * 10000000000
+              ).toISOString(),
               timesCompleted: Math.floor(Math.random() * 100),
-              averageScore: Math.floor(Math.random() * 40) + 60
+              averageScore: Math.floor(Math.random() * 40) + 60,
             }));
             setCases(casesData);
           }
@@ -227,12 +281,39 @@ const AdminDashboard: React.FC = () => {
             const usersWithScoresData = await api.fetchUsersWithScores();
             setUsersWithScores(usersWithScoresData);
           } catch (error) {
-            console.error('Error fetching users with scores:', error);
+            console.error("Error fetching users with scores:", error);
           }
-          
+
+          // Fetch program areas and specialties for case editing
+          try {
+            const programAreas = await api.fetchProgramAreas();
+            const specialties = await api.fetchSpecialties();
+            setAvailableProgramAreas(programAreas);
+            setAvailableSpecialties(specialties);
+          } catch (error) {
+            console.error(
+              "Error fetching program areas and specialties:",
+              error
+            );
+            // Set default values if API fails
+            setAvailableProgramAreas(["Basic Program", "Specialty Program"]);
+            setAvailableSpecialties([
+              "Internal Medicine",
+              "Surgery",
+              "Pediatrics",
+              "Ophthalmology",
+              "ENT",
+              "Cardiology",
+              "Neurology",
+              "Psychiatry",
+              "Emergency Medicine",
+              "Family Medicine",
+            ]);
+          }
+
           setLoading(false);
         } catch (error) {
-          console.error('Error loading admin data:', error);
+          console.error("Error loading admin data:", error);
           setLoading(false);
         }
       }
@@ -245,7 +326,8 @@ const AdminDashboard: React.FC = () => {
     setTabValue(newValue);
   };
 
-  const handleDeleteClick = (id: string, type: 'user' | 'case') => {
+  // Delete functionality
+  const handleDeleteClick = (id: string, type: "user" | "case") => {
     setItemToDelete({ id, type });
     setDeleteDialogOpen(true);
   };
@@ -254,25 +336,24 @@ const AdminDashboard: React.FC = () => {
     if (itemToDelete) {
       try {
         setLoading(true);
-        
-        if (itemToDelete.type === 'user') {
+
+        if (itemToDelete.type === "user") {
           // Call API to delete user
           await api.deleteUser(itemToDelete.id);
           // Update local state
-          setUsers(users.filter(user => user.id !== itemToDelete.id));
+          setUsers(users.filter((user) => user.id !== itemToDelete.id));
         } else {
           // Call API to delete case
           await api.deleteCase(itemToDelete.id);
           // Update local state
-          setCases(cases.filter(caseItem => caseItem.id !== itemToDelete.id));
+          setCases(cases.filter((caseItem) => caseItem.id !== itemToDelete.id));
         }
-        
+
         setDeleteDialogOpen(false);
         setItemToDelete(null);
       } catch (error) {
         console.error(`Error deleting ${itemToDelete.type}:`, error);
         // Show error message to user
-        // This could be enhanced with a proper error notification system
         alert(`Failed to delete ${itemToDelete.type}. Please try again.`);
       } finally {
         setLoading(false);
@@ -285,69 +366,98 @@ const AdminDashboard: React.FC = () => {
     setItemToDelete(null);
   };
 
+  // Create user functionality
   const handleCreateUserOpen = () => {
     setCreateUserDialogOpen(true);
-    setNewUser({ username: '', email: '', password: '', role: 'user' });
-    setCreateUserError('');
+    setNewUser({ username: "", email: "", password: "", role: "user" });
+    setCreateUserError("");
   };
 
   const handleCreateUserClose = () => {
     setCreateUserDialogOpen(false);
   };
 
-  const handleCreateUserChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleCreateUserChange = (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+  ) => {
     const { name, value } = e.target;
     setNewUser({
       ...newUser,
-      [name as string]: value
+      [name as string]: value,
     });
   };
 
   const handleCreateUserSubmit = async () => {
     try {
       setLoading(true);
-      setCreateUserError('');
-      
-      if (newUser.role === 'admin') {
+      setCreateUserError("");
+
+      if (newUser.role === "admin") {
         await api.createAdminUser({
           username: newUser.username,
           email: newUser.email,
-          password: newUser.password
+          password: newUser.password,
         });
       } else {
         // Regular user creation would go here
-        // This is a placeholder for future implementation
-        await api.post('/api/auth/register', {
+        await api.post("/api/auth/register", {
           username: newUser.username,
           email: newUser.email,
-          password: newUser.password
+          password: newUser.password,
         });
       }
-      
+
       // Refresh user list
       const usersData = await api.fetchUsers();
       setUsers(usersData);
-      
+
       setCreateUserDialogOpen(false);
-      setNewUser({ username: '', email: '', password: '', role: 'user' });
+      setNewUser({ username: "", email: "", password: "", role: "user" });
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error("Error creating user:", error);
       if (error instanceof Error) {
         setCreateUserError(error.message);
       } else {
-        setCreateUserError('An unknown error occurred');
+        setCreateUserError("An unknown error occurred");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditClick = (caseData: CaseData) => {
+  // Edit case functionality
+  const handleEditClick = async (caseData: CaseData) => {
     setCaseToEdit(caseData);
     setEditedCaseData({
       programArea: caseData.programArea,
       specialty: caseData.specialty,
     });
+
+    try {
+      // Fetch program areas and specialties from the backend
+      const programAreas = await api.fetchProgramAreas();
+      const specialties = await api.fetchSpecialties();
+
+      setAvailableProgramAreas(programAreas);
+      setAvailableSpecialties(specialties);
+    } catch (error) {
+      console.error("Error fetching program areas and specialties:", error);
+      // Use default values if API fails
+      setAvailableProgramAreas(["Basic Program", "Specialty Program"]);
+      setAvailableSpecialties([
+        "Internal Medicine",
+        "Surgery",
+        "Pediatrics",
+        "Ophthalmology",
+        "ENT",
+        "Cardiology",
+        "Neurology",
+        "Psychiatry",
+        "Emergency Medicine",
+        "Family Medicine",
+      ]);
+    }
+
     setEditCaseDialogOpen(true);
   };
 
@@ -356,14 +466,15 @@ const AdminDashboard: React.FC = () => {
     setCaseToEdit(null);
   };
 
-  const handleEditedCaseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditedCaseChange = (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+  ) => {
     const { name, value } = e.target;
     setEditedCaseData({
       ...editedCaseData,
-      [name]: value,
+      [name as string]: value as string,
     });
   };
-
 
   const handleUpdateCase = async () => {
     if (caseToEdit) {
@@ -377,24 +488,27 @@ const AdminDashboard: React.FC = () => {
 
         handleEditCaseClose();
       } catch (error) {
-        console.error('Error updating case:', error);
-        alert('Failed to update case. Please try again.');
+        console.error("Error updating case:", error);
+        alert("Failed to update case. Please try again.");
       } finally {
         setLoading(false);
       }
     }
   };
 
-  const handleUpdateUserRole = async (userId: string, newRole: 'user' | 'admin') => {
+  const handleUpdateUserRole = async (
+    userId: string,
+    newRole: "user" | "admin"
+  ) => {
     try {
       setLoading(true);
       await api.updateUserRole(userId, newRole);
-      
+
       // Refresh user list
       const usersData = await api.fetchUsers();
       setUsers(usersData);
     } catch (error) {
-      console.error('Error updating user role:', error);
+      console.error("Error updating user role:", error);
       // Show error message to user
       alert(`Failed to update user role. Please try again.`);
     } finally {
@@ -404,123 +518,130 @@ const AdminDashboard: React.FC = () => {
 
   const handleRefreshData = async () => {
     setLoading(true);
-    
+
     try {
       // Fetch system stats
       try {
         const statsData = await api.fetchSystemStats();
         setSystemStats(statsData);
       } catch (error) {
-        console.error('Error refreshing system stats:', error);
+        console.error("Error refreshing system stats:", error);
       }
-      
+
       // Fetch users
       try {
         const usersData = await api.fetchUsers();
         setUsers(usersData);
       } catch (error) {
-        console.error('Error refreshing users:', error);
+        console.error("Error refreshing users:", error);
       }
-      
+
       // Fetch cases
       try {
         const casesData = await api.fetchAdminCases();
         setCases(casesData);
       } catch (error) {
-        console.error('Error refreshing cases:', error);
+        console.error("Error refreshing cases:", error);
+      }
+
+      // Fetch program areas and specialties
+      try {
+        const programAreas = await api.fetchProgramAreas();
+        const specialties = await api.fetchSpecialties();
+        setAvailableProgramAreas(programAreas);
+        setAvailableSpecialties(specialties);
+      } catch (error) {
+        console.error("Error refreshing program areas and specialties:", error);
       }
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error("Error refreshing data:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const userColumns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', flex: 1 },
-    { field: 'email', headerName: 'Email', flex: 1 },
+    { field: "name", headerName: "Name", flex: 1 },
+    { field: "email", headerName: "Email", flex: 1 },
     {
-      field: 'role',
-      headerName: 'Role',
+      field: "role",
+      headerName: "Role",
       width: 150,
       renderCell: (params) => (
         <FormControl variant="standard" sx={{ minWidth: 120 }}>
           <Select
             value={params.value}
-            onChange={(e) => handleUpdateUserRole(params.row.id, e.target.value as 'user' | 'admin')}
+            onChange={(e) =>
+              handleUpdateUserRole(
+                params.row.id,
+                e.target.value as "user" | "admin"
+              )
+            }
             size="small"
           >
             <MenuItem value="user">User</MenuItem>
             <MenuItem value="admin">Admin</MenuItem>
           </Select>
         </FormControl>
-      )
+      ),
     },
     {
-      field: 'createdAt',
-      headerName: 'Created',
+      field: "createdAt",
+      headerName: "Created",
       width: 120,
-      valueFormatter: (params: { value: string }) => new Date(params.value).toLocaleDateString()
+      valueFormatter: (params: { value: string }) =>
+        new Date(params.value).toLocaleDateString(),
     },
     {
-      field: 'lastLogin',
-      headerName: 'Last Login',
+      field: "lastLogin",
+      headerName: "Last Login",
       width: 120,
-      valueFormatter: (params: { value: string }) => new Date(params.value).toLocaleDateString()
+      valueFormatter: (params: { value: string }) =>
+        new Date(params.value).toLocaleDateString(),
     },
-    { field: 'casesCompleted', headerName: 'Cases Completed', width: 150 },
+    { field: "casesCompleted", headerName: "Cases Completed", width: 150 },
     {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 180,
+      field: "actions",
+      headerName: "Actions",
+      width: 100,
       renderCell: (params) => (
-        <>
-          <Button
-            variant="outlined"
-            color="primary"
-            size="small"
-            onClick={() => handleEditClick(params.row)}
-            sx={{ mr: 1 }}
-          >
-            Edit
-          </Button>
-          <Button
-            variant="outlined"
-            color="error"
-            size="small"
-            onClick={() => handleDeleteClick(params.row.id, 'case')}
-          >
-            <Delete fontSize="small" />
-          </Button>
-        </>
+        <Button
+          variant="outlined"
+          color="error"
+          size="small"
+          onClick={() => handleDeleteClick(params.row.id, "user")}
+        >
+          <Delete fontSize="small" />
+        </Button>
       ),
     },
   ];
 
   const scoresColumns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', flex: 1 },
-    { field: 'email', headerName: 'Email', flex: 1 },
-    { field: 'averageScore', headerName: 'Average Score', width: 150 },
-    { field: 'casesCompleted', headerName: 'Cases Completed', width: 150 },
+    { field: "name", headerName: "Name", flex: 1 },
+    { field: "email", headerName: "Email", flex: 1 },
+    { field: "averageScore", headerName: "Average Score", width: 150 },
+    { field: "casesCompleted", headerName: "Cases Completed", width: 150 },
   ];
 
   const caseColumns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 100 },
-    { field: 'title', headerName: 'Title', flex: 1 },
-    { field: 'programArea', headerName: 'Program Area', width: 150 },
-    { field: 'specialty', headerName: 'Specialty', width: 150 },
-    { field: 'difficulty', headerName: 'Difficulty', width: 120 },
+    { field: "id", headerName: "ID", width: 100 },
+    { field: "title", headerName: "Title", flex: 1 },
+    { field: "programArea", headerName: "Program Area", width: 150 },
+    { field: "specialty", headerName: "Specialty", width: 150 },
+    { field: "difficulty", headerName: "Difficulty", width: 120 },
     {
-      field: 'createdAt',
-      headerName: 'Created',
+      field: "createdAt",
+      headerName: "Created",
       width: 120,
-      valueFormatter: (params: { value: string }) => new Date(params.value).toLocaleDateString()
+      valueFormatter: (params: { value: string }) =>
+        new Date(params.value).toLocaleDateString(),
     },
-    { field: 'timesCompleted', headerName: 'Times Completed', width: 150 },
-    { field: 'averageScore', headerName: 'Avg Score', width: 120 },
+    { field: "timesCompleted", headerName: "Times Completed", width: 150 },
+    { field: "averageScore", headerName: "Avg Score", width: 120 },
     {
-      field: 'actions',
-      headerName: 'Actions',
+      field: "actions",
+      headerName: "Actions",
       width: 180,
       renderCell: (params) => (
         <>
@@ -537,7 +658,7 @@ const AdminDashboard: React.FC = () => {
             variant="outlined"
             color="error"
             size="small"
-            onClick={() => handleDeleteClick(params.row.id, 'case')}
+            onClick={() => handleDeleteClick(params.row.id, "case")}
           >
             <Delete fontSize="small" />
           </Button>
@@ -546,7 +667,7 @@ const AdminDashboard: React.FC = () => {
     },
   ];
 
-  if (!currentUser || currentUser.role !== 'admin') {
+  if (!currentUser || currentUser.role !== "admin") {
     return (
       <Container sx={{ mt: 4 }}>
         <Typography variant="h5" color="error">
@@ -561,7 +682,7 @@ const AdminDashboard: React.FC = () => {
 
   if (loading || isAuthLoading) {
     return (
-      <Container sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+      <Container sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
         <CircularProgress />
       </Container>
     );
@@ -569,21 +690,39 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">
-          Admin Dashboard
-        </Typography>
-        <Button 
-          variant="contained" 
-          startIcon={<Refresh />}
-          onClick={handleRefreshData}
-        >
-          Refresh Data
-        </Button>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">Admin Dashboard</Typography>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => (window.location.href = "/select-program")}
+          >
+            Start Simulation
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Refresh />}
+            onClick={handleRefreshData}
+          >
+            Refresh Data
+          </Button>
+        </Box>
       </Box>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="admin dashboard tabs">
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="admin dashboard tabs"
+        >
           <Tab icon={<Dashboard />} label="Overview" {...a11yProps(0)} />
           <Tab icon={<People />} label="Users" {...a11yProps(1)} />
           <Tab icon={<Assignment />} label="Cases" {...a11yProps(2)} />
@@ -659,9 +798,18 @@ const AdminDashboard: React.FC = () => {
                     <PieChart>
                       <Pie
                         data={[
-                          { name: 'Beginner', value: systemStats.casesByDifficulty.Beginner },
-                          { name: 'Intermediate', value: systemStats.casesByDifficulty.Intermediate },
-                          { name: 'Advanced', value: systemStats.casesByDifficulty.Advanced }
+                          {
+                            name: "Beginner",
+                            value: systemStats.casesByDifficulty.Beginner,
+                          },
+                          {
+                            name: "Intermediate",
+                            value: systemStats.casesByDifficulty.Intermediate,
+                          },
+                          {
+                            name: "Advanced",
+                            value: systemStats.casesByDifficulty.Advanced,
+                          },
                         ]}
                         cx="50%"
                         cy="50%"
@@ -689,9 +837,15 @@ const AdminDashboard: React.FC = () => {
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart
                       data={[
-                        { name: 'Admin', count: systemStats.usersByRole.Admin },
-                        { name: 'Clinician', count: systemStats.usersByRole.Clinician },
-                        { name: 'Instructor', count: systemStats.usersByRole.Instructor }
+                        { name: "Admin", count: systemStats.usersByRole.Admin },
+                        {
+                          name: "Clinician",
+                          count: systemStats.usersByRole.Clinician,
+                        },
+                        {
+                          name: "Instructor",
+                          count: systemStats.usersByRole.Instructor,
+                        },
                       ]}
                       margin={{
                         top: 5,
@@ -717,7 +871,9 @@ const AdminDashboard: React.FC = () => {
                   </Typography>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart
-                      data={Object.entries(systemStats.casesByProgramArea).map(([name, value]) => ({ name, count: value }))}
+                      data={Object.entries(systemStats.casesByProgramArea).map(
+                        ([name, value]) => ({ name, count: value })
+                      )}
                       margin={{
                         top: 5,
                         right: 30,
@@ -730,7 +886,10 @@ const AdminDashboard: React.FC = () => {
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="count" fill={theme.palette.secondary.main} />
+                      <Bar
+                        dataKey="count"
+                        fill={theme.palette.secondary.main}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </Paper>
@@ -742,10 +901,8 @@ const AdminDashboard: React.FC = () => {
 
       {/* Users Tab */}
       <TabPanel value={tabValue} index={1}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h5">
-            User Management
-          </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+          <Typography variant="h5">User Management</Typography>
           <Button
             variant="contained"
             color="primary"
@@ -755,7 +912,7 @@ const AdminDashboard: React.FC = () => {
             Add User
           </Button>
         </Box>
-        <Paper sx={{ height: 600, width: '100%' }}>
+        <Paper sx={{ height: 600, width: "100%" }}>
           <DataGrid
             rows={users}
             columns={userColumns}
@@ -770,29 +927,27 @@ const AdminDashboard: React.FC = () => {
 
       {/* Cases Tab */}
       <TabPanel value={tabValue} index={2}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h5">
-            Case Management
-          </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+          <Typography variant="h5">Case Management</Typography>
           <Box>
-            <Button 
-              variant="contained" 
-              color="primary" 
+            <Button
+              variant="contained"
+              color="primary"
               startIcon={<Add />}
               sx={{ mr: 1 }}
             >
               Add Case
             </Button>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               color="primary"
-              onClick={() => window.location.href = '/scripts-documentation'}
+              onClick={() => (window.location.href = "/scripts-documentation")}
             >
               Case Scripts
             </Button>
           </Box>
         </Box>
-        <Paper sx={{ height: 600, width: '100%' }}>
+        <Paper sx={{ height: 600, width: "100%" }}>
           <DataGrid
             rows={cases}
             columns={caseColumns}
@@ -807,10 +962,8 @@ const AdminDashboard: React.FC = () => {
 
       {/* Scores Tab */}
       <TabPanel value={tabValue} index={3}>
-        <Typography variant="h5">
-          User Scores
-        </Typography>
-        <Paper sx={{ height: 600, width: '100%' }}>
+        <Typography variant="h5">User Scores</Typography>
+        <Paper sx={{ height: 600, width: "100%" }}>
           <DataGrid
             rows={usersWithScores}
             columns={scoresColumns}
@@ -832,26 +985,24 @@ const AdminDashboard: React.FC = () => {
           </Typography>
           <Box sx={{ mb: 3 }}>
             <Typography variant="body1" paragraph>
-              Use these tools to manage the database. Be careful, these actions cannot be undone.
+              Use these tools to manage the database. Be careful, these actions
+              cannot be undone.
             </Typography>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               color="primary"
               sx={{ mr: 2 }}
-              onClick={() => window.location.href = '/scripts-documentation'}
+              onClick={() => (window.location.href = "/scripts-documentation")}
             >
               View Scripts Documentation
             </Button>
-            <Button 
-              variant="outlined" 
-              color="error"
-            >
+            <Button variant="outlined" color="error">
               Reset Database
             </Button>
           </Box>
-          
+
           <Divider sx={{ my: 3 }} />
-          
+
           <Typography variant="h6" gutterBottom>
             System Configuration
           </Typography>
@@ -862,14 +1013,12 @@ const AdminDashboard: React.FC = () => {
       </TabPanel>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={handleDeleteCancel}
-      >
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this {itemToDelete?.type}? This action cannot be undone.
+            Are you sure you want to delete this {itemToDelete?.type}? This
+            action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -948,14 +1097,73 @@ const AdminDashboard: React.FC = () => {
             onClick={handleCreateUserSubmit}
             color="primary"
             variant="contained"
-            disabled={!newUser.username || !newUser.email || !newUser.password}
           >
-            Create
+            Create User
           </Button>
         </DialogActions>
       </Dialog>
 
+      {/* Edit Case Dialog */}
+      <Dialog
+        open={editCaseDialogOpen}
+        onClose={handleEditCaseClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Edit Case</DialogTitle>
+        <DialogContent>
+          <Typography variant="subtitle1" sx={{ mb: 2, mt: 1 }}>
+            Case ID: {caseToEdit?.id}
+          </Typography>
+          <Typography variant="subtitle1" sx={{ mb: 2 }}>
+            Title: {caseToEdit?.title}
+          </Typography>
 
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="program-area-label">Program Area</InputLabel>
+            <Select
+              labelId="program-area-label"
+              name="programArea"
+              value={editedCaseData.programArea}
+              label="Program Area"
+              onChange={handleEditedCaseChange}
+            >
+              {availableProgramAreas.map((area) => (
+                <MenuItem key={area} value={area}>
+                  {area}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="specialty-label">Specialty</InputLabel>
+            <Select
+              labelId="specialty-label"
+              name="specialty"
+              value={editedCaseData.specialty}
+              label="Specialty"
+              onChange={handleEditedCaseChange}
+            >
+              {availableSpecialties.map((specialty) => (
+                <MenuItem key={specialty} value={specialty}>
+                  {specialty}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditCaseClose}>Cancel</Button>
+          <Button
+            onClick={handleUpdateCase}
+            color="primary"
+            variant="contained"
+          >
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

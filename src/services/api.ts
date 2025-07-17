@@ -467,6 +467,7 @@ export const api = {
 
       const result = await response.json();
       console.log('Users result:', result);
+      // The backend now returns the array directly
       return result;
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -651,6 +652,59 @@ export const api = {
       console.error('Error fetching users with scores:', error);
       if (error instanceof ApiError) throw error;
       throw new ApiError('Failed to fetch users with scores. Please check your internet connection.');
+    }
+  },
+
+  async fetchProgramAreas(): Promise<string[]> {
+    console.log('Fetching program areas');
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/program-areas`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Program areas result:', result);
+      return result.programAreas || [];
+    } catch (error) {
+      console.error('Error fetching program areas:', error);
+      if (error instanceof ApiError) throw error;
+      // Return default program areas if API fails
+      return ["Basic Program", "Specialty Program"];
+    }
+  },
+
+  async fetchSpecialties(): Promise<string[]> {
+    console.log('Fetching specialties');
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/specialties`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          errorData.error || `Server error: ${response.status}`,
+          response.status
+        );
+      }
+
+      const result = await response.json();
+      console.log('Specialties result:', result);
+      return result.specialties || [];
+    } catch (error) {
+      console.error('Error fetching specialties:', error);
+      if (error instanceof ApiError) throw error;
+      // Return default specialties if API fails
+      return ["Internal Medicine", "Surgery", "Pediatrics", "Ophthalmology", "ENT", 
+              "Cardiology", "Neurology", "Psychiatry", "Emergency Medicine", "Family Medicine"];
     }
   }
   // ,

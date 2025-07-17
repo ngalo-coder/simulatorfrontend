@@ -50,6 +50,8 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
       setMetricsError(null);
       api.getPerformanceMetrics(sessionId)
         .then(data => {
+          console.log("Performance metrics received:", data);
+          console.log("Overall diagnosis accuracy:", data?.metrics?.overall_diagnosis_accuracy);
           setPerformanceMetrics(data);
         })
         .catch(err => {
@@ -300,9 +302,9 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
                   </div>
 
                   {/* Overall Diagnosis Accuracy (if present) */}
-                  {performanceMetrics.metrics?.overall_diagnosis_accuracy && (
+                  {performanceMetrics.metrics?.overall_diagnosis_accuracy && performanceMetrics.metrics.overall_diagnosis_accuracy !== "Undetermined" && (
                     <div className="pb-2"> {/* Adjusted padding */}
-                     {renderMetricItem('overall_diagnosis_accuracy', performanceMetrics?.metrics.overall_diagnosis_accuracy)}
+                     {renderMetricItem('overall_diagnosis_accuracy', performanceMetrics.metrics.overall_diagnosis_accuracy)}
                     </div>
                   )}
 
