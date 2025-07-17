@@ -14,15 +14,14 @@ import ClinicianDashboard from './components/ClinicianDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import { api } from './services/api';
 import { Message, EvaluationData } from './types';
-import { useAuth } from './contexts/AuthContext'; // Import useAuth
+import { useAuth } from './contexts/AuthContext';
 
 // Define local AppState type for this component
 type AppStateType = 'selecting_program' | 'selecting_specialty' | 'selecting_patient' | 'chatting' | 'showing_evaluation';
 
 function App() {
-  const { isLoggedIn, logout, isLoading: isAuthLoading } = useAuth(); // Add logout from useAuth
+  const { isLoggedIn, logout, isLoading: isAuthLoading } = useAuth();
 
-  // App state related to simulation flow
   const [appState, setAppState] = useState<AppStateType>('selecting_program');
   const [selectedProgramArea, setSelectedProgramArea] = useState<string | null>(null);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
@@ -56,7 +55,6 @@ function App() {
     setAppState('selecting_specialty');
   }, []);
 
-
   const handleStartSimulation = useCallback(async (caseId: string) => {
     setIsLoading(true);
     setError(null);
@@ -83,12 +81,8 @@ function App() {
   }, []);
 
   const handleEndSession = useCallback(async (bypassConfirmation = false) => {
-    if (!simulationSessionId) {
-      console.error('handleEndSession called without simulationSessionId');
-      return;
-    }
+    if (!simulationSessionId) return;
 
-    // Only show confirmation if not bypassed by an automatic process AND the session was active from user's perspective
     if (!bypassConfirmation && isSessionActive) {
       const confirmed = window.confirm(
         'Are you sure you want to end this session? You will receive an AI evaluation of your performance.'
@@ -96,21 +90,20 @@ function App() {
       if (!confirmed) return;
     }
 
-    setIsLoading(true); // Indicate loading for fetching evaluation
+    setIsLoading(true);
     setError(null);
 
     try {
-      const response = await api.endSession(simulationSessionId); // This fetches the full evaluation
-      setIsSessionActive(false); // Ensure session is marked inactive
+      const response = await api.endSession(simulationSessionId);
+      setIsSessionActive(false);
       setEvaluationData({
         evaluation: response.evaluation,
         history: response.history
       });
-      setAppState('showing_evaluation'); // Transition to show evaluation
+      setAppState('showing_evaluation');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to end session';
       setError(`Error ending session: ${errorMessage}`);
-      // Stay in current state if evaluation fetching fails
     } finally {
       setIsLoading(false);
     }
@@ -119,17 +112,14 @@ function App() {
   const handleSendMessage = useCallback((question: string) => {
     if (!question.trim() || !simulationSessionId || !isSessionActive) return;
 
-    // Clear any previous streaming state
     setStreamingMessageIndex(undefined);
 
-    // Add the user's message to the state immediately
     const userMessage: Message = {
       sender: 'clinician',
       text: question,
       timestamp: Date.now()
     };
 
-    // Add a placeholder for the patient's streaming response
     const patientPlaceholder: Message = {
       sender: 'patient',
       text: '',
@@ -138,65 +128,45 @@ function App() {
 
     const newMessages = [...messages, userMessage, patientPlaceholder];
     setMessages(newMessages);
-    
-    // Set streaming index to the patient placeholder message
     setStreamingMessageIndex(newMessages.length - 1);
-    
     setIsLoading(true);
     setError(null);
 
     let aiResponse = '';
-    const cleanup = api.streamSimulationAsk(
-      { sessionId: simulationSessionId, question }, // Use simulationSessionId
+    api.streamSimulationAsk(
+      { sessionId: simulationSessionId, question },
       (chunk) => {
         aiResponse += chunk;
         setMessages(prev => {
-          const newMessages = [...prev];
-          const lastMessage = newMessages[newMessages.length - 1];
-          if (lastMessage && lastMessage.sender === 'patient') {
-            lastMessage.text = aiResponse;
-          }
-          return newMessages;
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last?.sender === 'patient') last.text = aiResponse;
+          return updated;
         });
       },
       () => {
         setIsLoading(false);
-        // Keep streamingMessageIndex set for a short time after completion
-        // to allow the typing animation to finish
-        setTimeout(() => {
-          setStreamingMessageIndex(undefined);
-        }, 500);
-        // Stream completed normally - no automatic session end
+        setTimeout(() => setStreamingMessageIndex(undefined), 500);
       },
       (err) => {
         setIsLoading(false);
-        // Clear streaming index immediately on error
         setStreamingMessageIndex(undefined);
         setError('Communication error: ' + (err?.message || 'Unknown error'));
-        // Remove the placeholder message
         setMessages(prev => {
-          const newMessages = [...prev];
-          if (newMessages[newMessages.length - 1]?.sender === 'patient' &&
-              newMessages[newMessages.length - 1]?.text === '') {
-            newMessages.pop();
+          const updated = [...prev];
+          if (updated[updated.length - 1]?.sender === 'patient' && updated[updated.length - 1].text === '') {
+            updated.pop();
           }
-          return newMessages;
+          return updated;
         });
       },
-      (streamEndSignal) => {
-        // Handle automatic session end from backend
-        console.log('Automatic session end signaled by stream:', streamEndSignal);
+      () => {
         setIsLoading(false);
         setStreamingMessageIndex(undefined);
         setIsSessionActive(false);
-        
-        // Automatically trigger handleEndSession to fetch the full evaluation
-        handleEndSession(true); // Pass true to bypass confirmation
+        handleEndSession(true);
       }
     );
-
-    // Optional: cleanup on unmount or new message
-    // return cleanup;
   }, [simulationSessionId, isSessionActive, handleEndSession, messages]);
 
   const handleRestart = useCallback(() => {
@@ -214,87 +184,53 @@ function App() {
   }, []);
 
   const handleBack = useCallback(() => {
-    setAppState('selecting_program');
-    setSelectedProgramArea(null);
-    setSelectedSpecialty(null);
-    setSimulationSessionId(null);
-    setMessages([]);
-    setEvaluationData(null);
-    setError(null);
-    setIsLoading(false);
-    setCurrentCaseId(null);
-    setIsSessionActive(false);
-    setStreamingMessageIndex(undefined);
-  }, []);
+    handleRestart();
+  }, [handleRestart]);
 
   const handleDismissError = useCallback(() => {
     setError(null);
   }, []);
 
   const handleLogout = () => {
-    logout(); // Call logout from AuthContext
-    // AppContent's useEffect will handle navigation to /login
-    // Reset any app-specific states if necessary
-    setAppState('selecting_program');
-    setSelectedProgramArea(null);
-    setSelectedSpecialty(null);
-    setSimulationSessionId(null);
-    setMessages([]);
-    setEvaluationData(null);
-    setCurrentCaseId(null);
-    setIsSessionActive(false);
-    setError(null);
-    setStreamingMessageIndex(undefined);
+    logout();
+    handleRestart();
   };
 
-  // This component will wrap the main application logic and manage routing
   const AppContent: React.FC = () => {
-    const navigate = useNavigate(); // Hook for navigation
-    const { currentUser } = useAuth(); // Get currentUser from auth context
+    const navigate = useNavigate();
+    const { currentUser } = useAuth();
 
-    // Effect to redirect if not logged in, or set initial app state
     useEffect(() => {
-      if (!isAuthLoading && !isLoggedIn) { // Check isAuthLoading
-        // If not logged in and not on register/login, redirect to login
+      if (!isAuthLoading && !isLoggedIn) {
         if (window.location.pathname !== '/register' && window.location.pathname !== '/login') {
           navigate('/login');
         }
       } else if (!isAuthLoading && isLoggedIn) {
-        // If logged in and on login/register, redirect based on role
-        if (window.location.pathname === '/login' || window.location.pathname === '/register') {
-          // If user is admin, redirect to admin dashboard
+        const isAtAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
+        if (isAtAuthPage || window.location.pathname === '/') {
           if (currentUser?.role === 'admin') {
             navigate('/admin');
           } else {
-            // For regular users, redirect to home
-            navigate('/');
+            navigate('/dashboard');
           }
-        } else if (window.location.pathname === '/' && currentUser?.role === 'admin') {
-          // If admin user is at home route, redirect to admin dashboard
-          navigate('/admin');
         }
       }
     }, [isLoggedIn, isAuthLoading, navigate, currentUser]);
 
-    if (isAuthLoading) {
-      return <div>Loading...</div>; // Or a proper loading spinner
-    }
+    if (isAuthLoading) return <div>Loading...</div>;
 
     if (!isLoggedIn) {
-      // Routes for unauthenticated users
       return (
         <Routes>
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/register" element={<RegistrationScreen />} />
           <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
           <Route path="/reset-password/:token" element={<ResetPasswordScreen />} />
-          {/* Redirect any other unauthenticated access to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       );
     }
 
-    // Main application content for authenticated users
     return (
       <div className="flex flex-col min-h-screen">
         <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex justify-between items-center shadow-lg">
@@ -308,28 +244,24 @@ function App() {
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  if (currentUser?.role === 'admin') {
-                    navigate('/admin');
-                  } else {
-                    navigate('/dashboard');
-                  }
+                  if (currentUser?.role === 'admin') navigate('/admin');
+                  else navigate('/dashboard');
                 }}
-                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg"
               >
                 Dashboard
               </button>
-              {/* Show Admin Dashboard button only for users with admin role */}
               {currentUser?.role === 'admin' && (
                 <button
                   onClick={() => navigate('/admin')}
-                  className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                  className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg"
                 >
                   Admin
                 </button>
               )}
               <button
                 onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg"
               >
                 Logout
               </button>
@@ -338,17 +270,14 @@ function App() {
         </header>
         <main className="flex-grow">
           {error && (
-            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4 mt-4"> {/* Adjusted top for header */}
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4 mt-4">
               <ErrorMessage message={error} onDismiss={handleDismissError} />
             </div>
           )}
           <Routes>
             <Route path="/" element={
               appState === 'selecting_program' ? (
-                <ProgramAreaSelection
-                  onSelectProgramArea={handleSelectProgramArea}
-                  isLoading={isLoading || isAuthLoading}
-                />
+                <ProgramAreaSelection onSelectProgramArea={handleSelectProgramArea} isLoading={isLoading || isAuthLoading} />
               ) : appState === 'selecting_specialty' ? (
                 <SpecialtySelection
                   programArea={selectedProgramArea!}
@@ -366,34 +295,32 @@ function App() {
                 />
               ) : appState === 'chatting' ? (
                 <ChatScreen
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                onRestart={handleRestart}
-                onBack={handleBack}
-                currentCaseId={currentCaseId}
-                isSessionActive={isSessionActive}
-                sessionId={simulationSessionId} // Use simulationSessionId
-                onEndSession={() => handleEndSession(false)}
-                streamingMessageIndex={streamingMessageIndex}
-              />
-            ) : appState === 'showing_evaluation' && evaluationData ? (
-              <EvaluationScreen
-                evaluationData={evaluationData}
-                onRestart={handleRestart}
-                onBack={handleBack}
-                currentCaseId={currentCaseId}
-                sessionId={simulationSessionId} // Pass simulationSessionId
-              />
-            ) : (
-              <Navigate to="/" replace /> // Fallback, should ideally not be hit if appState is managed well
-            )
-          }/>
-          {/* Dashboard routes */}
-          <Route path="/dashboard" element={<ClinicianDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          {/* Add other authenticated routes here if needed */}
-          <Route path="*" element={<Navigate to="/" replace />} /> {/* Redirect unknown paths to home */}
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  onRestart={handleRestart}
+                  onBack={handleBack}
+                  currentCaseId={currentCaseId}
+                  isSessionActive={isSessionActive}
+                  sessionId={simulationSessionId}
+                  onEndSession={() => handleEndSession(false)}
+                  streamingMessageIndex={streamingMessageIndex}
+                />
+              ) : appState === 'showing_evaluation' && evaluationData ? (
+                <EvaluationScreen
+                  evaluationData={evaluationData}
+                  onRestart={handleRestart}
+                  onBack={handleBack}
+                  currentCaseId={currentCaseId}
+                  sessionId={simulationSessionId}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }/>
+            <Route path="/dashboard" element={<ClinicianDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
