@@ -12,10 +12,12 @@ import ForgotPasswordScreen from './components/ForgotPasswordScreen';
 import ResetPasswordScreen from './components/ResetPasswordScreen';
 import ClinicianDashboard from './components/ClinicianDashboard';
 import AdminDashboard from './components/AdminDashboard';
+import UserGuide from './components/UserGuide';
 import ProgramSelector from './components/ProgramSelector';
 import { api } from './services/api';
 import { Message, EvaluationData } from './types';
 import { useAuth } from './contexts/AuthContext';
+import { HelpCircle } from 'lucide-react';
 
 // Define local AppState type for this component
 type AppStateType = 'selecting_program' | 'selecting_specialty' | 'selecting_patient' | 'chatting' | 'showing_evaluation';
@@ -34,6 +36,7 @@ function App() {
   const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [streamingMessageIndex, setStreamingMessageIndex] = useState<number | undefined>(undefined);
+  const [showUserGuide, setShowUserGuide] = useState(false);
 
   const handleSelectProgramArea = useCallback((programArea: string) => {
     setSelectedProgramArea(programArea);
@@ -244,6 +247,14 @@ function App() {
           {isLoggedIn && (
             <div className="flex gap-3">
               <button
+                onClick={() => setShowUserGuide(true)}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2"
+                title="Help & Instructions"
+              >
+                <HelpCircle className="w-5 h-5" />
+                <span>Help</span>
+              </button>
+              <button
                 onClick={() => {
                   if (currentUser?.role === 'admin') navigate('/admin');
                   else navigate('/'); // Navigate to program selection for regular users
@@ -274,6 +285,12 @@ function App() {
             <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4 mt-4">
               <ErrorMessage message={error} onDismiss={handleDismissError} />
             </div>
+          )}
+          {showUserGuide && (
+            <UserGuide 
+              onClose={() => setShowUserGuide(false)} 
+              userRole={currentUser?.role as 'user' | 'admin'} 
+            />
           )}
           <Routes>
             <Route path="/" element={
