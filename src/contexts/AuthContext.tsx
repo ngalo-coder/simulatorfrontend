@@ -4,10 +4,11 @@ interface AuthState {
   token: string | null;
   currentUser: any | null; // Define a more specific User type if available
   isLoggedIn: boolean;
+  redirectTo: string | null;
 }
 
 interface AuthContextType extends AuthState {
-  login: (token: string, user: any) => void;
+  login: (token: string, user: any, redirectTo?: string) => void;
   logout: () => void;
   isLoading: boolean; // To handle async nature of checking localStorage
 }
@@ -19,6 +20,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     token: null,
     currentUser: null,
     isLoggedIn: false,
+    redirectTo: null,
   });
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
 
@@ -29,7 +31,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const userString = localStorage.getItem('currentUser');
       if (token && userString) {
         const currentUser = JSON.parse(userString);
-        setAuthState({ token, currentUser, isLoggedIn: true });
+        setAuthState({ token, currentUser, isLoggedIn: true, redirectTo: null });
       }
     } catch (error) {
       console.error("Error parsing auth data from localStorage", error);
@@ -40,14 +42,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(false); // Finished loading
   }, []);
 
-  const login = (token: string, user: any) => {
+  const login = (token: string, user: any, redirectTo?: string) => {
     localStorage.setItem('authToken', token);
     if (user) {
       localStorage.setItem('currentUser', JSON.stringify(user));
     } else {
       localStorage.removeItem('currentUser');
     }
-    setAuthState({ token, currentUser: user, isLoggedIn: true });
+    setAuthState({ token, currentUser: user, isLoggedIn: true, redirectTo: redirectTo || null });
   };
 
   const logout = () => {

@@ -38,10 +38,10 @@ const LoginScreen: React.FC = () => {
 
     try {
       const response = await api.post('/api/auth/login', { email, password });
-      const { token, user } = response;
+      const { token, user, redirectTo } = response;
 
-      login(token, user);
-      navigate('/');
+      login(token, user, redirectTo);
+      navigate(redirectTo || '/');
     } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message);
