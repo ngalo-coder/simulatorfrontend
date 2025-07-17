@@ -252,6 +252,12 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
               className="w-full pl-16 pr-6 py-5 text-lg border-2 border-gray-200 rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white shadow-lg"
             />
           </div>
+          <div className="text-center mt-3">
+            <p className="text-sm text-gray-500">
+              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">Tip</span>{" "}
+              Type to search or click on a program area to begin your simulation
+            </p>
+          </div>
         </div>
 
         {/* Program Areas Grid */}
