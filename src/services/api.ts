@@ -1,6 +1,6 @@
 // api.ts
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://simulatorbackend.onrender.com';
-// const API_BASE_URL = 'http://localhost:5001'; // For local testing
+// const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://simulatorbackend.onrender.com';
+const API_BASE_URL = 'http://localhost:5001'; // For local testing
 
 // Function to get the auth token from localStorage
 const getAuthToken = (): string | null => {
