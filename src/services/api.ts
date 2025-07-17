@@ -652,31 +652,32 @@ export const api = {
       if (error instanceof ApiError) throw error;
       throw new ApiError('Failed to fetch users with scores. Please check your internet connection.');
     }
-  },
-
-  async updateCase(caseId: string, data: { programArea: string, specialty: string }): Promise<any> {
-    console.log('Updating case:', caseId, data);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/cases/${caseId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Update case result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error updating case:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to update case. Please check your internet connection.');
-    }
   }
+  // ,
+
+  // async updateCase(caseId: string, data: { programArea: string, specialty: string }): Promise<any> {
+  //   console.log('Updating case:', caseId, data);
+  //   try {
+  //     const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/cases/${caseId}`, {
+  //       method: 'PUT',
+  //       body: JSON.stringify(data),
+  //     });
+
+  //     if (!response.ok) {
+  //       const errorData = await response.json().catch(() => ({}));
+  //       throw new ApiError(
+  //         errorData.error || `Server error: ${response.status}`,
+  //         response.status
+  //       );
+  //     }
+
+  //     const result = await response.json();
+  //     console.log('Update case result:', result);
+  //     return result;
+  //   } catch (error) {
+  //     console.error('Error updating case:', error);
+  //     if (error instanceof ApiError) throw error;
+  //     throw new ApiError('Failed to update case. Please check your internet connection.');
+  //   }
+  // }
 };

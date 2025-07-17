@@ -302,7 +302,7 @@ const EvaluationScreen: React.FC<EvaluationScreenProps> = ({
                   {/* Overall Diagnosis Accuracy (if present) */}
                   {performanceMetrics.metrics?.overall_diagnosis_accuracy && (
                     <div className="pb-2"> {/* Adjusted padding */}
-                     {renderMetricItem('overall_diagnosis_accuracy', performanceMetrics.metrics.overall_diagnosis_accuracy)}
+                     {renderMetricItem('overall_diagnosis_accuracy', performanceMetrics?.metrics.overall_diagnosis_accuracy)}
                     </div>
                   )}
 
