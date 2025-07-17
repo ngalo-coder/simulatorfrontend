@@ -260,11 +260,13 @@ function App() {
           navigate('/login');
         }
       } else if (!isAuthLoading && isLoggedIn) {
-        // If logged in and on login/register, redirect to the correct dashboard
-        if (window.location.pathname === '/login' || window.location.pathname === '/register') {
-          if (currentUser?.role === 'admin') {
+        if (currentUser?.role === 'admin') {
+          if (window.location.pathname !== '/admin') {
             navigate('/admin');
-          } else {
+          }
+        } else {
+          // If logged in and on login/register, redirect to the correct dashboard
+          if (window.location.pathname === '/login' || window.location.pathname === '/register') {
             navigate('/dashboard');
           }
         }
