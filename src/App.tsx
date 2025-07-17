@@ -12,6 +12,7 @@ import ForgotPasswordScreen from './components/ForgotPasswordScreen';
 import ResetPasswordScreen from './components/ResetPasswordScreen';
 import ClinicianDashboard from './components/ClinicianDashboard';
 import AdminDashboard from './components/AdminDashboard';
+import ProgramSelector from './components/ProgramSelector';
 import { api } from './services/api';
 import { Message, EvaluationData } from './types';
 import { useAuth } from './contexts/AuthContext';
@@ -320,6 +321,18 @@ function App() {
             }/>
             <Route path="/dashboard" element={<ClinicianDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            {/* Add route for select-program that resets the app state and shows program selection */}
+            <Route path="/select-program" element={
+              <ProgramSelector 
+                onSelectProgramArea={handleSelectProgramArea}
+                resetAppState={() => {
+                  setAppState('selecting_program');
+                  setSelectedProgramArea(null);
+                  setSelectedSpecialty(null);
+                }}
+                isLoading={isLoading || isAuthLoading}
+              />
+            } />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
