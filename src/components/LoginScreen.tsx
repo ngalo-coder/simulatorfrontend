@@ -38,7 +38,7 @@ const LoginScreen: React.FC = () => {
 
     try {
       const response = await api.post('/api/auth/login', { email, password });
-      const { token, user } = response;
+      const { token, user } = response.data || response;
 
       login(token, user);
       navigate('/');
