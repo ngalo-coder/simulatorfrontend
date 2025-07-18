@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import jwt_decode from 'jwt-decode';
 
 /**
  * User interface for type safety
@@ -59,50 +60,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Initialize auth state from localStorage
-    const initializeAuth = () => {
-      try {
-        const token = localStorage.getItem(STORAGE_KEY_TOKEN);
-        const user = getUserFromStorage();
-        
-        if (token && user) {
-          setAuthState({ token, currentUser: user, isLoggedIn: true });
-        }
-      } catch (error) {
-        console.error("Error initializing auth state", error);
-        // Clear potentially corrupted data
-        localStorage.removeItem(STORAGE_KEY_TOKEN);
-        localStorage.removeItem(STORAGE_KEY_USER);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    initializeAuth();
-  }, []);
-
-  /**
-   * Logs in a user and stores their credentials
-   */
-  const login = (token: string, user: User) => {
-    if (!token || !user) {
-      console.error("Invalid login attempt: Missing token or user data");
-      return;
-    }
-    
-    try {
-      localStorage.setItem(STORAGE_KEY_TOKEN, token);
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-      setAuthState({ token, currentUser: user, isLoggedIn: true });
-    } catch (error) {
-      console.error("Error storing auth data", error);
-    }
-  };
-
-  /**
-   * Logs out a user and clears their credentials
-   */
   const logout = () => {
     try {
       localStorage.removeItem(STORAGE_KEY_TOKEN);
@@ -113,9 +70,51 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  /**
-   * Updates user data without changing authentication status
-   */
+  useEffect(() => {
+    const initializeAuth = () => {
+      try {
+        const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+        const user = getUserFromStorage();
+
+        if (token && user) {
+          const decodedToken: { exp: number } = jwt_decode(token);
+          if (decodedToken.exp * 1000 < Date.now()) {
+            logout();
+          } else {
+            setAuthState({ token, currentUser: user, isLoggedIn: true });
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing auth state", error);
+        logout();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  const login = (token: string, user: User) => {
+    if (!token || !user) {
+      console.error("Invalid login attempt: Missing token or user data");
+      return;
+    }
+    
+    try {
+      const decodedToken: { exp: number } = jwt_decode(token);
+      if (decodedToken.exp * 1000 < Date.now()) {
+        logout();
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY_TOKEN, token);
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+      setAuthState({ token, currentUser: user, isLoggedIn: true });
+    } catch (error) {
+      console.error("Error storing auth data", error);
+    }
+  };
+
   const updateUser = (userData: Partial<User>) => {
     if (!authState.currentUser) return;
     
@@ -133,7 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     login,
     logout,
     updateUser,
-    isLoading
+    isLoading,
   };
 
   return (
