@@ -211,7 +211,8 @@ function App() {
         }
       } else if (!isAuthLoading && isLoggedIn) {
         const isAtAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
-        if (isAtAuthPage || window.location.pathname === '/') {
+        // Only redirect from the root path if the user is not in the middle of a selection process
+        if ((isAtAuthPage || window.location.pathname === '/') && appState === 'selecting_program') {
           if (currentUser?.role === 'admin') {
             navigate('/admin');
           } else {
@@ -219,7 +220,7 @@ function App() {
           }
         }
       }
-    }, [isLoggedIn, isAuthLoading, navigate, currentUser]);
+    }, [isLoggedIn, isAuthLoading, navigate, currentUser, appState]);
 
     if (isAuthLoading) return <div>Loading...</div>;
 
