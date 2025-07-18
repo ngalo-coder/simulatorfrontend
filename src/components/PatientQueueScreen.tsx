@@ -361,7 +361,11 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
                     </h3>
                     
                     <p className="text-gray-600 mb-4 line-clamp-2">
-                      {patientCase.description}
+                      {patientCase.chiefComplaint 
+                        ? `Patient presenting with ${patientCase.chiefComplaint.toLowerCase()}`
+                        : patientCase.description && patientCase.description !== "A universal template for creating virtual patient simulation cases."
+                          ? patientCase.description
+                          : `${patientCase.title} simulation case`}
                     </p>
                     
                     <div className="flex flex-wrap gap-2 mb-4">

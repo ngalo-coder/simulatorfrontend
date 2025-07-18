@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { api, ApiError } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
-import { 
-  Stethoscope, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  ArrowRight, 
-  Shield, 
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { api, ApiError } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  Stethoscope,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Shield,
   Brain,
   Heart,
   Zap,
-  CheckCircle
-} from 'lucide-react';
+  CheckCircle,
+} from "lucide-react";
 
 const LoginScreen: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,34 +31,50 @@ const LoginScreen: React.FC = () => {
     setIsLoading(true);
 
     if (!email || !password) {
-      setError('Email and password are required.');
+      setError("Email and password are required.");
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await api.post('/api/auth/login', { email, password });
+      const response = await api.post("/api/auth/login", { email, password });
       const { token, user } = response.data || response;
 
       login(token, user);
-      navigate('/');
+      navigate("/");
     } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError('Login failed. Please check your credentials and try again.');
+        setError("Login failed. Please check your credentials and try again.");
       }
-      console.error('Login error:', err);
+      console.error("Login error:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
   const features = [
-    { icon: Brain, title: "AI-Powered Learning", description: "Advanced virtual patients" },
-    { icon: Heart, title: "Clinical Excellence", description: "Real-world scenarios" },
-    { icon: Shield, title: "Safe Environment", description: "Risk-free practice" },
-    { icon: Zap, title: "Instant Feedback", description: "Immediate evaluation" }
+    {
+      icon: Brain,
+      title: "AI-Powered Learning",
+      description: "Advanced virtual patients",
+    },
+    {
+      icon: Heart,
+      title: "Clinical Excellence",
+      description: "Real-world scenarios",
+    },
+    {
+      icon: Shield,
+      title: "Safe Environment",
+      description: "Risk-free practice",
+    },
+    {
+      icon: Zap,
+      title: "Instant Feedback",
+      description: "Immediate evaluation",
+    },
   ];
 
   return (
@@ -73,26 +89,34 @@ const LoginScreen: React.FC = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white">Simuatech</h1>
-              <p className="text-blue-100">Where virtual patients build real clinicians</p>
+              <p className="text-blue-100">
+                Where virtual patients build real clinicians
+              </p>
             </div>
           </div>
-          
+
           <div className="mb-12">
             <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
               Where Virtual Patients Build Real Clinicians
             </h2>
             <p className="text-xl text-blue-100 leading-relaxed">
-              Master clinical skills with AI-powered virtual patients, receive instant feedback, and accelerate your medical education journey.
+              Master clinical skills with AI-powered virtual patients, receive
+              instant feedback, and accelerate your medical education journey.
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
             {features.map((feature, index) => (
-              <div key={index} className="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-20">
+              <div
+                key={index}
+                className="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-6 border border-white border-opacity-20"
+              >
                 <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mb-4">
                   <feature.icon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-white font-semibold mb-2">{feature.title}</h3>
+                <h3 className="text-white font-semibold mb-2">
+                  {feature.title}
+                </h3>
                 <p className="text-blue-100 text-sm">{feature.description}</p>
               </div>
             ))}
@@ -108,15 +132,20 @@ const LoginScreen: React.FC = () => {
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Stethoscope className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Kuiga</h1>
             <h1 className="text-2xl font-bold text-gray-900">Simuatech</h1>
-            <p className="text-gray-600">Where virtual patients build real clinicians</p>
+            <p className="text-gray-600">
+              Where virtual patients build real clinicians
+            </p>
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-              <p className="text-gray-600">Sign in to access your virtual patient simulations</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Welcome Back
+              </h2>
+              <p className="text-gray-600">
+                Sign in to access your virtual patient simulations
+              </p>
             </div>
 
             {error && (
@@ -127,7 +156,10 @@ const LoginScreen: React.FC = () => {
 
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3" htmlFor="email">
+                <label
+                  className="block text-sm font-semibold text-gray-700 mb-3"
+                  htmlFor="email"
+                >
                   Email Address
                 </label>
                 <div className="relative">
@@ -145,7 +177,10 @@ const LoginScreen: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3" htmlFor="password">
+                <label
+                  className="block text-sm font-semibold text-gray-700 mb-3"
+                  htmlFor="password"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -164,7 +199,11 @@ const LoginScreen: React.FC = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -191,15 +230,15 @@ const LoginScreen: React.FC = () => {
             <div className="mt-8 text-center">
               <p className="text-gray-600">
                 <button
-                  onClick={() => navigate('/forgot-password')}
+                  onClick={() => navigate("/forgot-password")}
                   className="font-bold text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   Forgot Password?
                 </button>
-                {' | '}
-                Don't have an account?{' '}
+                {" | "}
+                Don't have an account?{" "}
                 <button
-                  onClick={() => navigate('/register')}
+                  onClick={() => navigate("/register")}
                   className="font-bold text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   Create Account
