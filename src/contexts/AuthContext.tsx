@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 /**
  * User interface for type safety
@@ -77,7 +77,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const user = getUserFromStorage();
 
         if (token && user) {
-          const decodedToken: { exp: number } = jwt_decode(token);
+          const decodedToken: { exp: number } = jwtDecode(token);
           if (decodedToken.exp * 1000 < Date.now()) {
             logout();
           } else {
@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     
     try {
-      const decodedToken: { exp: number } = jwt_decode(token);
+      const decodedToken: { exp: number } = jwtDecode(token);
       if (decodedToken.exp * 1000 < Date.now()) {
         logout();
         return;

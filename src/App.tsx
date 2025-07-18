@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+
+// Component imports
 import ProgramAreaSelection from './components/ProgramAreaSelection';
 import SpecialtySelection from './components/SpecialtySelection';
 import PatientQueueScreen from './components/PatientQueueScreen';
@@ -14,28 +16,47 @@ import ClinicianDashboard from './components/ClinicianDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import UserGuide from './components/UserGuide';
 import ProgramSelector from './components/ProgramSelector';
+
+// Services and utilities
 import { api } from './services/api';
 import { Message, EvaluationData } from './types';
 import { useAuth } from './contexts/AuthContext';
 import { HelpCircle } from 'lucide-react';
+import SimulationFlowRouter from './components/SimulationFlowRouter';
 
-// Define local AppState type for this component
-type AppStateType = 'selecting_program' | 'selecting_specialty' | 'selecting_patient' | 'chatting' | 'showing_evaluation';
+/**
+ * Application state types for the simulation flow
+ */
+type AppStateType = 
+  | 'selecting_program'    // User is selecting a program area
+  | 'selecting_specialty'  // User is selecting a specialty within a program
+  | 'selecting_patient'    // User is selecting a patient case
+  | 'chatting'             // User is in an active simulation session
+  | 'showing_evaluation';  // User is viewing evaluation results
 
+/**
+ * Main application component
+ */
 function App() {
+  // Authentication state
   const { isLoggedIn, logout, isLoading: isAuthLoading } = useAuth();
 
+  // Simulation flow state
   const [appState, setAppState] = useState<AppStateType>('selecting_program');
   const [selectedProgramArea, setSelectedProgramArea] = useState<string | null>(null);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [simulationSessionId, setSimulationSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null);
   const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
   const [isSessionActive, setIsSessionActive] = useState(false);
+  
+  // Chat and evaluation state
+  const [messages, setMessages] = useState<Message[]>([]);
   const [streamingMessageIndex, setStreamingMessageIndex] = useState<number | undefined>(undefined);
+  const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null);
+  
+  // UI state
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showUserGuide, setShowUserGuide] = useState(false);
 
   const handleSelectProgramArea = useCallback((programArea: string) => {
@@ -59,15 +80,32 @@ function App() {
     setAppState('selecting_specialty');
   }, []);
 
+  /**
+   * Starts a simulation session with the selected case
+   * @param caseId ID of the case to simulate
+   */
   const handleStartSimulation = useCallback(async (caseId: string) => {
+    if (!caseId) {
+      setError("Invalid case ID provided");
+      return;
+    }
+    
+    // Reset state for new simulation
     setIsLoading(true);
     setError(null);
     setCurrentCaseId(caseId);
     setIsSessionActive(false);
     setEvaluationData(null);
+    setMessages([]);
 
     try {
       const response = await api.startSimulation(caseId);
+      
+      if (!response?.sessionId) {
+        throw new Error("Invalid response from server");
+      }
+      
+      // Set up the new simulation session
       setSimulationSessionId(response.sessionId);
       setMessages([{
         sender: 'patient',
@@ -84,9 +122,18 @@ function App() {
     }
   }, []);
 
+  /**
+   * Ends the current simulation session and shows evaluation
+   * @param bypassConfirmation Whether to skip the confirmation dialog
+   */
   const handleEndSession = useCallback(async (bypassConfirmation = false) => {
-    if (!simulationSessionId) return;
+    // Validate session state
+    if (!simulationSessionId) {
+      setError("No active session to end");
+      return;
+    }
 
+    // Confirm with user unless bypassed
     if (!bypassConfirmation && isSessionActive) {
       const confirmed = window.confirm(
         'Are you sure you want to end this session? You will receive an AI evaluation of your performance.'
@@ -99,6 +146,8 @@ function App() {
 
     try {
       const response = await api.endSession(simulationSessionId);
+      
+      // Update state with evaluation results
       setIsSessionActive(false);
       setEvaluationData({
         evaluation: response.evaluation,
@@ -113,14 +162,24 @@ function App() {
     }
   }, [simulationSessionId, isSessionActive]);
 
+  /**
+   * Sends a message to the virtual patient and handles the streaming response
+   * @param question The clinician's question to send
+   */
   const handleSendMessage = useCallback((question: string) => {
-    if (!question.trim() || !simulationSessionId || !isSessionActive) return;
+    // Validate inputs and session state
+    if (!question?.trim() || !simulationSessionId || !isSessionActive) {
+      return;
+    }
 
+    // Reset streaming state
     setStreamingMessageIndex(undefined);
-
+    setError(null);
+    
+    // Create messages
     const userMessage: Message = {
       sender: 'clinician',
-      text: question,
+      text: question.trim(),
       timestamp: Date.now()
     };
 
@@ -130,40 +189,53 @@ function App() {
       timestamp: Date.now()
     };
 
+    // Update UI state
     const newMessages = [...messages, userMessage, patientPlaceholder];
     setMessages(newMessages);
     setStreamingMessageIndex(newMessages.length - 1);
     setIsLoading(true);
-    setError(null);
 
+    // Track the response text
     let aiResponse = '';
+    
+    // Stream the response from the API
     api.streamSimulationAsk(
-      { sessionId: simulationSessionId, question },
+      { sessionId: simulationSessionId, question: question.trim() },
+      // Handle incoming chunks
       (chunk) => {
         aiResponse += chunk;
         setMessages(prev => {
           const updated = [...prev];
           const last = updated[updated.length - 1];
-          if (last?.sender === 'patient') last.text = aiResponse;
-          return updated;
-        });
-      },
-      () => {
-        setIsLoading(false);
-        setTimeout(() => setStreamingMessageIndex(undefined), 500);
-      },
-      (err) => {
-        setIsLoading(false);
-        setStreamingMessageIndex(undefined);
-        setError('Communication error: ' + (err?.message || 'Unknown error'));
-        setMessages(prev => {
-          const updated = [...prev];
-          if (updated[updated.length - 1]?.sender === 'patient' && updated[updated.length - 1].text === '') {
-            updated.pop();
+          if (last?.sender === 'patient') {
+            last.text = aiResponse;
           }
           return updated;
         });
       },
+      // Handle completion
+      () => {
+        setIsLoading(false);
+        setTimeout(() => setStreamingMessageIndex(undefined), 500);
+      },
+      // Handle errors
+      (err) => {
+        setIsLoading(false);
+        setStreamingMessageIndex(undefined);
+        setError('Communication error: ' + (err?.message || 'Unknown error'));
+        
+        // Remove empty patient message if there was an error
+        setMessages(prev => {
+          const updated = [...prev];
+          if (updated.length > 0 && 
+              updated[updated.length - 1]?.sender === 'patient' && 
+              updated[updated.length - 1].text === '') {
+            return updated.slice(0, -1);
+          }
+          return updated;
+        });
+      },
+      // Handle session end
       () => {
         setIsLoading(false);
         setStreamingMessageIndex(undefined);
@@ -173,56 +245,100 @@ function App() {
     );
   }, [simulationSessionId, isSessionActive, handleEndSession, messages]);
 
+  /**
+   * Resets the application state to start a new simulation
+   */
   const handleRestart = useCallback(() => {
+    // Reset all simulation state
     setAppState('selecting_program');
     setSelectedProgramArea(null);
     setSelectedSpecialty(null);
     setSimulationSessionId(null);
+    setCurrentCaseId(null);
+    setIsSessionActive(false);
+    
+    // Clear UI state
     setMessages([]);
     setEvaluationData(null);
     setError(null);
     setIsLoading(false);
-    setCurrentCaseId(null);
-    setIsSessionActive(false);
     setStreamingMessageIndex(undefined);
   }, []);
 
+  /**
+   * Handles back navigation from evaluation screen
+   */
   const handleBack = useCallback(() => {
+    // Currently just restarts the flow
     handleRestart();
+    // Could be enhanced to go back one step in the flow instead
   }, [handleRestart]);
 
+  /**
+   * Dismisses error messages
+   */
   const handleDismissError = useCallback(() => {
     setError(null);
   }, []);
 
-  const handleLogout = () => {
+  /**
+   * Handles user logout
+   */
+  const handleLogout = useCallback(() => {
     logout();
     handleRestart();
-  };
+  }, [logout, handleRestart]);
 
+  /**
+   * Inner component that handles routing and authentication state
+   */
   const AppContent: React.FC = () => {
     const navigate = useNavigate();
     const { currentUser } = useAuth();
 
+    // Handle authentication redirects
     useEffect(() => {
-      if (!isAuthLoading && !isLoggedIn) {
-        if (window.location.pathname !== '/register' && window.location.pathname !== '/login') {
+      if (isAuthLoading) {
+        // Wait for auth to initialize
+        return;
+      }
+      
+      if (!isLoggedIn) {
+        // Redirect to login if not on an auth page
+        const authPages = ['/register', '/login', '/forgot-password', '/reset-password'];
+        const isAtAuthPage = authPages.some(path => 
+          window.location.pathname === path || window.location.pathname.startsWith('/reset-password/')
+        );
+        
+        if (!isAtAuthPage) {
           navigate('/login');
         }
-      } else if (!isAuthLoading && isLoggedIn) {
-        const isAtAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
+      } else {
+        // Redirect logged-in users from auth pages to appropriate dashboard
+        const isAtAuthPage = ['/login', '/register'].includes(window.location.pathname);
         if (isAtAuthPage) {
           if (currentUser?.role === 'admin') {
             navigate('/admin');
           } else {
-            navigate('/dashboard'); // Direct normal users to their dashboard
+            navigate('/dashboard');
           }
         }
       }
-    }, [isLoggedIn, isAuthLoading, navigate, currentUser, appState]);
+    }, [isLoggedIn, isAuthLoading, navigate, currentUser]);
 
-    if (isAuthLoading) return <div>Loading...</div>;
+    // Show loading state while auth is initializing
+    if (isAuthLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-lg text-gray-600">Loading...</p>
+          </div>
+        </div>
+      );
+    }
 
+    // Show auth routes for non-authenticated users
     if (!isLoggedIn) {
       return (
         <Routes>
@@ -237,48 +353,63 @@ function App() {
 
     return (
       <div className="flex flex-col min-h-screen">
-        <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex flex-col sm:flex-row justify-between items-center shadow-lg">
-          <div className="flex items-center gap-3 mb-3 sm:mb-0">
-            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-              <span className="text-xl font-bold">S</span>
+        <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 shadow-lg">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center">
+            {/* Logo and brand */}
+            <div className="flex items-center gap-3 mb-3 sm:mb-0">
+              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center shadow-inner">
+                <span className="text-xl font-bold">S</span>
+              </div>
+              <h1 className="text-xl font-bold">Simuatech</h1>
             </div>
-            <h1 className="text-xl font-bold">Simuatech</h1>
-          </div>
-          {isLoggedIn && (
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-              <button
-                onClick={() => setShowUserGuide(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg flex items-center gap-1 sm:gap-2 text-sm sm:text-base transition-colors duration-200"
-                title="Help & Instructions"
-              >
-                <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden xs:inline">Help</span>
-              </button>
-              <button
-                onClick={() => {
-                  if (currentUser?.role === 'admin') navigate('/admin');
-                  else navigate('/dashboard'); // Navigate to dashboard for regular users
-                }}
-                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base transition-colors duration-200"
-              >
-                Dashboard
-              </button>
-              {currentUser?.role === 'admin' && (
+            
+            {/* Navigation buttons */}
+            {isLoggedIn && (
+              <nav className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                {/* Help button */}
                 <button
-                  onClick={() => navigate('/admin')}
-                  className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base transition-colors duration-200"
+                  onClick={() => setShowUserGuide(true)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg flex items-center gap-1 sm:gap-2 text-sm sm:text-base transition-all duration-200 hover:shadow-md"
+                  title="Help & Instructions"
+                  aria-label="Help and Instructions"
                 >
-                  Admin
+                  <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden xs:inline">Help</span>
                 </button>
-              )}
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base transition-colors duration-200"
-              >
-                Logout
-              </button>
-            </div>
-          )}
+                
+                {/* Dashboard button */}
+                <button
+                  onClick={() => {
+                    navigate(currentUser?.role === 'admin' ? '/admin' : '/dashboard');
+                  }}
+                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base transition-all duration-200 hover:shadow-md"
+                  aria-label="Go to Dashboard"
+                >
+                  Dashboard
+                </button>
+                
+                {/* Admin button - only shown to admin users */}
+                {currentUser?.role === 'admin' && (
+                  <button
+                    onClick={() => navigate('/admin')}
+                    className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base transition-all duration-200 hover:shadow-md"
+                    aria-label="Go to Admin Dashboard"
+                  >
+                    Admin
+                  </button>
+                )}
+                
+                {/* Logout button */}
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base transition-all duration-200 hover:shadow-md"
+                  aria-label="Logout"
+                >
+                  Logout
+                </button>
+              </nav>
+            )}
+          </div>
         </header>
         <main className="flex-grow">
           {error && (
@@ -293,52 +424,37 @@ function App() {
             />
           )}
           <Routes>
+            {/* Main simulation flow route */}
             <Route path="/" element={
-              appState === 'selecting_program' ? (
-                <ProgramAreaSelection onSelectProgramArea={handleSelectProgramArea} isLoading={isLoading || isAuthLoading} />
-              ) : appState === 'selecting_specialty' ? (
-                <SpecialtySelection
-                  programArea={selectedProgramArea!}
-                  onSelectSpecialty={handleSelectSpecialty}
-                  onBack={handleBackToProgramSelection}
-                  isLoading={isLoading}
-                />
-              ) : appState === 'selecting_patient' ? (
-                <PatientQueueScreen
-                  programArea={selectedProgramArea!}
-                  specialty={selectedSpecialty!}
-                  onBack={handleBackToSpecialtySelection}
-                  onStartCase={handleStartSimulation}
-                  isLoading={isLoading}
-                />
-              ) : appState === 'chatting' ? (
-                <ChatScreen
-                  messages={messages}
-                  onSendMessage={handleSendMessage}
-                  isLoading={isLoading}
-                  onRestart={handleRestart}
-                  onBack={handleBack}
-                  currentCaseId={currentCaseId}
-                  isSessionActive={isSessionActive}
-                  sessionId={simulationSessionId}
-                  onEndSession={() => handleEndSession(false)}
-                  streamingMessageIndex={streamingMessageIndex}
-                />
-              ) : appState === 'showing_evaluation' && evaluationData ? (
-                <EvaluationScreen
-                  evaluationData={evaluationData}
-                  onRestart={handleRestart}
-                  onBack={handleBack}
-                  currentCaseId={currentCaseId}
-                  sessionId={simulationSessionId}
-                />
-              ) : (
-                <Navigate to="/" replace />
-              )
+              <SimulationFlowRouter 
+                appState={appState}
+                selectedProgramArea={selectedProgramArea}
+                selectedSpecialty={selectedSpecialty}
+                messages={messages}
+                isLoading={isLoading}
+                isAuthLoading={isAuthLoading}
+                currentCaseId={currentCaseId}
+                isSessionActive={isSessionActive}
+                simulationSessionId={simulationSessionId}
+                streamingMessageIndex={streamingMessageIndex}
+                evaluationData={evaluationData}
+                handleSelectProgramArea={handleSelectProgramArea}
+                handleSelectSpecialty={handleSelectSpecialty}
+                handleBackToProgramSelection={handleBackToProgramSelection}
+                handleBackToSpecialtySelection={handleBackToSpecialtySelection}
+                handleStartSimulation={handleStartSimulation}
+                handleSendMessage={handleSendMessage}
+                handleEndSession={handleEndSession}
+                handleRestart={handleRestart}
+                handleBack={handleBack}
+              />
             }/>
+            
+            {/* Dashboard routes */}
             <Route path="/dashboard" element={<ClinicianDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            {/* Add route for select-program that resets the app state and shows program selection */}
+            
+            {/* Program selection route */}
             <Route path="/select-program" element={
               <ProgramSelector 
                 onSelectProgramArea={handleSelectProgramArea}
@@ -350,6 +466,8 @@ function App() {
                 isLoading={isLoading || isAuthLoading}
               />
             } />
+            
+            {/* Fallback route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

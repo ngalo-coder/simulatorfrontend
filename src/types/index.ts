@@ -1,5 +1,5 @@
 export interface Message {
-  sender: 'patient' | 'clinician';
+  sender: "patient" | "clinician";
   text: string;
   timestamp: number;
 }
@@ -58,12 +58,12 @@ export interface PatientCase {
   specializedArea?: string;
 }
 
-export type AppState = 'selecting_case' | 'chatting' | 'showing_evaluation';
+export type AppState = "selecting_case" | "chatting" | "showing_evaluation";
 
 export interface CaseCategories {
   program_areas: string[];
   specialties: string[];
   specialized_areas: string[];
 }
-export * from './performanceMetrics'; // Export PerformanceMetrics types
-export * from './clinicianProgress'; // Export ClinicianProgress types
+export * from "./performanceMetrics"; // Export PerformanceMetrics types
+export * from "./clinicianProgress"; // Export ClinicianProgress types
