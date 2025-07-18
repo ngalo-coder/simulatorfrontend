@@ -37,12 +37,36 @@ const SpecialtySelection: React.FC<SpecialtySelectionProps> = ({
     const fetchSpecialties = async () => {
       try {
         setLoading(true);
-        // Try to get specialties for the selected program area
-        const data = await api.getCaseCategories({ program_area: programArea });
+        console.log("Fetching specialties for program area:", programArea);
         
-        if (data && data.specialties && data.specialties.length > 0) {
-          setSpecialties(data.specialties);
+        // Try to get specialties for the selected program area
+        const response = await api.getCaseCategories({ program_area: programArea });
+        console.log("Received specialties response:", response);
+        
+        // Extract data from the response - handle different response structures
+        let specialtiesData = [];
+        
+        // Check all possible response structures with detailed logging
+        if (response && response.specialties) {
+          console.log("Found specialties directly in response:", response.specialties);
+          specialtiesData = response.specialties;
+        } else if (response && response.data && response.data.specialties) {
+          console.log("Found specialties in response.data:", response.data.specialties);
+          specialtiesData = response.data.specialties;
+        } else if (Array.isArray(response)) {
+          console.log("Response is an array:", response);
+          specialtiesData = response;
         } else {
+          console.log("Could not find specialties in expected locations. Full response:", JSON.stringify(response));
+        }
+        
+        console.log("Extracted specialties data:", specialtiesData);
+        
+        if (specialtiesData && specialtiesData.length > 0) {
+          console.log("Setting specialties from API:", specialtiesData);
+          setSpecialties(specialtiesData);
+        } else {
+          console.log("No specialties found in API response, using fallback");
           // Fallback to default specialties if none are returned
           setSpecialties([
             'Internal Medicine',
