@@ -13,6 +13,22 @@ const getAuthToken = (): string | null => {
   }
 };
 
+const getCsrfToken = (): string | null => {
+  try {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'csrf_token') {
+        return value;
+      }
+    }
+    return null;
+  } catch (e) {
+    console.error("Error accessing document.cookie for csrf_token", e);
+    return null;
+  }
+};
+
 /**
  * Handles authentication failures by clearing credentials and redirecting
  */
@@ -31,11 +47,16 @@ const handleAuthFailure = () => {
  */
 const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
   const token = getAuthToken();
+  const csrfToken = getCsrfToken();
   const headers = new Headers(options.headers || {});
 
   // Set auth header if token exists
   if (token) {
     headers.append('Authorization', `Bearer ${token}`);
+  }
+
+  if (csrfToken) {
+    headers.append('X-CSRF-TOKEN', csrfToken);
   }
   
   // Always set content type for consistency

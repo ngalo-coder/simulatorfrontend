@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { api } from "../services/api";
 import {
   Box,
   Button,
@@ -11,7 +10,6 @@ import {
   Chip,
   CircularProgress,
   Container,
-  Divider,
   Grid,
   LinearProgress,
   Paper,
@@ -21,6 +19,7 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
+import { useClinicianProgress, useProgressRecommendations } from "../hooks/useApi";
 import {
   BarChart,
   Bar,
@@ -48,12 +47,11 @@ import {
   EmojiEvents,
   Psychology,
   MedicalServices,
-  QuestionAnswer,
   AccessTime,
-  Favorite,
   Info,
   ArrowForward,
 } from "@mui/icons-material";
+import DashboardCard from "./DashboardCard";
 
 interface ProgressData {
   beginnerCasesCompleted: number;
@@ -123,84 +121,24 @@ interface Achievement {
 }
 
 const ClinicianDashboard: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, isLoading: isAuthLoading } = useAuth();
   const theme = useTheme();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState<ProgressData | null>(null);
-  const [recentMetrics, setRecentMetrics] = useState<RecentMetric[]>([]);
-  const [recommendations, setRecommendations] = useState<Recommendation | null>(
-    null
-  );
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
+  const userId = currentUser?._id || currentUser?.id || currentUser?.userId;
+
+  const { data: progressData, isLoading: isLoadingProgress } = useClinicianProgress(userId);
+  const { data: recommendations, isLoading: isLoadingRecommendations } = useProgressRecommendations(userId);
+
+  const progress = progressData?.progress;
+  const recentMetrics = progressData?.recentMetrics || [];
+
   useEffect(() => {
-    const loadDashboardData = async () => {
-      if (!currentUser) {
-        console.log("No currentUser object available");
-        setLoading(false);
-        return;
-      }
-
-      console.log("Current user object:", currentUser);
-
-      // Get the user ID, handling different property names
-      const userId = currentUser._id || currentUser.id || currentUser.userId;
-
-      if (!userId) {
-        console.error("User ID not found in currentUser object:", currentUser);
-        setLoading(false);
-        return;
-      }
-
-      console.log("Using user ID:", userId);
-
-      try {
-        setLoading(true);
-        console.log("Loading dashboard data for user:", userId);
-
-        try {
-          // Fetch progress data
-          const progressData = await api.fetchClinicianProgress(userId);
-          console.log("Progress data received:", progressData);
-
-          if (progressData && progressData.progress) {
-            setProgress(progressData.progress);
-            setRecentMetrics(progressData.recentMetrics || []);
-
-            // Generate achievements based on progress
-            generateAchievements(progressData.progress);
-          } else {
-            console.log("No progress data available for user");
-            // Set progress to null to show the empty state
-            setProgress(null);
-          }
-        } catch (progressError) {
-          console.error("Error fetching progress data:", progressError);
-          // Continue with other data fetching even if progress fails
-        }
-
-        try {
-          // Fetch recommendations
-          const recommendationsData = await api.fetchProgressRecommendations(
-            userId
-          );
-          console.log("Recommendations data received:", recommendationsData);
-          setRecommendations(recommendationsData);
-        } catch (recError) {
-          console.error("Error fetching recommendations:", recError);
-          // Continue even if recommendations fail
-        }
-      } catch (error) {
-        console.error("Error loading dashboard data:", error);
-      } finally {
-        // Always set loading to false to prevent infinite loading state
-        setLoading(false);
-      }
-    };
-
-    loadDashboardData();
-  }, [currentUser]);
+    if (progress) {
+      generateAchievements(progress);
+    }
+  }, [progress]);
 
   const generateAchievements = (progressData: ProgressData | null) => {
     if (!progressData) return;
@@ -279,7 +217,7 @@ const ClinicianDashboard: React.FC = () => {
     navigate("/select-program");
   };
 
-  if (loading) {
+  if (isAuthLoading || isLoadingProgress || isLoadingRecommendations) {
     return (
       <Container
         sx={{
@@ -485,127 +423,54 @@ const ClinicianDashboard: React.FC = () => {
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-              height: "100%",
-              transition: "transform 0.3s",
-              "&:hover": {
-                transform: "translateY(-5px)",
-                boxShadow: "0 6px 25px rgba(0,0,0,0.15)",
-              },
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={1}>
-                <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
-                  <Assignment />
-                </Avatar>
-                <Typography variant="h6" component="div">
-                  Total Cases
-                </Typography>
-              </Box>
-              <Typography
-                variant="h3"
-                component="div"
-                sx={{ mt: 2, fontWeight: "bold" }}
-              >
-                {progress.totalCasesCompleted}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {progress.totalCasesCompleted > 0
-                  ? `Great job completing ${progress.totalCasesCompleted} case${
-                      progress.totalCasesCompleted !== 1 ? "s" : ""
-                    }!`
-                  : "Start your first case today!"}
-              </Typography>
-            </CardContent>
-          </Card>
+          <DashboardCard
+            title="Total Cases"
+            value={progress.totalCasesCompleted}
+            icon={<Assignment />}
+            subtitle={
+              progress.totalCasesCompleted > 0
+                ? `Great job completing ${progress.totalCasesCompleted} case${
+                    progress.totalCasesCompleted !== 1 ? "s" : ""
+                  }!`
+                : "Start your first case today!"
+            }
+          />
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-              height: "100%",
-              transition: "transform 0.3s",
-              "&:hover": {
-                transform: "translateY(-5px)",
-                boxShadow: "0 6px 25px rgba(0,0,0,0.15)",
-              },
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={1}>
-                <Avatar sx={{ bgcolor: "secondary.main", mr: 2 }}>
-                  <Star />
-                </Avatar>
-                <Typography variant="h6" component="div">
-                  Avg Score
-                </Typography>
-              </Box>
-              <Typography
-                variant="h3"
-                component="div"
-                sx={{ mt: 2, fontWeight: "bold" }}
-              >
-                {progress.overallAverageScore.toFixed(1)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {progress.overallAverageScore >= 90
-                  ? "Excellent performance!"
-                  : progress.overallAverageScore >= 80
-                  ? "Very good performance!"
-                  : progress.overallAverageScore >= 70
-                  ? "Good performance!"
-                  : "Keep practicing to improve!"}
-              </Typography>
-            </CardContent>
-          </Card>
+          <DashboardCard
+            title="Avg Score"
+            value={progress.overallAverageScore.toFixed(1)}
+            icon={<Star />}
+            color="secondary.main"
+            subtitle={
+              progress.overallAverageScore >= 90
+                ? "Excellent performance!"
+                : progress.overallAverageScore >= 80
+                ? "Very good performance!"
+                : progress.overallAverageScore >= 70
+                ? "Good performance!"
+                : "Keep practicing to improve!"
+            }
+          />
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-              height: "100%",
-              transition: "transform 0.3s",
-              "&:hover": {
-                transform: "translateY(-5px)",
-                boxShadow: "0 6px 25px rgba(0,0,0,0.15)",
-              },
-            }}
-          >
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={1}>
-                <Avatar sx={{ bgcolor: "success.main", mr: 2 }}>
-                  <School />
-                </Avatar>
-                <Typography variant="h6" component="div">
-                  Current Level
-                </Typography>
-              </Box>
-              <Typography
-                variant="h3"
-                component="div"
-                sx={{ mt: 2, fontWeight: "bold" }}
-              >
-                {progress.currentProgressionLevel}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {progress.currentProgressionLevel === "Expert"
-                  ? "You've reached the highest level!"
-                  : progress.currentProgressionLevel === "Advanced"
-                  ? "Almost at expert level!"
-                  : progress.currentProgressionLevel === "Intermediate"
-                  ? "Making great progress!"
-                  : "Keep practicing to advance!"}
-              </Typography>
-            </CardContent>
-          </Card>
+          <DashboardCard
+            title="Current Level"
+            value={progress.currentProgressionLevel}
+            icon={<School />}
+            color="success.main"
+            subtitle={
+              progress.currentProgressionLevel === "Expert"
+                ? "You've reached the highest level!"
+                : progress.currentProgressionLevel === "Advanced"
+                ? "Almost at expert level!"
+                : progress.currentProgressionLevel === "Intermediate"
+                ? "Making great progress!"
+                : "Keep practicing to advance!"
+            }
+          />
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>

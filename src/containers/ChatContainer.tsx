@@ -26,14 +26,14 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ caseId, onBack }) => {
         if (isMounted) {
           setSessionId(result.sessionId);
           setMessages([
-            { role: 'ai', content: result.initialPrompt }
+            { sender: 'patient', text: result.initialPrompt, timestamp: Date.now() }
           ]);
         }
       })
       .catch(err => {
         if (isMounted) {
           setMessages([
-            { role: 'ai', content: 'Failed to start simulation. Please try again.' }
+            { sender: 'patient', text: 'Failed to start simulation. Please try again.', timestamp: Date.now() }
           ]);
         }
       });
@@ -46,15 +46,15 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ caseId, onBack }) => {
     if (!sessionId) {
       setMessages(prev => [
         ...prev,
-        { role: 'system', content: 'Session not started. Please try again.' }
+        { sender: 'patient', text: 'Session not started. Please try again.', timestamp: Date.now() }
       ]);
       return;
     }
 
     setMessages(prev => [
       ...prev,
-      { role: 'user', content: question },
-      { role: 'ai', content: '' } // Placeholder for streaming response
+      { sender: 'clinician', text: question, timestamp: Date.now() },
+      { sender: 'patient', text: '', timestamp: Date.now() } // Placeholder for streaming response
     ]);
     setIsLoading(true);
 
@@ -66,7 +66,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ caseId, onBack }) => {
         setMessages(prev => {
           // Update the last message (AI) with the new chunk
           const updated = [...prev];
-          updated[updated.length - 1] = { role: 'ai', content: aiResponse };
+          updated[updated.length - 1] = { sender: 'patient', text: aiResponse, timestamp: Date.now() };
           return updated;
         });
       },
@@ -78,7 +78,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ caseId, onBack }) => {
         setIsLoading(false);
         setMessages(prev => [
           ...prev,
-          { role: 'system', content: 'Error receiving response from server.' }
+          { sender: 'patient', text: 'Error receiving response from server.', timestamp: Date.now() }
         ]);
       }
     );
@@ -94,15 +94,24 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ caseId, onBack }) => {
     // Optionally, you can trigger a re-mount or call startSimulation again
   };
 
+  const handleEndSession = async () => {
+    if (sessionId) {
+      const data = await api.endSession(sessionId);
+      setEvaluationData(data);
+    }
+  }
+
   return (
     <ChatScreen
       messages={messages}
       onSendMessage={handleSendMessage}
       isLoading={isLoading}
-      evaluationData={evaluationData}
       onRestart={handleRestart}
       onBack={onBack}
       currentCaseId={caseId}
+      isSessionActive={!evaluationData}
+      sessionId={sessionId}
+      onEndSession={handleEndSession}
     />
   );
 };

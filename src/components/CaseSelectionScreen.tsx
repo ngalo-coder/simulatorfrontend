@@ -70,7 +70,7 @@ const CaseSelectionScreen: React.FC<CaseSelectionScreenProps> = ({ onStart, isLo
     specializedArea: ''
   });
 
-  const [caseCategories, setCaseCategories] = useState<CaseCategories>({ program_areas: [], specialized_areas: [] });
+  const [caseCategories, setCaseCategories] = useState<CaseCategories>({ program_areas: [], specialties: [], specialized_areas: [] });
 
   // State for Queue Mode
   const [isQueueModeActive, setIsQueueModeActive] = useState(false);
