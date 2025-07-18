@@ -1,6 +1,6 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import ProgramAreaSelection from './ProgramAreaSelection';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import ProgramAreaSelection from "./ProgramAreaSelection";
 
 interface ProgramSelectorProps {
   onSelectProgramArea: (programArea: string) => void;
@@ -11,10 +11,10 @@ interface ProgramSelectorProps {
 /**
  * This component wraps the ProgramAreaSelection component. It is used for the /select-program route.
  */
-const ProgramSelector: React.FC<ProgramSelectorProps> = ({ 
-  onSelectProgramArea, 
-  resetAppState, 
-  isLoading 
+const ProgramSelector: React.FC<ProgramSelectorProps> = ({
+  onSelectProgramArea,
+  resetAppState,
+  isLoading,
 }) => {
   const navigate = useNavigate();
 
@@ -23,7 +23,7 @@ const ProgramSelector: React.FC<ProgramSelectorProps> = ({
   // and then navigates to the main route.
   const handleSelectProgramArea = (programArea: string) => {
     onSelectProgramArea(programArea);
-    navigate('/');
+    navigate("/");
   };
 
   // Reset the app state when the component mounts.
@@ -32,9 +32,9 @@ const ProgramSelector: React.FC<ProgramSelectorProps> = ({
   }, [resetAppState]);
 
   return (
-    <ProgramAreaSelection 
-      onSelectProgramArea={handleSelectProgramArea} 
-      isLoading={isLoading} 
+    <ProgramAreaSelection
+      onSelectProgramArea={handleSelectProgramArea}
+      isLoading={isLoading}
     />
   );
 };
