@@ -215,7 +215,7 @@ function App() {
           if (currentUser?.role === 'admin') {
             navigate('/admin');
           } else {
-            navigate('/'); // Direct normal users to program selection
+            navigate('/dashboard'); // Direct normal users to their dashboard
           }
         }
       }
@@ -257,11 +257,11 @@ function App() {
               <button
                 onClick={() => {
                   if (currentUser?.role === 'admin') navigate('/admin');
-                  else navigate('/'); // Navigate to program selection for regular users
+                  else navigate('/dashboard'); // Navigate to dashboard for regular users
                 }}
                 className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg"
               >
-                {currentUser?.role === 'admin' ? 'Dashboard' : 'Home'}
+                Dashboard
               </button>
               {currentUser?.role === 'admin' && (
                 <button

@@ -142,6 +142,18 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
             "Pathology",
             "Anesthesiology",
           ],
+          specialties: [
+            "Internal Medicine",
+            "Surgery",
+            "Pediatrics",
+            "Ophthalmology",
+            "ENT",
+            "Cardiology",
+            "Neurology",
+            "Psychiatry",
+            "Emergency Medicine",
+            "Family Medicine",
+          ],
           specialized_areas: [],
         });
       }
@@ -195,9 +207,9 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
 
   const handleSelectArea = (area: string) => {
     setSelectedCategory(area);
-    setTimeout(() => {
-      onSelectProgramArea(area);
-    }, 300);
+    console.log("Selected program area:", area);
+    // Remove the timeout which might be causing issues
+    onSelectProgramArea(area);
   };
 
   if (!categories) {
