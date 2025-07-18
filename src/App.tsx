@@ -295,24 +295,22 @@ function App() {
           )}
           <Routes>
             <Route path="/" element={
-              appState === 'selecting_program' ? (
-                <ProgramAreaSelection onSelectProgramArea={handleSelectProgramArea} isLoading={isLoading || isAuthLoading} />
-              ) : appState === 'selecting_specialty' ? (
+              appState === 'selecting_specialty' && selectedProgramArea ? (
                 <SpecialtySelection
-                  programArea={selectedProgramArea!}
+                  programArea={selectedProgramArea}
                   onSelectSpecialty={handleSelectSpecialty}
                   onBack={handleBackToProgramSelection}
                   isLoading={isLoading}
                 />
-              ) : appState === 'selecting_patient' ? (
+              ) : appState === 'selecting_patient' && selectedProgramArea && selectedSpecialty ? (
                 <PatientQueueScreen
-                  programArea={selectedProgramArea!}
-                  specialty={selectedSpecialty!}
+                  programArea={selectedProgramArea}
+                  specialty={selectedSpecialty}
                   onBack={handleBackToSpecialtySelection}
                   onStartCase={handleStartSimulation}
                   isLoading={isLoading}
                 />
-              ) : appState === 'chatting' ? (
+              ) : appState === 'chatting' && simulationSessionId ? (
                 <ChatScreen
                   messages={messages}
                   onSendMessage={handleSendMessage}
@@ -334,7 +332,7 @@ function App() {
                   sessionId={simulationSessionId}
                 />
               ) : (
-                <Navigate to="/" replace />
+                <ProgramAreaSelection onSelectProgramArea={handleSelectProgramArea} isLoading={isLoading || isAuthLoading} />
               )
             }/>
             <Route path="/dashboard" element={<ClinicianDashboard />} />
