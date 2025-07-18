@@ -211,7 +211,7 @@ function App() {
         }
       } else if (!isAuthLoading && isLoggedIn) {
         const isAtAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
-        if (isAtAuthPage || window.location.pathname === '/') {
+        if (isAtAuthPage) {
           if (currentUser?.role === 'admin') {
             navigate('/admin');
           } else {
@@ -219,7 +219,7 @@ function App() {
           }
         }
       }
-    }, [isLoggedIn, isAuthLoading, navigate, currentUser]);
+    }, [isLoggedIn, isAuthLoading, navigate, currentUser, appState]);
 
     if (isAuthLoading) return <div>Loading...</div>;
 

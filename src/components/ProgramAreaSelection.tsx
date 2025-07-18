@@ -208,8 +208,10 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
   const handleSelectArea = (area: string) => {
     setSelectedCategory(area);
     console.log("Selected program area:", area);
-    // Remove the timeout which might be causing issues
-    onSelectProgramArea(area);
+    // Add a small delay to allow the UI to update before navigation
+    setTimeout(() => {
+      onSelectProgramArea(area);
+    }, 300);
   };
 
   if (!categories) {
