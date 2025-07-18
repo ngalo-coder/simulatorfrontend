@@ -1,18 +1,55 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 
+/**
+ * User interface for type safety
+ */
+export interface User {
+  id?: string;
+  _id?: string;
+  username: string;
+  email: string;
+  role: 'user' | 'admin';
+  [key: string]: any; // Allow for additional properties
+}
+
 interface AuthState {
   token: string | null;
-  currentUser: any | null; // Define a more specific User type if available
+  currentUser: User | null;
   isLoggedIn: boolean;
 }
 
 interface AuthContextType extends AuthState {
-  login: (token: string, user: any) => void;
+  login: (token: string, user: User) => void;
   logout: () => void;
-  isLoading: boolean; // To handle async nature of checking localStorage
+  updateUser: (userData: Partial<User>) => void;
+  isLoading: boolean;
 }
 
+// Storage keys as constants for consistency
+const STORAGE_KEY_TOKEN = 'authToken';
+const STORAGE_KEY_USER = 'currentUser';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/**
+ * Securely retrieves and parses user data from localStorage
+ */
+const getUserFromStorage = (): User | null => {
+  try {
+    const userString = localStorage.getItem(STORAGE_KEY_USER);
+    if (!userString) return null;
+    
+    const user = JSON.parse(userString);
+    // Validate that it's a user object
+    if (user && typeof user === 'object' && 'username' in user) {
+      return user as User;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error parsing user data from localStorage", error);
+    return null;
+  }
+};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>({
@@ -20,51 +57,95 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     currentUser: null,
     isLoggedIn: false,
   });
-  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check localStorage for existing token on initial load
-    try {
-      const token = localStorage.getItem('authToken');
-      const userString = localStorage.getItem('currentUser');
-      if (token && userString) {
-        const currentUser = JSON.parse(userString);
-        setAuthState({ token, currentUser, isLoggedIn: true });
+    // Initialize auth state from localStorage
+    const initializeAuth = () => {
+      try {
+        const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+        const user = getUserFromStorage();
+        
+        if (token && user) {
+          setAuthState({ token, currentUser: user, isLoggedIn: true });
+        }
+      } catch (error) {
+        console.error("Error initializing auth state", error);
+        // Clear potentially corrupted data
+        localStorage.removeItem(STORAGE_KEY_TOKEN);
+        localStorage.removeItem(STORAGE_KEY_USER);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error parsing auth data from localStorage", error);
-      // Clear potentially corrupted data
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('currentUser');
-    }
-    setIsLoading(false); // Finished loading
+    };
+    
+    initializeAuth();
   }, []);
 
-  const login = (token: string, user: any) => {
-    localStorage.setItem('authToken', token);
-    if (user) {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('currentUser');
+  /**
+   * Logs in a user and stores their credentials
+   */
+  const login = (token: string, user: User) => {
+    if (!token || !user) {
+      console.error("Invalid login attempt: Missing token or user data");
+      return;
     }
-    setAuthState({ token, currentUser: user, isLoggedIn: true });
+    
+    try {
+      localStorage.setItem(STORAGE_KEY_TOKEN, token);
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+      setAuthState({ token, currentUser: user, isLoggedIn: true });
+    } catch (error) {
+      console.error("Error storing auth data", error);
+    }
   };
 
+  /**
+   * Logs out a user and clears their credentials
+   */
   const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    setAuthState({ token: null, currentUser: null, isLoggedIn: false });
-    // Optionally, redirect to login page or reload
-    // window.location.href = '/login'; // Or use navigate if within Router context
+    try {
+      localStorage.removeItem(STORAGE_KEY_TOKEN);
+      localStorage.removeItem(STORAGE_KEY_USER);
+      setAuthState({ token: null, currentUser: null, isLoggedIn: false });
+    } catch (error) {
+      console.error("Error during logout", error);
+    }
+  };
+
+  /**
+   * Updates user data without changing authentication status
+   */
+  const updateUser = (userData: Partial<User>) => {
+    if (!authState.currentUser) return;
+    
+    try {
+      const updatedUser = { ...authState.currentUser, ...userData };
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(updatedUser));
+      setAuthState(prev => ({ ...prev, currentUser: updatedUser }));
+    } catch (error) {
+      console.error("Error updating user data", error);
+    }
+  };
+
+  const contextValue: AuthContextType = {
+    ...authState,
+    login,
+    logout,
+    updateUser,
+    isLoading
   };
 
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout, isLoading }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
+/**
+ * Hook to access authentication context
+ */
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {

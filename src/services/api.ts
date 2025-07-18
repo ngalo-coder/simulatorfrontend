@@ -1,8 +1,9 @@
 // api.ts
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://simulatorbackend.onrender.com';
-// const API_BASE_URL = 'http://localhost:5001'; // For local testing
 
-// Function to get the auth token from localStorage
+/**
+ * Securely retrieves the authentication token from localStorage
+ */
 const getAuthToken = (): string | null => {
   try {
     return localStorage.getItem('authToken');
@@ -12,32 +13,49 @@ const getAuthToken = (): string | null => {
   }
 };
 
-// Centralized fetch function to include Authorization header and handle 401
+/**
+ * Handles authentication failures by clearing credentials and redirecting
+ */
+const handleAuthFailure = () => {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('currentUser');
+  
+  // Only redirect if not already on login page
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login';
+  }
+};
+
+/**
+ * Centralized fetch function with authentication and error handling
+ */
 const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
   const token = getAuthToken();
   const headers = new Headers(options.headers || {});
 
+  // Set auth header if token exists
   if (token) {
     headers.append('Authorization', `Bearer ${token}`);
   }
-  headers.append('Content-Type', 'application/json'); // Ensure Content-Type is set
+  
+  // Always set content type for consistency
+  headers.append('Content-Type', 'application/json');
 
-  const response = await fetch(url, { ...options, headers });
-
-  if (response.status === 401) {
-    // Handle unauthorized access: e.g., clear token, redirect to login
-    console.error('Unauthorized access - 401');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    // Consider a more robust way to trigger logout, e.g., via AuthContext or event
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login'; // Force redirect
+  try {
+    const response = await fetch(url, { ...options, headers });
+    
+    // Handle authentication failures
+    if (response.status === 401) {
+      handleAuthFailure();
+      throw new ApiError('Unauthorized: Please login again.', 401);
     }
-    // Throw an error to stop further processing in the calling function
-    throw new ApiError('Unauthorized: Please login again.', 401);
+    
+    return response;
+  } catch (error) {
+    // Rethrow API errors, wrap other errors
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(`Network error: ${(error as Error).message}`, 0);
   }
-
-  return response;
 };
 
 
@@ -49,38 +67,29 @@ export class ApiError extends Error {
 }
 
 export const api = {
+  /**
+   * Fetch patient cases with optional filtering
+   * @param filters Optional filters for program area and specialty
+   * @returns Promise with patient cases array
+   */
   async getCases(filters?: { program_area?: string, specialty?: string }): Promise<import('../types').PatientCase[]> {
-    let url = `${API_BASE_URL}/api/simulation/cases`;
-    if (filters) {
-      const queryParams = new URLSearchParams();
-      if (filters.program_area) queryParams.append('program_area', filters.program_area);
-      if (filters.specialty) queryParams.append('specialty', filters.specialty);
-      if (queryParams.toString()) {
-        url += `?${queryParams.toString()}`;
-      }
-    }
-
     try {
-      const response = await authenticatedFetch(url, { method: 'GET' });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const data = await response.json();
-      console.log('Raw cases data from server:', data);
-
-      // Check if the response has a 'cases' property and use it
+      // Build query parameters for filtering
+      const queryParams = new URLSearchParams();
+      if (filters?.program_area) queryParams.append('program_area', filters.program_area);
+      if (filters?.specialty) queryParams.append('specialty', filters.specialty);
+      
+      const endpoint = `/api/simulation/cases${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const data = await this.get<any>(endpoint);
+      
+      // Process the response data
       const caseList = Array.isArray(data) ? data : data.cases || [];
-
-      const cases: import('../types').PatientCase[] = caseList.map((caseItem: any) => {
+      
+      // Map raw data to PatientCase objects
+      return caseList.map((caseItem: any) => {
         const caseId = caseItem.case_id || caseItem.id || caseItem.title || 'unknown';
         const caseMetadata = caseItem.case_metadata || caseItem;
-
+        
         return {
           id: caseId,
           title: caseMetadata.title || caseItem.title || caseId,
@@ -104,9 +113,6 @@ export const api = {
           specializedArea: caseMetadata.specialized_area || caseItem.specialized_area
         };
       });
-
-      console.log('Processed cases:', cases);
-      return cases;
     } catch (error) {
       console.error('Error fetching cases:', error);
       if (error instanceof ApiError) throw error;
@@ -114,90 +120,34 @@ export const api = {
     }
   },
 
+  /**
+   * Fetch performance metrics for a simulation session
+   * @param sessionId ID of the session to fetch metrics for
+   * @returns Promise with performance metrics data
+   */
   async getPerformanceMetrics(sessionId: string): Promise<import('../types').PerformanceMetrics> {
     console.log('Fetching performance metrics for session:', sessionId);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/performance-metrics/session/${sessionId}`, {
-        method: 'GET',
-      });
-
-      console.log('Performance metrics response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Performance metrics error:', errorData);
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Performance metrics result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error fetching performance metrics:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to fetch performance metrics. Please check your internet connection.');
-    }
+    return this.get<import('../types').PerformanceMetrics>(`/api/simulation/performance-metrics/session/${sessionId}`);
   },
 
+  /**
+   * Start a new simulation session
+   * @param caseId ID of the case to simulate
+   * @returns Promise with session ID and initial prompt
+   */
   async startSimulation(caseId: string): Promise<{ sessionId: string; initialPrompt: string }> {
     console.log('Starting simulation for case:', caseId);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/start`, {
-        method: 'POST',
-        body: JSON.stringify({ caseId }),
-      });
-
-      console.log('Start simulation response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Start simulation error:', errorData);
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Start simulation result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error starting simulation:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to connect to the server. Please check your internet connection.');
-    }
+    return this.post<{ sessionId: string; initialPrompt: string }>('/api/simulation/start', { caseId });
   },
 
+  /**
+   * End a simulation session
+   * @param sessionId ID of the session to end
+   * @returns Promise with session end response
+   */
   async endSession(sessionId: string): Promise<import('../types').SessionEndResponse> {
     console.log('Ending session:', sessionId);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/end`, {
-        method: 'POST',
-        body: JSON.stringify({ sessionId }),
-      });
-
-      console.log('End session response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('End session error:', errorData);
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('End session result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error ending session:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to end session. Please check your internet connection.');
-    }
+    return this.post<import('../types').SessionEndResponse>('/api/simulation/end', { sessionId });
   },
 
   streamSimulationAsk(
@@ -250,25 +200,19 @@ export const api = {
     return () => eventSource.close(); // Cleanup function
   },
 
+  /**
+   * Fetch case categories with optional program area filter
+   * @param filters Optional filters for program area
+   * @returns Promise with case categories
+   */
   async getCaseCategories(filters?: { program_area?: string }): Promise<import('../types').CaseCategories> {
     try {
-      let url = `${API_BASE_URL}/api/simulation/case-categories`;
-      if (filters && filters.program_area) {
-        url += `?program_area=${encodeURIComponent(filters.program_area)}`;
-      }
+      // Build query parameters for filtering
+      const queryParams = new URLSearchParams();
+      if (filters?.program_area) queryParams.append('program_area', filters.program_area);
       
-      const response = await authenticatedFetch(url, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-      return response.json();
+      const endpoint = `/api/simulation/case-categories${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      return this.get<import('../types').CaseCategories>(endpoint);
     } catch (error) {
       console.error('Error fetching case categories:', error);
       if (error instanceof ApiError) throw error;
@@ -276,15 +220,24 @@ export const api = {
     }
   },
 
-  // Add post method for convenience, using authenticatedFetch
-  async post(endpoint: string, body: any): Promise<any> {
-    const url = `${API_BASE_URL}${endpoint}`; // Assuming all API endpoints are under /api
+  /**
+   * Generic request handler for all HTTP methods
+   * @param method HTTP method (GET, POST, PUT, PATCH, DELETE)
+   * @param endpoint API endpoint path
+   * @param body Optional request body for POST, PUT, PATCH
+   * @returns Promise with the JSON response
+   */
+  async request<T = any>(method: string, endpoint: string, body?: any): Promise<T> {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const options: RequestInit = { method };
+    
+    if (body && ['POST', 'PUT', 'PATCH'].includes(method)) {
+      options.body = JSON.stringify(body);
+    }
+    
     try {
-      const response = await authenticatedFetch(url, {
-        method: 'POST',
-        body: JSON.stringify(body),
-      });
-
+      const response = await authenticatedFetch(url, options);
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new ApiError(
@@ -292,446 +245,188 @@ export const api = {
           response.status
         );
       }
-      return response.json();
+      
+      return await response.json();
     } catch (error) {
-      console.error(`Error POST ${endpoint}:`, error);
+      console.error(`Error ${method} ${endpoint}:`, error);
       if (error instanceof ApiError) throw error;
-      throw new ApiError(`Failed to POST to ${endpoint}.`);
+      throw new ApiError(`Failed to ${method} ${endpoint}.`);
     }
   },
-
-  // Add get method for convenience, using authenticatedFetch
-  async get(endpoint: string): Promise<any> {
-    const url = `${API_BASE_URL}${endpoint}`; // Assuming all API endpoints are under /api
-    try {
-      const response = await authenticatedFetch(url, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.message || errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-      return response.json();
-    } catch (error) {
-      console.error(`Error GET ${endpoint}:`, error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError(`Failed to GET from ${endpoint}.`);
-    }
+  
+  // Convenience methods using the generic request handler
+  async get<T = any>(endpoint: string): Promise<T> {
+    return this.request<T>('GET', endpoint);
   },
-
-  // Add patch method for convenience, using authenticatedFetch
-  async patch(endpoint: string, body: any): Promise<any> {
-    const url = `${API_BASE_URL}${endpoint}`; // Assuming all API endpoints are under /api
-    try {
-      const response = await authenticatedFetch(url, {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.message || errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-      return response.json();
-    } catch (error) {
-      console.error(`Error PATCH ${endpoint}:`, error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError(`Failed to PATCH to ${endpoint}.`);
-    }
+  
+  async post<T = any>(endpoint: string, body: any): Promise<T> {
+    return this.request<T>('POST', endpoint, body);
+  },
+  
+  async put<T = any>(endpoint: string, body: any): Promise<T> {
+    return this.request<T>('PUT', endpoint, body);
+  },
+  
+  async patch<T = any>(endpoint: string, body: any): Promise<T> {
+    return this.request<T>('PATCH', endpoint, body);
+  },
+  
+  async delete<T = any>(endpoint: string): Promise<T> {
+    return this.request<T>('DELETE', endpoint);
   },
 
   // Clinician Progress Endpoints
+  /**
+   * Fetch clinician progress data
+   * @param userId User ID to fetch progress for
+   * @returns Promise with clinician progress data
+   */
   async fetchClinicianProgress(userId: string): Promise<import('../types').ClinicianProgressResponse> {
     console.log('Fetching clinician progress for user:', userId);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/progress/${userId}`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Clinician progress result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error fetching clinician progress:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to fetch clinician progress. Please check your internet connection.');
-    }
+    return this.get<import('../types').ClinicianProgressResponse>(`/api/progress/${userId}`);
   },
 
+  /**
+   * Fetch progress recommendations for a user
+   * @param userId User ID to fetch recommendations for
+   * @returns Promise with progress recommendations
+   */
   async fetchProgressRecommendations(userId: string): Promise<import('../types').ProgressRecommendation> {
     console.log('Fetching progress recommendations for user:', userId);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/progress/recommendations/${userId}`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Progress recommendations result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error fetching progress recommendations:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to fetch progress recommendations. Please check your internet connection.');
-    }
+    return this.get<import('../types').ProgressRecommendation>(`/api/progress/recommendations/${userId}`);
   },
 
+  /**
+   * Update clinician progress after case completion
+   * @param data Progress update data
+   * @returns Promise with update result
+   */
   async updateProgressAfterCase(data: { userId: string, caseId: string, performanceMetricsId: string }): Promise<any> {
     console.log('Updating clinician progress after case completion:', data);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/progress/update`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Progress update result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error updating clinician progress:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to update clinician progress. Please check your internet connection.');
-    }
+    return this.post('/api/progress/update', data);
   },
 
   // Admin Dashboard Endpoints
+  /**
+   * Fetch system statistics for admin dashboard
+   * @returns Promise with system statistics
+   */
   async fetchSystemStats(): Promise<any> {
     console.log('Fetching system statistics');
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/stats`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('System stats result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error fetching system stats:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to fetch system statistics. Please check your internet connection.');
-    }
+    return this.get('/api/admin/stats');
   },
 
+  /**
+   * Fetch all users for admin dashboard
+   * @returns Promise with users data
+   */
   async fetchUsers(): Promise<any> {
     console.log('Fetching users');
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Users result:', result);
-      // The backend now returns the array directly
-      return result;
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to fetch users. Please check your internet connection.');
-    }
+    return this.get('/api/admin/users');
   },
 
+  /**
+   * Fetch all cases for admin dashboard
+   * @returns Promise with cases data
+   */
   async fetchAdminCases(): Promise<any> {
     console.log('Fetching all cases for admin');
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/cases`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Admin cases result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error fetching admin cases:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to fetch cases. Please check your internet connection.');
-    }
+    return this.get('/api/admin/cases');
   },
 
+  /**
+   * Delete a user by ID
+   * @param userId ID of the user to delete
+   * @returns Promise with deletion result
+   */
   async deleteUser(userId: string): Promise<any> {
     console.log('Deleting user:', userId);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Delete user result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to delete user. Please check your internet connection.');
-    }
+    return this.delete(`/api/admin/users/${userId}`);
   },
 
+  /**
+   * Delete a case by ID
+   * @param caseId ID of the case to delete
+   * @returns Promise with deletion result
+   */
   async deleteCase(caseId: string): Promise<any> {
     console.log('Deleting case:', caseId);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/cases/${caseId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Delete case result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error deleting case:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to delete case. Please check your internet connection.');
-    }
+    return this.delete(`/api/admin/cases/${caseId}`);
   },
 
   // Admin User Management
+  /**
+   * Create a new admin user
+   * @param userData User data including username, email, and password
+   * @returns Promise with creation result
+   */
   async createAdminUser(userData: { username: string, email: string, password: string }): Promise<any> {
     console.log('Creating admin user');
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/admin`, {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Create admin user result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error creating admin user:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to create admin user. Please check your internet connection.');
-    }
+    return this.post('/api/admin/users/admin', userData);
   },
 
+  /**
+   * Update a user's role
+   * @param userId ID of the user to update
+   * @param role New role to assign
+   * @returns Promise with update result
+   */
   async updateUserRole(userId: string, role: 'user' | 'admin'): Promise<any> {
     console.log('Updating user role:', userId, role);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
-        method: 'PUT',
-        body: JSON.stringify({ role }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Update user role result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error updating user role:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to update user role. Please check your internet connection.');
-    }
+    return this.put(`/api/admin/users/${userId}/role`, { role });
   },
 
+  /**
+   * Update case metadata
+   * @param caseId ID of the case to update
+   * @param data Updated case data
+   * @returns Promise with update result
+   */
   async updateCase(caseId: string, data: { programArea: string, specialty: string }): Promise<any> {
     console.log('Updating case:', caseId, data);
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/cases/${caseId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Update case result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error updating case:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to update case. Please check your internet connection.');
-    }
+    return this.put(`/api/admin/cases/${caseId}`, data);
   },
 
+  /**
+   * Fetch users with their performance scores
+   * @returns Promise with users and scores data
+   */
   async fetchUsersWithScores(): Promise<any> {
     console.log('Fetching users with scores');
-    try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/users/scores`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Users with scores result:', result);
-      return result;
-    } catch (error) {
-      console.error('Error fetching users with scores:', error);
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('Failed to fetch users with scores. Please check your internet connection.');
-    }
+    return this.get('/api/admin/users/scores');
   },
 
+  /**
+   * Fetch available program areas
+   * @returns Promise with program areas array
+   */
   async fetchProgramAreas(): Promise<string[]> {
     console.log('Fetching program areas');
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/program-areas`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Program areas result:', result);
+      const result = await this.get<{programAreas: string[]}>('/api/admin/program-areas');
       return result.programAreas || [];
     } catch (error) {
       console.error('Error fetching program areas:', error);
-      if (error instanceof ApiError) throw error;
       // Return default program areas if API fails
       return ["Basic Program", "Specialty Program"];
     }
   },
 
+  /**
+   * Fetch available specialties
+   * @returns Promise with specialties array
+   */
   async fetchSpecialties(): Promise<string[]> {
     console.log('Fetching specialties');
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/specialties`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.error || `Server error: ${response.status}`,
-          response.status
-        );
-      }
-
-      const result = await response.json();
-      console.log('Specialties result:', result);
+      const result = await this.get<{specialties: string[]}>('/api/admin/specialties');
       return result.specialties || [];
     } catch (error) {
       console.error('Error fetching specialties:', error);
-      if (error instanceof ApiError) throw error;
       // Return default specialties if API fails
       return ["Internal Medicine", "Surgery", "Pediatrics", "Ophthalmology", "ENT", 
               "Cardiology", "Neurology", "Psychiatry", "Emergency Medicine", "Family Medicine"];
     }
   }
-  // ,
 
-  // async updateCase(caseId: string, data: { programArea: string, specialty: string }): Promise<any> {
-  //   console.log('Updating case:', caseId, data);
-  //   try {
-  //     const response = await authenticatedFetch(`${API_BASE_URL}/api/admin/cases/${caseId}`, {
-  //       method: 'PUT',
-  //       body: JSON.stringify(data),
-  //     });
-
-  //     if (!response.ok) {
-  //       const errorData = await response.json().catch(() => ({}));
-  //       throw new ApiError(
-  //         errorData.error || `Server error: ${response.status}`,
-  //         response.status
-  //       );
-  //     }
-
-  //     const result = await response.json();
-  //     console.log('Update case result:', result);
-  //     return result;
-  //   } catch (error) {
-  //     console.error('Error updating case:', error);
-  //     if (error instanceof ApiError) throw error;
-  //     throw new ApiError('Failed to update case. Please check your internet connection.');
-  //   }
-  // }
 };
