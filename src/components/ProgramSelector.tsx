@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import ProgramAreaSelection from './ProgramAreaSelection';
 
 interface ProgramSelectorProps {
@@ -18,47 +17,16 @@ const ProgramSelector: React.FC<ProgramSelectorProps> = ({
   resetAppState, 
   isLoading 
 }) => {
-  const navigate = useNavigate();
-  
-  // Check for stored program area and specialty in session storage
+  // Reset app state when this component mounts
   useEffect(() => {
-    const storedProgramArea = sessionStorage.getItem("selectedProgramArea");
-    const storedSpecialty = sessionStorage.getItem("selectedSpecialty");
-    const storedCaseId = sessionStorage.getItem("selectedCaseId");
-    
-    if (storedProgramArea) {
-      console.log("Found stored program area:", storedProgramArea);
-      
-      // Reset app state first to ensure clean state
-      resetAppState();
-      
-      // Use the stored program area
-      onSelectProgramArea(storedProgramArea);
-      
-      // Clear the stored values after using them
-      sessionStorage.removeItem("selectedProgramArea");
-      sessionStorage.removeItem("selectedSpecialty");
-      sessionStorage.removeItem("selectedCaseId");
-      
-      // Navigate to the main route where state-based rendering will show the next screen
-      navigate('/');
-    } else {
-      // If no stored values, just reset the app state
-      resetAppState();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    resetAppState();
+  }, [resetAppState]);
 
-  // Wrap the onSelectProgramArea to navigate to main route after selection
-  const handleSelectProgramArea = (programArea: string) => {
-    onSelectProgramArea(programArea);
-    // Navigate to the main route where state-based rendering will show SpecialtySelection
-    navigate('/');
-  };
-
+  // The handleSelectProgramArea function is passed directly to the child component
+  // as App.tsx will handle the state change and render the next component.
   return (
     <ProgramAreaSelection 
-      onSelectProgramArea={handleSelectProgramArea} 
+      onSelectProgramArea={onSelectProgramArea}
       isLoading={isLoading} 
     />
   );
