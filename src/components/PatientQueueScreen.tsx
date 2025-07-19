@@ -334,7 +334,7 @@ const PatientQueueScreen: React.FC<PatientQueueScreenProps> = ({
                       sx={{ mb: 2 }}
                     >
                       {patientCase.chiefComplaint
-                        ? `Patient presenting with ${patientCase.chiefComplaint.toLowerCase()}`
+                        ? `Complaint: ${patientCase.chiefComplaint.toLowerCase()}`
                         : patientCase.description &&
                           patientCase.description !==
                             'A universal template for creating virtual patient simulation cases.'

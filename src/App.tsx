@@ -20,6 +20,9 @@ import ForgotPasswordScreen from "./components/ForgotPasswordScreen";
 import ResetPasswordScreen from "./components/ResetPasswordScreen";
 import ClinicianDashboard from "./components/ClinicianDashboard";
 import AdminDashboard from "./components/AdminDashboard";
+import MinimalClinicianDashboard from "./components/MinimalClinicianDashboard";
+import MinimalAdminDashboard from "./components/MinimalAdminDashboard";
+import DebugApiTester from "./components/DebugApiTester";
 import UserGuide from "./components/UserGuide";
 import ProgramSelector from "./components/ProgramSelector";
 
@@ -352,21 +355,29 @@ function App() {
         }
       }
     }, [isLoggedIn, isAuthLoading, navigate, currentUser]);
-    
+
     // Handle app state navigation
     useEffect(() => {
       if (isAuthLoading || !isLoggedIn) return;
-      
+
       console.log("App state changed:", appState);
       console.log("Selected program area:", selectedProgramArea);
       console.log("Selected specialty:", selectedSpecialty);
-      
+
       if (appState === "selecting_specialty" && selectedProgramArea) {
         console.log("Navigating to specialty selection screen");
         navigate(`/specialty/${encodeURIComponent(selectedProgramArea)}`);
-      } else if (appState === "selecting_patient" && selectedProgramArea && selectedSpecialty) {
+      } else if (
+        appState === "selecting_patient" &&
+        selectedProgramArea &&
+        selectedSpecialty
+      ) {
         console.log("Navigating to patient queue screen");
-        navigate(`/patients/${encodeURIComponent(selectedProgramArea)}/${encodeURIComponent(selectedSpecialty)}`);
+        navigate(
+          `/patients/${encodeURIComponent(
+            selectedProgramArea
+          )}/${encodeURIComponent(selectedSpecialty)}`
+        );
       } else if (appState === "chatting" && simulationSessionId) {
         console.log("Navigating to chat screen");
         navigate("/simulation");
@@ -374,7 +385,16 @@ function App() {
         console.log("Navigating to evaluation screen");
         navigate("/evaluation");
       }
-    }, [appState, selectedProgramArea, selectedSpecialty, simulationSessionId, evaluationData, navigate, isLoggedIn, isAuthLoading]);
+    }, [
+      appState,
+      selectedProgramArea,
+      selectedSpecialty,
+      simulationSessionId,
+      evaluationData,
+      navigate,
+      isLoggedIn,
+      isAuthLoading,
+    ]);
 
     // Show loading state while auth is initializing
     if (isAuthLoading) {
@@ -491,8 +511,9 @@ function App() {
             />
 
             {/* Dashboard routes */}
-            <Route path="/dashboard" element={<ClinicianDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/dashboard" element={<MinimalClinicianDashboard />} />
+            <Route path="/admin" element={<MinimalAdminDashboard />} />
+            <Route path="/debug-api" element={<DebugApiTester />} />
 
             {/* Program selection route */}
             <Route

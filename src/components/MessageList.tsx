@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { User, UserCheck, Loader2, Stethoscope, Brain, Clock, MessageCircle } from 'lucide-react';
 import { Message } from '../types';
-import TypingEffect from './TypingEffect';
+import EnhancedTypingEffect from './EnhancedTypingEffect';
+import '../styles/chatAnimations.css';
 
 interface MessageListProps {
   messages: Message[];
@@ -74,12 +75,16 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, streamin
               </div>
 
               {/* Message content */}
-              <p className={`text-sm leading-relaxed whitespace-pre-wrap font-medium ${
+              <div className={`message-content ${
                 streamingMessageId === index && message.text === '' ? 'min-h-[1.25rem]' : ''
               }`}>
                 {message.sender === 'patient' && streamingMessageId === index ? (
                   message.text !== '' ? (
-                    <TypingEffect text={message.text} typingSpeed={25} />
+                    <EnhancedTypingEffect 
+                      text={message.text} 
+                      typingSpeed={30} 
+                      className="patient-message-text"
+                    />
                   ) : (
                     <div className="flex items-center gap-2 text-gray-500 animate-pulse">
                       <MessageCircle className="w-4 h-4" />
@@ -87,9 +92,32 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, streamin
                     </div>
                   )
                 ) : (
-                  message.text
+                  <div className={`message-text ${message.sender === 'clinician' ? 'clinician-text' : 'patient-text'}`}>
+                    {message.text}
+                  </div>
                 )}
-              </p>
+              </div>
+              
+              <style jsx>{`
+                .message-content {
+                  font-size: 1.05rem;
+                  line-height: 1.6;
+                  letter-spacing: -0.01em;
+                  margin-bottom: 0.5rem;
+                }
+                
+                .patient-text {
+                  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  font-weight: 400;
+                  color: #374151;
+                }
+                
+                .clinician-text {
+                  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  font-weight: 500;
+                  color: #f8fafc;
+                }
+              `}</style>
 
               {/* Message footer */}
               <div className={`flex items-center gap-2 mt-3 pt-2 border-t ${

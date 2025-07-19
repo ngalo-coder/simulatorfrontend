@@ -1,0 +1,147 @@
+/* Chat Animation Styles */
+
+/* Improved font rendering for all text */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Message animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulseHighlight {
+  0% { background-color: rgba(16, 185, 129, 0.05); }
+  50% { background-color: rgba(16, 185, 129, 0.1); }
+  100% { background-color: rgba(16, 185, 129, 0); }
+}
+
+/* Typing cursor animation */
+@keyframes cursorBlink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* Message bubble animations */
+.message-bubble-patient {
+  animation: slideIn 0.3s ease-out forwards;
+  transform-origin: left center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.message-bubble-patient:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.message-bubble-clinician {
+  animation: slideInRight 0.3s ease-out forwards;
+  transform-origin: right center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.message-bubble-clinician:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Enhanced typing effect styles */
+.typing-effect-container {
+  position: relative;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  font-weight: 450;
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background-color: currentColor;
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: cursorBlink 0.8s infinite;
+}
+
+.latest-char {
+  animation: pulseHighlight 0.6s forwards;
+  border-radius: 2px;
+  padding: 0 1px;
+  margin: 0 -1px;
+}
+
+/* Patient message specific styles */
+.patient-message-text {
+  color: #374151;
+  font-weight: 450;
+}
+
+/* Clinician message specific styles */
+.clinician-message-text {
+  color: #f8fafc;
+  font-weight: 500;
+}
+
+/* Smooth transition for message appearance */
+.message-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.message-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Improved message content styling */
+.message-content {
+  position: relative;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+/* Thinking animation */
+.thinking-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thinking-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.7;
+}
+
+.thinking-dot:nth-child(1) { animation: dotPulse 1.4s infinite 0s; }
+.thinking-dot:nth-child(2) { animation: dotPulse 1.4s infinite 0.2s; }
+.thinking-dot:nth-child(3) { animation: dotPulse 1.4s infinite 0.4s; }
+
+@keyframes dotPulse {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.5; }
+}
