@@ -23,6 +23,7 @@ import AdminDashboard from "./components/AdminDashboard";
 import MinimalClinicianDashboard from "./components/MinimalClinicianDashboard";
 import MinimalAdminDashboard from "./components/MinimalAdminDashboard";
 import DebugApiTester from "./components/DebugApiTester";
+import PerformanceAnalytics from "./components/PerformanceAnalytics";
 import UserGuide from "./components/UserGuide";
 import ProgramSelector from "./components/ProgramSelector";
 
@@ -462,6 +463,15 @@ function App() {
                 >
                   Dashboard
                 </button>
+                
+                {/* Analytics button */}
+                <button
+                  onClick={() => navigate("/analytics")}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base transition-all duration-200 hover:shadow-md"
+                  aria-label="Go to Analytics"
+                >
+                  Analytics
+                </button>
 
                 {/* Admin button - only shown to admin users */}
                 {currentUser?.role === "admin" && (
@@ -514,6 +524,7 @@ function App() {
             <Route path="/dashboard" element={<MinimalClinicianDashboard />} />
             <Route path="/admin" element={<MinimalAdminDashboard />} />
             <Route path="/debug-api" element={<DebugApiTester />} />
+            <Route path="/analytics" element={<PerformanceAnalytics />} />
 
             {/* Program selection route */}
             <Route
