@@ -122,6 +122,7 @@ function App() {
           sender: "patient",
           text: response.initialPrompt,
           timestamp: Date.now(),
+          speaks_for: response.speaks_for,
         },
       ]);
       setAppState("chatting");
@@ -220,13 +221,16 @@ function App() {
       api.streamSimulationAsk(
         { sessionId: simulationSessionId, question: question.trim() },
         // Handle incoming chunks
-        (chunk) => {
+        (chunk, speaks_for) => {
           aiResponse += chunk;
           setMessages((prev) => {
             const updated = [...prev];
             const last = updated[updated.length - 1];
             if (last?.sender === "patient") {
               last.text = aiResponse;
+              if (speaks_for) {
+                last.speaks_for = speaks_for;
+              }
             }
             return updated;
           });
