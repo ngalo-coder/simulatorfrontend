@@ -2,6 +2,7 @@ export interface Message {
   sender: "patient" | "clinician";
   text: string;
   timestamp: number;
+  speaks_for?: string;
 }
 
 export interface EvaluationData {
@@ -56,6 +57,9 @@ export interface PatientCase {
   presentingSymptoms?: string[];
   programArea?: string;
   specializedArea?: string;
+  speaks_for?: string;
+  patient_is_present?: boolean;
+  patient_age_for_communication?: number;
 }
 
 export type AppState = "selecting_case" | "chatting" | "showing_evaluation";

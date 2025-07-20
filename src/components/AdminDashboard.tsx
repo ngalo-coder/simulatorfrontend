@@ -21,6 +21,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import { sanitizeInput } from "../utils/sanitize";
 import {
@@ -132,9 +134,15 @@ const AdminDashboard: React.FC = () => {
   const [editedCaseData, setEditedCaseData] = useState<{
     programArea: string;
     specialty: string;
+    speaks_for: string;
+    patient_is_present: boolean;
+    patient_age_for_communication: number;
   }>({
     programArea: "",
     specialty: "",
+    speaks_for: "",
+    patient_is_present: false,
+    patient_age_for_communication: 0,
   });
 
   // Pagination state
@@ -233,6 +241,9 @@ const AdminDashboard: React.FC = () => {
     setEditedCaseData({
       programArea: caseData.programArea,
       specialty: caseData.specialty,
+      speaks_for: caseData.speaks_for || "",
+      patient_is_present: caseData.patient_is_present || false,
+      patient_age_for_communication: caseData.patient_age_for_communication || 0,
     });
     setEditCaseDialogOpen(true);
   };
@@ -245,10 +256,10 @@ const AdminDashboard: React.FC = () => {
   const handleEditedCaseChange = (
     e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
   ) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target as HTMLInputElement;
     setEditedCaseData({
       ...editedCaseData,
-      [name as string]: value as string,
+      [name as string]: type === 'checkbox' ? checked : value,
     });
   };
 
@@ -258,6 +269,9 @@ const AdminDashboard: React.FC = () => {
         const sanitizedData = {
           programArea: sanitizeInput(editedCaseData.programArea),
           specialty: sanitizeInput(editedCaseData.specialty),
+          speaks_for: sanitizeInput(editedCaseData.speaks_for),
+          patient_is_present: editedCaseData.patient_is_present,
+          patient_age_for_communication: editedCaseData.patient_age_for_communication,
         };
         await api.updateCase(caseToEdit.id, sanitizedData);
         refetchCases();
@@ -843,6 +857,40 @@ const AdminDashboard: React.FC = () => {
                 </MenuItem>
               ))}
             </Select>
+          </FormControl>
+          <TextField
+            margin="dense"
+            name="speaks_for"
+            label="Speaks For"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={editedCaseData.speaks_for}
+            onChange={handleEditedCaseChange}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            name="patient_age_for_communication"
+            label="Patient Age for Communication"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={editedCaseData.patient_age_for_communication}
+            onChange={handleEditedCaseChange}
+            sx={{ mb: 2 }}
+          />
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={editedCaseData.patient_is_present}
+                  onChange={handleEditedCaseChange}
+                  name="patient_is_present"
+                />
+              }
+              label="Patient is Present"
+            />
           </FormControl>
         </DialogContent>
         <DialogActions>
