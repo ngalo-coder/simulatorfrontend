@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -20,12 +20,13 @@ import ForgotPasswordScreen from "./components/ForgotPasswordScreen";
 import ResetPasswordScreen from "./components/ResetPasswordScreen";
 import ClinicianDashboard from "./components/ClinicianDashboard";
 import AdminDashboard from "./components/AdminDashboard";
-import MinimalClinicianDashboard from "./components/MinimalClinicianDashboard";
-import MinimalAdminDashboard from "./components/MinimalAdminDashboard";
 import DebugApiTester from "./components/DebugApiTester";
-import PerformanceAnalytics from "./components/PerformanceAnalytics";
 import UserGuide from "./components/UserGuide";
 import ProgramSelector from "./components/ProgramSelector";
+
+const MinimalClinicianDashboard = lazy(() => import("./components/MinimalClinicianDashboard"));
+const MinimalAdminDashboard = lazy(() => import("./components/MinimalAdminDashboard"));
+const PerformanceAnalytics = lazy(() => import("./components/PerformanceAnalytics"));
 
 // Services and utilities
 import { api } from "./services/api";
@@ -521,10 +522,10 @@ function App() {
             />
 
             {/* Dashboard routes */}
-            <Route path="/dashboard" element={<MinimalClinicianDashboard />} />
-            <Route path="/admin" element={<MinimalAdminDashboard />} />
+            <Route path="/dashboard" element={<Suspense fallback={<div>Loading...</div>}><MinimalClinicianDashboard /></Suspense>} />
+            <Route path="/admin" element={<Suspense fallback={<div>Loading...</div>}><MinimalAdminDashboard /></Suspense>} />
             <Route path="/debug-api" element={<DebugApiTester />} />
-            <Route path="/analytics" element={<PerformanceAnalytics />} />
+            <Route path="/analytics" element={<Suspense fallback={<div>Loading...</div>}><PerformanceAnalytics /></Suspense>} />
 
             {/* Program selection route */}
             <Route
