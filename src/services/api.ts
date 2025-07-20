@@ -137,9 +137,9 @@ export const api = {
    * @param caseId ID of the case to simulate
    * @returns Promise with session ID and initial prompt
    */
-  async startSimulation(caseId: string): Promise<{ sessionId: string; initialPrompt: string }> {
+  async startSimulation(caseId: string): Promise<{ sessionId: string; initialPrompt: string; speaks_for?: string }> {
     console.log('Starting simulation for case:', caseId);
-    return this.post<{ sessionId: string; initialPrompt: string }>('/api/simulation/start', { caseId });
+    return this.post<{ sessionId: string; initialPrompt: string; speaks_for?: string }>('/api/simulation/start', { caseId });
   },
 
   /**
@@ -154,7 +154,7 @@ export const api = {
 
   streamSimulationAsk(
     params: { sessionId: string; question: string },
-    onChunk: (chunk: string) => void,
+    onChunk: (chunk: string, speaks_for?: string) => void,
     onDone: () => void,
     onError?: (err: any) => void,
     onSessionEnd?: (summary: string) => void
@@ -178,7 +178,7 @@ export const api = {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'chunk') {
-          onChunk(data.content);
+          onChunk(data.content, data.speaks_for);
         } else if (data.type === 'done') {
           eventSource.close();
           onDone();
