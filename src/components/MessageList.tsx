@@ -70,7 +70,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, streamin
                   <Stethoscope className="w-4 h-4" />
                 )}
                 <span className="text-xs font-semibold uppercase tracking-wide">
-                  {message.sender === 'clinician' ? 'You (Clinician)' : 'Virtual Patient'}
+                  {message.sender === 'clinician' ? 'You (Clinician)' : message.speaks_for || 'Virtual Patient'}
                 </span>
               </div>
 
