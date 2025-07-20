@@ -262,12 +262,10 @@ const ProgramAreaSelection: React.FC<ProgramAreaSelectionProps> = ({
 
           <div className="max-w-3xl mx-auto px-4 sm:px-0">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
-              Where Virtual Patients Build Real Clinicians
+              Master clinical skills with AI
             </h2>
             <p className="text-base sm:text-xl text-gray-600 leading-relaxed">
-              Master clinical skills with AI. Choose your medical specialty to
-              access relevant virtual patient cases and begin your clinical
-              training journey.
+              From Virtual patients to confident clinical practice
             </p>
           </div>
         </div>
