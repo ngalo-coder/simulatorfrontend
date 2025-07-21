@@ -1,0 +1,22 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Stethoscope design -->
+  <circle cx="16" cy="16" r="15" fill="#2563eb" stroke="#1e40af" stroke-width="2"/>
+  
+  <!-- Stethoscope head -->
+  <circle cx="16" cy="22" r="3" fill="white" stroke="#1e40af" stroke-width="1"/>
+  
+  <!-- Stethoscope tubes -->
+  <path d="M16 19 C16 16, 12 14, 8 14" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M16 19 C16 16, 20 14, 24 14" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Earpieces -->
+  <circle cx="8" cy="14" r="1.5" fill="white"/>
+  <circle cx="24" cy="14" r="1.5" fill="white"/>
+  
+  <!-- Connecting lines to ears -->
+  <path d="M8 14 C6 12, 4 10, 4 8" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M24 14 C26 12, 28 10, 28 8" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  
+  <!-- Small highlight for 3D effect -->
+  <circle cx="12" cy="10" r="2" fill="rgba(255,255,255,0.3)"/>
+</svg>
