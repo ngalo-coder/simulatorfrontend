@@ -290,7 +290,7 @@ const SimulationChatPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8 -my-8">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex justify-between items-center">
