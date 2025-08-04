@@ -195,6 +195,35 @@ export const api = {
     }
   },
 
+  // Get leaderboard data
+  getLeaderboard: async (specialty?: string, limit: number = 10) => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (specialty) queryParams.append('specialty', specialty);
+      queryParams.append('limit', limit.toString());
+      
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/performance/leaderboard?${queryParams.toString()}`,
+        {},
+        false
+      );
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log('Authentication required for leaderboard');
+          return [];
+        }
+        throw new Error('Failed to fetch leaderboard');
+      }
+      
+      const data = await response.json();
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      return [];
+    }
+  },
+
   // Admin APIs
   getSystemStats: async () => {
     try {

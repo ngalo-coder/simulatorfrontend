@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { api } from '../services/apiService';
 
 interface LeaderboardEntry {
   userId: string;
@@ -17,93 +18,41 @@ const LeaderboardPage: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('');
-  const [specialties] = useState<string[]>([
-    'Internal Medicine',
-    'Cardiology',
-    'Emergency Medicine',
-    'Pediatrics',
-    'Surgery',
-    'Neurology'
-  ]);
+  const [specialties, setSpecialties] = useState<string[]>([]);
 
   useEffect(() => {
+    fetchSpecialties();
     fetchLeaderboard();
   }, [selectedSpecialty]);
+
+  const fetchSpecialties = async () => {
+    try {
+      const categories = await api.getCaseCategories();
+      setSpecialties(categories.specialties || []);
+    } catch (error) {
+      console.error('Error fetching specialties:', error);
+    }
+  };
 
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      // Mock data for now - replace with actual API call
-      const mockData: LeaderboardEntry[] = [
-        {
-          userId: '1',
-          name: 'Dr. Sarah Johnson',
-          totalCases: 45,
-          excellentCount: 38,
-          excellentRate: '84.4',
-          averageScore: '87.2',
-          isContributor: true,
-          rank: 1
-        },
-        {
-          userId: '2',
-          name: 'Dr. Michael Chen',
-          totalCases: 52,
-          excellentCount: 41,
-          excellentRate: '78.8',
-          averageScore: '85.6',
-          isContributor: true,
-          rank: 2
-        },
-        {
-          userId: '3',
-          name: 'Dr. Emily Rodriguez',
-          totalCases: 38,
-          excellentCount: 29,
-          excellentRate: '76.3',
-          averageScore: '84.1',
-          isContributor: false,
-          rank: 3
-        },
-        {
-          userId: '4',
-          name: 'Dr. James Wilson',
-          totalCases: 41,
-          excellentCount: 30,
-          excellentRate: '73.2',
-          averageScore: '82.9',
-          isContributor: true,
-          rank: 4
-        },
-        {
-          userId: '5',
-          name: 'Dr. Lisa Thompson',
-          totalCases: 33,
-          excellentCount: 23,
-          excellentRate: '69.7',
-          averageScore: '81.4',
-          isContributor: false,
-          rank: 5
-        }
-      ];
+      // Fetch real leaderboard data from API
+      const data = await api.getLeaderboard(selectedSpecialty, 20);
+      
+      // Add rank numbers to the data
+      const rankedData = data.map((entry: any, index: number) => ({
+        ...entry,
+        rank: index + 1,
+        userId: entry.userId?._id || entry.userId,
+        name: entry.name || entry.userId?.username || 'Anonymous User'
+      }));
 
-      // Add current user if not in top 5
-      if (user && !mockData.find(entry => entry.userId === user.id)) {
-        mockData.push({
-          userId: user.id,
-          name: user.username,
-          totalCases: 12,
-          excellentCount: 7,
-          excellentRate: '58.3',
-          averageScore: '76.8',
-          isContributor: false,
-          rank: 23
-        });
-      }
-
-      setLeaderboard(mockData);
+      setLeaderboard(rankedData);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
+      // Fallback to empty array on error
+      setLeaderboard([]);
     } finally {
       setLoading(false);
     }
@@ -183,8 +132,14 @@ const LeaderboardPage: React.FC = () => {
           </h2>
         </div>
 
-        <div className="divide-y divide-gray-200">
-          {leaderboard.map((entry) => (
+        {leaderboard.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            <p className="text-lg mb-2">No leaderboard data available yet</p>
+            <p className="text-sm">Complete some cases to see rankings appear!</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-200">
+            {leaderboard.map((entry) => (
             <div
               key={entry.userId}
               className={`p-6 hover:bg-gray-50 transition-colors ${
@@ -244,8 +199,9 @@ const LeaderboardPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Your Rank (if not in top 5) */}
