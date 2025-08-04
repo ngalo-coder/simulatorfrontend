@@ -1,7 +1,33 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 const HomePage: React.FC = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect to dashboard if user is already logged in
+    if (!loading && user) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  // Don't render the landing page if user is logged in (will redirect)
+  if (user) {
+    return null;
+  }
+
   return (
     <div className="max-w-4xl mx-auto text-center">
       <h1 className="text-4xl font-bold text-gray-900 mb-6">
