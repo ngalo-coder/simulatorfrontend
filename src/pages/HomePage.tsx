@@ -5,10 +5,16 @@ const HomePage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto text-center">
       <h1 className="text-4xl font-bold text-gray-900 mb-6">
-        Virtual Patient Simulation Platform
+        Simulatech
       </h1>
-      <p className="text-xl text-gray-600 mb-8">
-        Practice clinical skills with AI-powered virtual patients
+      <p className="text-xl text-gray-600 mb-4">
+        Where virtual patients build real clinicians
+      </p>
+      <p className="text-lg text-gray-700 mb-4">
+        Master clinical skills with AI
+      </p>
+      <p className="text-base text-gray-600 mb-8">
+        From Virtual patients to confident clinical practice
       </p>
       
       <div className="grid md:grid-cols-2 gap-6 mb-8">
