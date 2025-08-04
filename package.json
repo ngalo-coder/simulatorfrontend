@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Frontend for Virtual Patient Simulation System",
+  "description": "Frontend for Simuatech - Virtual Patient Simulation System",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

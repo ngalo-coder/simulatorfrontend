@@ -296,7 +296,7 @@ const SimulationChatPage: React.FC = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">
-              Virtual Patient Simulation
+              Simuatech
             </h1>
             {sessionData?.patientName && (
               <p className="text-sm text-gray-600">

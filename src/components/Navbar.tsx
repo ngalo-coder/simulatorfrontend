@@ -33,7 +33,7 @@ const Navbar: React.FC = () => {
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
               <div className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
-                🏥 Virtual Patient Simulator
+                🏥 Simuatech
               </div>
             </Link>
           </div>

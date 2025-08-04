@@ -5,7 +5,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto text-center">
       <h1 className="text-4xl font-bold text-gray-900 mb-6">
-        Simulatech
+        Simuatech
       </h1>
       <p className="text-xl text-gray-600 mb-4">
         Where virtual patients build real clinicians
