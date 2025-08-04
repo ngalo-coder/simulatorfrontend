@@ -4,19 +4,29 @@ import { api } from '../services/apiService';
 import { formatDate, formatScore, getPerformanceColor } from '../utils/helpers';
 
 interface ProgressData {
-  totalCasesCompleted: number;
-  overallAverageScore: number;
-  specialtyProgress: Array<{
-    specialty: string;
-    casesCompleted: number;
-    averageScore: number;
-    lastCompletedAt: Date;
-  }>;
-  recentPerformance: Array<{
-    caseId: string;
-    caseTitle: string;
-    score: number;
-    completedAt: Date;
+  progress: {
+    totalCasesCompleted: number;
+    overallAverageScore: number;
+    beginnerCasesCompleted: number;
+    intermediateCasesCompleted: number;
+    advancedCasesCompleted: number;
+    beginnerAverageScore: number;
+    intermediateAverageScore: number;
+    advancedAverageScore: number;
+    currentProgressionLevel: string;
+  };
+  recentMetrics: Array<{
+    evaluated_at: string;
+    metrics: {
+      overall_score: number;
+    };
+    case_ref: {
+      case_metadata: {
+        title: string;
+        specialty: string;
+        difficulty: string;
+      };
+    };
   }>;
 }
 
