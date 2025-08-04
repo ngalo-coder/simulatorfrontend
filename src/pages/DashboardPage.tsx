@@ -88,48 +88,51 @@ const DashboardPage: React.FC = () => {
           <div className="grid md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {progressData?.totalCasesCompleted || 0}
+                {progressData?.progress?.totalCasesCompleted || 0}
               </div>
               <div className="text-sm text-gray-600">Cases Completed</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {progressData?.overallAverageScore ? `${Math.round(progressData.overallAverageScore)}%` : '0%'}
+                {progressData?.progress?.overallAverageScore ? `${Math.round(progressData.progress.overallAverageScore)}%` : '0%'}
               </div>
               <div className="text-sm text-gray-600">Average Score</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">
-                {progressData?.specialtyProgress?.length || 0}
+                {progressData?.recentMetrics?.length || 0}
               </div>
-              <div className="text-sm text-gray-600">Specialties Explored</div>
+              <div className="text-sm text-gray-600">Recent Cases</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
-                {progressData?.recentPerformance?.length || 0}
+                {progressData?.progress?.beginnerCasesCompleted + progressData?.progress?.intermediateCasesCompleted + progressData?.progress?.advancedCasesCompleted || 0}
               </div>
-              <div className="text-sm text-gray-600">Recent Cases</div>
+              <div className="text-sm text-gray-600">Total by Difficulty</div>
             </div>
           </div>
         )}
       </div>
 
       {/* Recent Activity Section */}
-      {progressData?.recentPerformance && progressData.recentPerformance.length > 0 && (
+      {progressData?.recentMetrics && progressData.recentMetrics.length > 0 && (
         <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
           <div className="space-y-3">
-            {progressData.recentPerformance.slice(0, 5).map((performance: any, index: number) => (
+            {progressData.recentMetrics.slice(0, 5).map((metric: any, index: number) => (
               <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
                 <div>
-                  <h4 className="font-medium">{performance.caseTitle}</h4>
+                  <h4 className="font-medium">{metric.case_ref?.case_metadata?.title || 'Unknown Case'}</h4>
                   <p className="text-sm text-gray-600">
-                    Completed on {new Date(performance.completedAt).toLocaleDateString()}
+                    {metric.case_ref?.case_metadata?.specialty} • {metric.case_ref?.case_metadata?.difficulty}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Completed on {new Date(metric.evaluated_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="text-right">
-                  <div className={`font-bold ${performance.score >= 90 ? 'text-green-600' : performance.score >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
-                    {performance.score}%
+                  <div className={`font-bold ${metric.metrics?.overall_score >= 90 ? 'text-green-600' : metric.metrics?.overall_score >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    {Math.round(metric.metrics?.overall_score || 0)}%
                   </div>
                 </div>
               </div>
@@ -138,28 +141,56 @@ const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* Specialty Progress */}
-      {progressData?.specialtyProgress && progressData.specialtyProgress.length > 0 && (
+      {/* Progress by Difficulty */}
+      {progressData?.progress && (
         <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Progress by Specialty</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            {progressData.specialtyProgress.map((specialty: any, index: number) => (
-              <div key={index} className="p-4 border border-gray-200 rounded-lg">
-                <h4 className="font-medium text-gray-900">{specialty.specialty}</h4>
-                <div className="mt-2 flex justify-between text-sm">
-                  <span className="text-gray-600">Cases: {specialty.casesCompleted}</span>
-                  <span className={`font-medium ${specialty.averageScore >= 90 ? 'text-green-600' : specialty.averageScore >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
-                    Avg: {Math.round(specialty.averageScore)}%
-                  </span>
-                </div>
-                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full ${specialty.averageScore >= 90 ? 'bg-green-500' : specialty.averageScore >= 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                    style={{ width: `${Math.min(specialty.averageScore, 100)}%` }}
-                  ></div>
-                </div>
+          <h3 className="text-lg font-semibold mb-4">Progress by Difficulty</h3>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="p-4 border border-gray-200 rounded-lg">
+              <h4 className="font-medium text-gray-900">Beginner</h4>
+              <div className="mt-2 flex justify-between text-sm">
+                <span className="text-gray-600">Cases: {progressData.progress.beginnerCasesCompleted}</span>
+                <span className={`font-medium ${progressData.progress.beginnerAverageScore >= 90 ? 'text-green-600' : progressData.progress.beginnerAverageScore >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
+                  Avg: {Math.round(progressData.progress.beginnerAverageScore)}%
+                </span>
               </div>
-            ))}
+              <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full ${progressData.progress.beginnerAverageScore >= 90 ? 'bg-green-500' : progressData.progress.beginnerAverageScore >= 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                  style={{ width: `${Math.min(progressData.progress.beginnerAverageScore, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+            <div className="p-4 border border-gray-200 rounded-lg">
+              <h4 className="font-medium text-gray-900">Intermediate</h4>
+              <div className="mt-2 flex justify-between text-sm">
+                <span className="text-gray-600">Cases: {progressData.progress.intermediateCasesCompleted}</span>
+                <span className={`font-medium ${progressData.progress.intermediateAverageScore >= 90 ? 'text-green-600' : progressData.progress.intermediateAverageScore >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
+                  Avg: {Math.round(progressData.progress.intermediateAverageScore)}%
+                </span>
+              </div>
+              <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full ${progressData.progress.intermediateAverageScore >= 90 ? 'bg-green-500' : progressData.progress.intermediateAverageScore >= 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                  style={{ width: `${Math.min(progressData.progress.intermediateAverageScore, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+            <div className="p-4 border border-gray-200 rounded-lg">
+              <h4 className="font-medium text-gray-900">Advanced</h4>
+              <div className="mt-2 flex justify-between text-sm">
+                <span className="text-gray-600">Cases: {progressData.progress.advancedCasesCompleted}</span>
+                <span className={`font-medium ${progressData.progress.advancedAverageScore >= 90 ? 'text-green-600' : progressData.progress.advancedAverageScore >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
+                  Avg: {Math.round(progressData.progress.advancedAverageScore)}%
+                </span>
+              </div>
+              <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full ${progressData.progress.advancedAverageScore >= 90 ? 'bg-green-500' : progressData.progress.advancedAverageScore >= 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                  style={{ width: `${Math.min(progressData.progress.advancedAverageScore, 100)}%` }}
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
       )}
