@@ -122,9 +122,16 @@ export const api = {
   },
 
   // Get case categories
-  getCaseCategories: async () => {
+  getCaseCategories: async (filters?: { program_area?: string }) => {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/case-categories`, {}, false);
+      const queryParams = new URLSearchParams();
+      if (filters?.program_area) {
+        queryParams.append('program_area', filters.program_area);
+      }
+      
+      const endpoint = `/api/simulation/case-categories${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await authenticatedFetch(`${API_BASE_URL}${endpoint}`, {}, false);
+      
       if (!response.ok) {
         if (response.status === 401) {
           console.log('Authentication required for case categories');
