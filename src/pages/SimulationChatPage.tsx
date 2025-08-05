@@ -152,6 +152,16 @@ const SimulationChatPage: React.FC = () => {
         messages.push(defaultPatientMessage);
       }
 
+      // Force add a test message to see if rendering works
+      const testMessage: Message = {
+        id: 'test-message',
+        role: 'assistant',
+        content: 'TEST: This is a test message to verify rendering works',
+        timestamp: new Date(),
+        speaks_for: 'Test Patient'
+      };
+      messages.push(testMessage);
+      
       console.log('🔍 Final messages array:', messages);
       console.log('🔍 Messages count:', messages.length);
       console.log('🔍 Initial prompt exists?', !!fixedResponse.initialPrompt);
