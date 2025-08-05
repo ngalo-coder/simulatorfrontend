@@ -311,7 +311,7 @@ const ProgressPage: React.FC = () => {
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
           <h3 className="text-lg font-semibold text-blue-800 mb-2">Ready to Start Learning?</h3>
           <p className="text-blue-600 mb-4">
-            Complete your first virtual patient case to begin tracking your progress.
+            Complete your first patient case to begin tracking your progress.
           </p>
           <button
             onClick={() => window.location.href = '/simulation'}

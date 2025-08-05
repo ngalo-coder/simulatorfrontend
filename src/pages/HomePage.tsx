@@ -34,13 +34,13 @@ const HomePage: React.FC = () => {
         Simuatech
       </h1>
       <p className="text-xl text-gray-600 mb-4">
-        Where virtual patients build real clinicians
+        Where patients build real clinicians
       </p>
       <p className="text-lg text-gray-700 mb-4">
         Master clinical skills with AI
       </p>
       <p className="text-base text-gray-600 mb-8">
-        From Virtual patients to confident clinical practice
+        From patients to confident clinical practice
       </p>
       
       <div className="grid md:grid-cols-2 gap-6 mb-8">

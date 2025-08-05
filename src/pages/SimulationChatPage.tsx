@@ -62,7 +62,7 @@ const SimulationChatPage: React.FC = () => {
       const systemMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `🏥 **Welcome to Virtual Patient Simulation**\n\nYou are now interacting with a virtual patient. This is a safe learning environment where you can practice your clinical skills.\n\n**How to interact:**\n• Ask questions about symptoms, medical history, or concerns\n• Conduct a virtual examination by asking specific questions\n• Practice your diagnostic reasoning\n• The patient will respond realistically based on their condition\n\n**Tips:**\n• Start with open-ended questions like "What brings you in today?"\n• Be thorough in your questioning\n• Take your time - there's no rush\n\nType your first question below to begin the consultation. Good luck! 👩‍⚕️👨‍⚕️`,
+        content: `🏥 **Welcome to Simuatech**\n\nYou are now interacting with ${response.patientName || 'your patient'}. This is a safe learning environment where you can practice your clinical skills.\n\n**How to interact:**\n• Ask questions about symptoms, medical history, or concerns\n• Conduct a virtual examination by asking specific questions\n• Practice your diagnostic reasoning\n• The patient will respond realistically based on their condition\n\n**Tips:**\n• Start with open-ended questions like "What brings you in today?"\n• Be thorough in your questioning\n• Take your time - there's no rush\n\nType your first question below to begin the consultation. Good luck! 👩‍⚕️👨‍⚕️`,
         timestamp: new Date(),
         speaks_for: 'System'
       };
@@ -76,7 +76,7 @@ const SimulationChatPage: React.FC = () => {
           role: 'assistant',
           content: response.initialPrompt,
           timestamp: new Date(),
-          speaks_for: response.speaks_for || response.patientName || 'Virtual Patient'
+          speaks_for: response.speaks_for || response.patientName || 'Patient'
         };
         messages.push(patientMessage);
       }
@@ -166,7 +166,7 @@ const SimulationChatPage: React.FC = () => {
         role: 'assistant',
         content: '',
         timestamp: new Date(),
-        speaks_for: sessionData?.patientName || 'Virtual Patient'
+        speaks_for: sessionData?.patientName || 'Patient'
       };
       
       let hasStarted = false;
@@ -388,12 +388,100 @@ const SimulationChatPage: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Evaluation */}
+      {/* Enhanced Evaluation Report */}
       {isSessionEnded && evaluation && (
-        <div className="bg-yellow-50 border-t border-yellow-200 p-4">
-          <h3 className="font-semibold text-yellow-800 mb-2">Session Evaluation</h3>
-          <div className="text-sm text-yellow-700 whitespace-pre-wrap">
-            {evaluation}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-100 border-t border-blue-200 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-2xl">📋</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Session Evaluation Report</h3>
+                    <p className="text-sm text-gray-600">
+                      Patient: {sessionData?.patientName || 'Patient'} • 
+                      Completed: {new Date().toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-gray-500">Session ID</div>
+                  <div className="text-xs font-mono text-gray-700">
+                    {sessionData?.sessionId?.slice(-8) || 'N/A'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-6">
+                <div className="prose prose-sm max-w-none">
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                      <span className="mr-2">🎯</span>
+                      Performance Summary
+                    </h4>
+                    <div className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                      {evaluation}
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4 mt-6">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h5 className="font-semibold text-green-800 mb-2 flex items-center">
+                        <span className="mr-2">✅</span>
+                        Strengths
+                      </h5>
+                      <p className="text-sm text-green-700">
+                        Review your evaluation above for specific strengths identified during this session.
+                      </p>
+                    </div>
+                    
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                      <h5 className="font-semibold text-amber-800 mb-2 flex items-center">
+                        <span className="mr-2">💡</span>
+                        Areas for Improvement
+                      </h5>
+                      <p className="text-sm text-amber-700">
+                        Check your evaluation for recommendations on areas to focus on for future cases.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h5 className="font-semibold text-blue-800 mb-2 flex items-center">
+                      <span className="mr-2">🚀</span>
+                      Next Steps
+                    </h5>
+                    <div className="text-sm text-blue-700 space-y-2">
+                      <p>• Review your performance metrics in the Progress section</p>
+                      <p>• Try similar cases to reinforce your learning</p>
+                      <p>• Challenge yourself with cases of increasing difficulty</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                <div className="text-xs text-gray-500">
+                  This evaluation was generated by Simuatech AI to help improve your clinical skills.
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => navigate('/progress')}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    View Progress
+                  </button>
+                  <button
+                    onClick={() => navigate('/simulation')}
+                    className="px-4 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 transition-colors"
+                  >
+                    Try Another Case
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

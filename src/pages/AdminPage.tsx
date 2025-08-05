@@ -94,7 +94,7 @@ const AdminPage: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        <p className="text-gray-600">Manage your virtual patient simulation platform</p>
+        <p className="text-gray-600">Manage your patient simulation platform</p>
       </div>
 
       {/* Navigation Tabs */}
@@ -174,7 +174,7 @@ const AdminPage: React.FC = () => {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-semibold mb-3">Case Library</h3>
               <p className="text-gray-600 mb-4">
-                Add, edit, and organize virtual patient cases
+                Add, edit, and organize patient cases
               </p>
               <button 
                 onClick={() => setActiveTab('cases')}
@@ -256,7 +256,7 @@ const AdminPage: React.FC = () => {
             <p>This section will contain case management tools including:</p>
             <ul className="text-left mt-4 space-y-2 max-w-md mx-auto">
               <li>• Browse all available cases</li>
-              <li>• Add new virtual patient cases</li>
+              <li>• Add new patient cases</li>
               <li>• Edit existing case content</li>
               <li>• Organize cases by specialty</li>
             </ul>

@@ -113,7 +113,7 @@ const SimulationPage: React.FC = () => {
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Virtual Patient Cases
+          Patient Cases
         </h1>
         <p className="text-gray-600">
           Select a case to begin your simulation experience

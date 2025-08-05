@@ -32,7 +32,7 @@ const DashboardPage: React.FC = () => {
           Welcome back, {user?.username}!
         </h1>
         <p className="text-gray-600">
-          Continue your medical training with virtual patient simulations
+          Continue your medical training with patient simulations
         </p>
       </div>
 
