@@ -76,7 +76,7 @@ const SimulationChatPage: React.FC = () => {
 
   const startNewSimulation = async () => {
     if (!caseId) return;
-    
+
     // Prevent starting a new simulation if one is already in progress
     if (sessionData && !isSessionEnded) {
       console.log('⚠️ Simulation already in progress, not starting a new one');
@@ -91,8 +91,24 @@ const SimulationChatPage: React.FC = () => {
       console.log('🔍 Full API Response:', response);
       console.log('🔍 Patient Name from response:', response.patientName);
       console.log('🔍 Response keys:', Object.keys(response));
+      console.log('🔍 Response type:', typeof response);
+      console.log('🔍 Is response an object?', response && typeof response === 'object');
+      
+      // Test if the patient name exists in different possible locations
+      console.log('🔍 Checking all possible patient name fields:');
+      console.log('  - response.patientName:', response.patientName);
+      console.log('  - response.patient_name:', response.patient_name);
+      console.log('  - response.name:', response.name);
+      console.log('  - response.data?.patientName:', response.data?.patientName);
 
-      setSessionData(response);
+      // Temporary test: Add a hardcoded patient name to verify display works
+      const responseWithTestName = {
+        ...response,
+        patientName: response.patientName || 'TEST PATIENT NAME'
+      };
+      
+      setSessionData(responseWithTestName);
+      console.log('🔍 Set sessionData with:', responseWithTestName);
 
       // Add system welcome message
       const systemMessage: Message = {
@@ -296,7 +312,7 @@ const SimulationChatPage: React.FC = () => {
 
       setIsSessionEnded(true);
       setEvaluation(response.evaluation || 'Session completed successfully.');
-      
+
       // Log completion for debugging progress tracking
       console.log('✅ Session completed successfully. Progress should be updated.');
     } catch (error) {
@@ -349,11 +365,15 @@ const SimulationChatPage: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">
-                      {sessionData.patientName || sessionData.patient_name || sessionData.name || 'Patient'}
+                      {sessionData.patientName ||
+                        sessionData.patient_name ||
+                        sessionData.name ||
+                        'Patient'}
                       {/* Debug info */}
                       {import.meta.env.DEV && (
                         <span className="text-xs text-red-500 ml-2">
-                          (Debug: patientName={sessionData.patientName}, keys={Object.keys(sessionData).join(',')})
+                          (Debug: patientName={sessionData.patientName}, keys=
+                          {Object.keys(sessionData).join(',')})
                         </span>
                       )}
                     </p>
@@ -509,7 +529,10 @@ const SimulationChatPage: React.FC = () => {
               </div>
               <div className="max-w-md lg:max-w-lg">
                 <div className="text-xs mb-2 font-semibold text-purple-700">
-                  {sessionData?.patientName || sessionData?.patient_name || sessionData?.name || 'Patient'}
+                  {sessionData?.patientName ||
+                    sessionData?.patient_name ||
+                    sessionData?.name ||
+                    'Patient'}
                 </div>
                 <div className="bg-white text-gray-900 border border-gray-200 shadow-lg px-4 py-3 rounded-2xl pulse-glow">
                   <div className="flex items-center space-x-3">
@@ -528,7 +551,11 @@ const SimulationChatPage: React.FC = () => {
                       ></div>
                     </div>
                     <span className="text-sm text-gray-600 font-medium">
-                      {sessionData?.patientName || sessionData?.patient_name || sessionData?.name || 'Patient'} is thinking...
+                      {sessionData?.patientName ||
+                        sessionData?.patient_name ||
+                        sessionData?.name ||
+                        'Patient'}{' '}
+                      is thinking...
                     </span>
                   </div>
                 </div>
