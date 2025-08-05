@@ -150,6 +150,11 @@ const SimulationChatPage: React.FC = () => {
         messages.push(defaultPatientMessage);
       }
 
+      console.log('🔍 Final messages array:', messages);
+      console.log('🔍 Messages count:', messages.length);
+      console.log('🔍 Initial prompt exists?', !!fixedResponse.initialPrompt);
+      console.log('🔍 Initial prompt content:', fixedResponse.initialPrompt);
+      
       setMessages(messages);
 
       // Update URL to include session ID
@@ -387,10 +392,10 @@ const SimulationChatPage: React.FC = () => {
                         sessionData.patient_name ||
                         sessionData.name ||
                         'Patient'}
-                      {/* Debug info */}
+                      {/* Enhanced Debug info */}
                       {import.meta.env.DEV && (
                         <span className="text-xs text-red-500 ml-2">
-                          (Debug: patientName={sessionData.patientName}, keys=
+                          (Debug: patientName={sessionData.patientName}, initialPrompt={!!sessionData.initialPrompt}, keys=
                           {Object.keys(sessionData).join(',')})
                         </span>
                       )}
