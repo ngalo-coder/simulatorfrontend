@@ -76,14 +76,21 @@ const SimulationChatPage: React.FC = () => {
 
   const startNewSimulation = async () => {
     if (!caseId) return;
+    
+    // Prevent starting a new simulation if one is already in progress
+    if (sessionData && !isSessionEnded) {
+      console.log('⚠️ Simulation already in progress, not starting a new one');
+      return;
+    }
 
     try {
       setIsLoading(true);
       const response = await api.startSimulation(caseId);
 
       // Debug: Log the response to see what we're getting
-      console.log('API Response:', response);
-      console.log('Patient Name:', response.patientName);
+      console.log('🔍 Full API Response:', response);
+      console.log('🔍 Patient Name from response:', response.patientName);
+      console.log('🔍 Response keys:', Object.keys(response));
 
       setSessionData(response);
 
@@ -289,6 +296,9 @@ const SimulationChatPage: React.FC = () => {
 
       setIsSessionEnded(true);
       setEvaluation(response.evaluation || 'Session completed successfully.');
+      
+      // Log completion for debugging progress tracking
+      console.log('✅ Session completed successfully. Progress should be updated.');
     } catch (error) {
       console.error('Error ending session:', error);
       alert('Failed to end session properly.');
@@ -339,11 +349,11 @@ const SimulationChatPage: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">
-                      {sessionData.patientName || 'Patient'}
+                      {sessionData.patientName || sessionData.patient_name || sessionData.name || 'Patient'}
                       {/* Debug info */}
                       {import.meta.env.DEV && (
                         <span className="text-xs text-red-500 ml-2">
-                          (Debug: {JSON.stringify(sessionData)})
+                          (Debug: patientName={sessionData.patientName}, keys={Object.keys(sessionData).join(',')})
                         </span>
                       )}
                     </p>
@@ -499,7 +509,7 @@ const SimulationChatPage: React.FC = () => {
               </div>
               <div className="max-w-md lg:max-w-lg">
                 <div className="text-xs mb-2 font-semibold text-purple-700">
-                  {sessionData?.patientName || 'Patient'}
+                  {sessionData?.patientName || sessionData?.patient_name || sessionData?.name || 'Patient'}
                 </div>
                 <div className="bg-white text-gray-900 border border-gray-200 shadow-lg px-4 py-3 rounded-2xl pulse-glow">
                   <div className="flex items-center space-x-3">
@@ -518,7 +528,7 @@ const SimulationChatPage: React.FC = () => {
                       ></div>
                     </div>
                     <span className="text-sm text-gray-600 font-medium">
-                      {sessionData?.patientName || 'Patient'} is thinking...
+                      {sessionData?.patientName || sessionData?.patient_name || sessionData?.name || 'Patient'} is thinking...
                     </span>
                   </div>
                 </div>
