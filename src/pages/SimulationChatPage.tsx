@@ -93,7 +93,7 @@ const SimulationChatPage: React.FC = () => {
       console.log('🔍 Response keys:', Object.keys(response));
       console.log('🔍 Response type:', typeof response);
       console.log('🔍 Is response an object?', response && typeof response === 'object');
-      
+
       // Test if the patient name exists in different possible locations
       console.log('🔍 Checking all possible patient name fields:');
       console.log('  - response.patientName:', response.patientName);
@@ -104,9 +104,9 @@ const SimulationChatPage: React.FC = () => {
       // Temporary test: Add a hardcoded patient name to verify display works
       const responseWithTestName = {
         ...response,
-        patientName: response.patientName || 'TEST PATIENT NAME'
+        patientName: response.patientName || 'TEST PATIENT NAME',
       };
-      
+
       setSessionData(responseWithTestName);
       console.log('🔍 Set sessionData with:', responseWithTestName);
 
@@ -668,48 +668,32 @@ const SimulationChatPage: React.FC = () => {
         </div>
       )}
 
-      {/* Smart Suggestions Panel */}
+      {/* Compact Smart Suggestions */}
       {messages.length <= 2 && !isSessionEnded && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-t border-blue-200 p-6">
+        <div className="bg-blue-50 border-t border-blue-200 px-6 py-3">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <span className="text-2xl">🎯</span>
-                <h3 className="font-bold text-blue-900">Smart Consultation Starters</h3>
-              </div>
-              <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                Click to use
+                <span className="text-sm">💡</span>
+                <span className="text-sm font-medium text-blue-800">Quick Starters:</span>
               </div>
             </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+            
+            <div className="flex flex-wrap gap-2">
               {[
-                { icon: '🗣️', text: 'What brings you in today?', category: 'Opening' },
-                { icon: '🤒', text: 'Can you describe your symptoms?', category: 'Symptoms' },
-                { icon: '⏰', text: 'When did this start?', category: 'Timeline' },
-                { icon: '📋', text: 'Any medical history I should know?', category: 'History' },
+                'What brings you in today?',
+                'Can you describe your symptoms?',
+                'When did this start?',
+                'Any medical history I should know?'
               ].map((suggestion, index) => (
                 <button
                   key={index}
-                  onClick={() => setInputMessage(suggestion.text)}
-                  className="text-left p-3 bg-white rounded-lg border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all duration-200 group"
+                  onClick={() => setInputMessage(suggestion)}
+                  className="text-xs px-3 py-1 bg-white text-blue-700 rounded-full border border-blue-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
                 >
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-lg">{suggestion.icon}</span>
-                    <span className="text-xs font-medium text-blue-600">{suggestion.category}</span>
-                  </div>
-                  <div className="text-sm text-gray-700 group-hover:text-blue-800 font-medium">
-                    "{suggestion.text}"
-                  </div>
+                  "{suggestion}"
                 </button>
               ))}
-            </div>
-
-            <div className="mt-4 text-center">
-              <p className="text-xs text-blue-700">
-                💡 These are evidence-based consultation starters used by medical professionals
-                worldwide
-              </p>
             </div>
           </div>
         </div>
