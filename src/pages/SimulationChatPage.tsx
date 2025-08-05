@@ -80,7 +80,7 @@ const SimulationChatPage: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await api.startSimulation(caseId);
-      
+
       // Debug: Log the response to see what we're getting
       console.log('API Response:', response);
       console.log('Patient Name:', response.patientName);
@@ -339,9 +339,9 @@ const SimulationChatPage: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">
-                      {sessionData.patientName || 'Patient'} 
+                      {sessionData.patientName || 'Patient'}
                       {/* Debug info */}
-                      {process.env.NODE_ENV === 'development' && (
+                      {import.meta.env.DEV && (
                         <span className="text-xs text-red-500 ml-2">
                           (Debug: {JSON.stringify(sessionData)})
                         </span>
