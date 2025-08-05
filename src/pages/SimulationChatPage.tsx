@@ -129,7 +129,8 @@ const SimulationChatPage: React.FC = () => {
       const messages = [systemMessage];
 
       // Add initial message from patient if available
-      if (fixedResponse.initialPrompt) {
+      if (fixedResponse.initialPrompt && fixedResponse.initialPrompt.trim()) {
+        console.log('🔍 Adding initial prompt message');
         const patientMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -139,6 +140,7 @@ const SimulationChatPage: React.FC = () => {
         };
         messages.push(patientMessage);
       } else {
+        console.log('🔍 Adding default patient greeting');
         // If no initial prompt, add a default patient greeting
         const defaultPatientMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -154,6 +156,16 @@ const SimulationChatPage: React.FC = () => {
       console.log('🔍 Messages count:', messages.length);
       console.log('🔍 Initial prompt exists?', !!fixedResponse.initialPrompt);
       console.log('🔍 Initial prompt content:', fixedResponse.initialPrompt);
+      
+      // Debug each message individually
+      messages.forEach((msg, index) => {
+        console.log(`🔍 Message ${index}:`, {
+          id: msg.id,
+          role: msg.role,
+          speaks_for: msg.speaks_for,
+          content: msg.content.substring(0, 50) + '...'
+        });
+      });
       
       setMessages(messages);
 
