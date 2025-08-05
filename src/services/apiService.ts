@@ -168,6 +168,10 @@ export const api = {
       }
       
       const data = await response.json();
+      console.log('🔍 Raw API response in startSimulation:', data);
+      console.log('🔍 data.data exists?', !!data.data);
+      console.log('🔍 data.data content:', data.data);
+      console.log('🔍 Returning:', data.data || data);
       return data.data || data;
     } catch (error) {
       console.error('Error starting simulation:', error);

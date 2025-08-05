@@ -101,21 +101,23 @@ const SimulationChatPage: React.FC = () => {
       console.log('  - response.name:', response.name);
       console.log('  - response.data?.patientName:', response.data?.patientName);
 
-      // Temporary test: Add a hardcoded patient name to verify display works
-      const responseWithTestName = {
-        ...response,
-        patientName: response.patientName || 'TEST PATIENT NAME',
+      // Fix response structure - ensure we have the correct data
+      const fixedResponse = {
+        sessionId: response.sessionId,
+        patientName: response.patientName || response.patient_name || response.name || 'Patient',
+        initialPrompt: response.initialPrompt || response.initial_prompt,
+        speaks_for: response.speaks_for || response.patientName || response.patient_name || response.name || 'Patient'
       };
 
-      setSessionData(responseWithTestName);
-      console.log('🔍 Set sessionData with:', responseWithTestName);
+      setSessionData(fixedResponse);
+      console.log('🔍 Set sessionData with fixed response:', fixedResponse);
 
       // Add system welcome message
       const systemMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
         content: `🏥 **Welcome to Simuatech**\n\nYou are now interacting with ${
-          response.patientName || 'your patient'
+          fixedResponse.patientName
         }. This is a safe learning environment where you can practice your clinical skills.\n\n**How to interact:**\n• Ask questions about symptoms, medical history, or concerns\n• Conduct a virtual examination by asking specific questions\n• Practice your diagnostic reasoning\n• The patient will respond realistically based on their condition\n\n**Tips:**\n• Start with open-ended questions like "What brings you in today?"\n• Be thorough in your questioning\n• Take your time - there's no rush\n\nType your first question below to begin the consultation. Good luck! 👩‍⚕️👨‍⚕️`,
         timestamp: new Date(),
         speaks_for: 'System',
@@ -124,21 +126,31 @@ const SimulationChatPage: React.FC = () => {
       const messages = [systemMessage];
 
       // Add initial message from patient if available
-      if (response.initialPrompt) {
+      if (fixedResponse.initialPrompt) {
         const patientMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: response.initialPrompt,
+          content: fixedResponse.initialPrompt,
           timestamp: new Date(),
-          speaks_for: response.speaks_for || response.patientName || 'Patient',
+          speaks_for: fixedResponse.speaks_for,
         };
         messages.push(patientMessage);
+      } else {
+        // If no initial prompt, add a default patient greeting
+        const defaultPatientMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `Hello, I'm ${fixedResponse.patientName}. Thank you for seeing me today.`,
+          timestamp: new Date(),
+          speaks_for: fixedResponse.speaks_for,
+        };
+        messages.push(defaultPatientMessage);
       }
 
       setMessages(messages);
 
       // Update URL to include session ID
-      navigate(`/simulation/${caseId}/session/${response.sessionId}`, { replace: true });
+      navigate(`/simulation/${caseId}/session/${fixedResponse.sessionId}`, { replace: true });
     } catch (error) {
       console.error('Error starting simulation:', error);
       alert('Failed to start simulation. Please try again.');
@@ -678,13 +690,13 @@ const SimulationChatPage: React.FC = () => {
                 <span className="text-sm font-medium text-blue-800">Quick Starters:</span>
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               {[
                 'What brings you in today?',
                 'Can you describe your symptoms?',
                 'When did this start?',
-                'Any medical history I should know?'
+                'Any medical history I should know?',
               ].map((suggestion, index) => (
                 <button
                   key={index}
