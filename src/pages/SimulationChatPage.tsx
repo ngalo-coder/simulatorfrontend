@@ -14,7 +14,7 @@ interface Message {
 const SimulationChatPage: React.FC = () => {
   const { caseId, sessionId } = useParams();
   const navigate = useNavigate();
-  
+
   // Add custom styles for animations
   React.useEffect(() => {
     const style = document.createElement('style');
@@ -35,7 +35,9 @@ const SimulationChatPage: React.FC = () => {
       }
     `;
     document.head.appendChild(style);
-    return () => document.head.removeChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
   }, []);
   const {} = useAuth();
 
@@ -325,7 +327,7 @@ const SimulationChatPage: React.FC = () => {
                   <p className="text-xs text-gray-500">Medical Simulation Platform</p>
                 </div>
               </div>
-              
+
               {sessionData?.patientName && (
                 <div className="flex items-center space-x-3 ml-8 pl-8 border-l border-gray-200">
                   <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
@@ -341,15 +343,13 @@ const SimulationChatPage: React.FC = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <div className="text-right mr-4">
                 <p className="text-xs text-gray-500">Session Time</p>
-                <p className="text-sm font-mono text-gray-700">
-                  {new Date().toLocaleTimeString()}
-                </p>
+                <p className="text-sm font-mono text-gray-700">{new Date().toLocaleTimeString()}</p>
               </div>
-              
+
               {!isSessionEnded && (
                 <button
                   onClick={endSession}
@@ -374,18 +374,23 @@ const SimulationChatPage: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Progress Indicator */}
         {!isSessionEnded && (
           <div className="px-6 pb-3">
             <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
               <span>Session Progress</span>
-              <span>{messages.filter(m => m.role === 'user').length} questions asked</span>
+              <span>{messages.filter((m) => m.role === 'user').length} questions asked</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5">
-              <div 
+              <div
                 className="bg-gradient-to-r from-blue-500 to-indigo-600 h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${Math.min((messages.filter(m => m.role === 'user').length / 10) * 100, 100)}%` }}
+                style={{
+                  width: `${Math.min(
+                    (messages.filter((m) => m.role === 'user').length / 10) * 100,
+                    100
+                  )}%`,
+                }}
               ></div>
             </div>
           </div>
@@ -397,67 +402,76 @@ const SimulationChatPage: React.FC = () => {
         {messages.map((message, index) => (
           <div
             key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
+            className={`flex ${
+              message.role === 'user' ? 'justify-end' : 'justify-start'
+            } animate-fade-in`}
             style={{ animationDelay: `${index * 0.1}s` }}
           >
-            <div className={`flex items-start space-x-3 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+            <div
+              className={`flex items-start space-x-3 ${
+                message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+              }`}
+            >
               {/* Avatar */}
-              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                message.role === 'user'
-                  ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                  : message.speaks_for === 'System'
-                  ? 'bg-gradient-to-br from-green-500 to-emerald-600'
-                  : 'bg-gradient-to-br from-purple-500 to-pink-600'
-              }`}>
+              <div
+                className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                  message.role === 'user'
+                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                    : message.speaks_for === 'System'
+                    ? 'bg-gradient-to-br from-green-500 to-emerald-600'
+                    : 'bg-gradient-to-br from-purple-500 to-pink-600'
+                }`}
+              >
                 <span className="text-white text-sm font-medium">
-                  {message.role === 'user' 
-                    ? '👨‍⚕️' 
-                    : message.speaks_for === 'System' 
-                    ? 'ℹ️' 
-                    : '🤒'
-                  }
+                  {message.role === 'user' ? '👨‍⚕️' : message.speaks_for === 'System' ? 'ℹ️' : '🤒'}
                 </span>
               </div>
-              
+
               {/* Message Bubble */}
-              <div className={`max-w-md lg:max-w-lg ${
-                message.role === 'user' ? 'text-right' : 'text-left'
-              }`}>
+              <div
+                className={`max-w-md lg:max-w-lg ${
+                  message.role === 'user' ? 'text-right' : 'text-left'
+                }`}
+              >
                 {/* Speaker Label */}
                 {message.role === 'assistant' && message.speaks_for && (
-                  <div className={`text-xs mb-2 font-semibold ${
-                    message.speaks_for === 'System' 
-                      ? 'text-green-700' 
-                      : 'text-purple-700'
-                  }`}>
+                  <div
+                    className={`text-xs mb-2 font-semibold ${
+                      message.speaks_for === 'System' ? 'text-green-700' : 'text-purple-700'
+                    }`}
+                  >
                     {message.speaks_for === 'System' ? 'System Guide' : message.speaks_for}
                   </div>
                 )}
-                
+
                 {/* Message Content */}
-                <div className={`px-4 py-3 rounded-2xl shadow-md ${
-                  message.role === 'user'
-                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white'
-                    : message.speaks_for === 'System'
-                    ? 'bg-gradient-to-br from-green-50 to-emerald-50 text-gray-800 border-l-4 border-green-400'
-                    : 'bg-white text-gray-900 border border-gray-200 shadow-lg'
-                }`}>
-                  <div className={`whitespace-pre-wrap ${
-                    message.speaks_for === 'System' ? 'text-sm leading-relaxed' : ''
-                  }`}>
+                <div
+                  className={`px-4 py-3 rounded-2xl shadow-md ${
+                    message.role === 'user'
+                      ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white'
+                      : message.speaks_for === 'System'
+                      ? 'bg-gradient-to-br from-green-50 to-emerald-50 text-gray-800 border-l-4 border-green-400'
+                      : 'bg-white text-gray-900 border border-gray-200 shadow-lg'
+                  }`}
+                >
+                  <div
+                    className={`whitespace-pre-wrap ${
+                      message.speaks_for === 'System' ? 'text-sm leading-relaxed' : ''
+                    }`}
+                  >
                     {message.content}
                   </div>
                 </div>
-                
+
                 {/* Timestamp */}
-                <div className={`text-xs mt-2 ${
-                  message.role === 'user' 
-                    ? 'text-blue-600' 
-                    : 'text-gray-500'
-                }`}>
-                  {message.timestamp.toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
+                <div
+                  className={`text-xs mt-2 ${
+                    message.role === 'user' ? 'text-blue-600' : 'text-gray-500'
+                  }`}
+                >
+                  {message.timestamp.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
                   })}
                 </div>
               </div>
@@ -478,9 +492,18 @@ const SimulationChatPage: React.FC = () => {
                 <div className="bg-white text-gray-900 border border-gray-200 shadow-lg px-4 py-3 rounded-2xl pulse-glow">
                   <div className="flex items-center space-x-3">
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div
+                        className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+                        style={{ animationDelay: '0ms' }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+                        style={{ animationDelay: '150ms' }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+                        style={{ animationDelay: '300ms' }}
+                      ></div>
                     </div>
                     <span className="text-sm text-gray-600 font-medium">
                       {sessionData?.patientName || 'Patient'} is thinking...
@@ -609,13 +632,13 @@ const SimulationChatPage: React.FC = () => {
                 Click to use
               </div>
             </div>
-            
+
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { icon: "🗣️", text: "What brings you in today?", category: "Opening" },
-                { icon: "🤒", text: "Can you describe your symptoms?", category: "Symptoms" },
-                { icon: "⏰", text: "When did this start?", category: "Timeline" },
-                { icon: "📋", text: "Any medical history I should know?", category: "History" }
+                { icon: '🗣️', text: 'What brings you in today?', category: 'Opening' },
+                { icon: '🤒', text: 'Can you describe your symptoms?', category: 'Symptoms' },
+                { icon: '⏰', text: 'When did this start?', category: 'Timeline' },
+                { icon: '📋', text: 'Any medical history I should know?', category: 'History' },
               ].map((suggestion, index) => (
                 <button
                   key={index}
@@ -632,10 +655,11 @@ const SimulationChatPage: React.FC = () => {
                 </button>
               ))}
             </div>
-            
+
             <div className="mt-4 text-center">
               <p className="text-xs text-blue-700">
-                💡 These are evidence-based consultation starters used by medical professionals worldwide
+                💡 These are evidence-based consultation starters used by medical professionals
+                worldwide
               </p>
             </div>
           </div>
@@ -678,7 +702,7 @@ const SimulationChatPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <button
                 onClick={sendMessage}
                 disabled={!inputMessage.trim() || isLoading}
