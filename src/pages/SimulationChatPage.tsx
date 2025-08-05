@@ -80,6 +80,10 @@ const SimulationChatPage: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await api.startSimulation(caseId);
+      
+      // Debug: Log the response to see what we're getting
+      console.log('API Response:', response);
+      console.log('Patient Name:', response.patientName);
 
       setSessionData(response);
 
@@ -328,13 +332,21 @@ const SimulationChatPage: React.FC = () => {
                 </div>
               </div>
 
-              {sessionData?.patientName && (
+              {sessionData && (
                 <div className="flex items-center space-x-3 ml-8 pl-8 border-l border-gray-200">
                   <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
                     <span className="text-white text-lg">👤</span>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{sessionData.patientName}</p>
+                    <p className="font-semibold text-gray-900">
+                      {sessionData.patientName || 'Patient'} 
+                      {/* Debug info */}
+                      {process.env.NODE_ENV === 'development' && (
+                        <span className="text-xs text-red-500 ml-2">
+                          (Debug: {JSON.stringify(sessionData)})
+                        </span>
+                      )}
+                    </p>
                     <p className="text-sm text-gray-600 flex items-center">
                       <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
                       Active Session
