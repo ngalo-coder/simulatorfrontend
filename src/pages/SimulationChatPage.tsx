@@ -106,7 +106,12 @@ const SimulationChatPage: React.FC = () => {
         sessionId: response.sessionId,
         patientName: response.patientName || response.patient_name || response.name || 'Patient',
         initialPrompt: response.initialPrompt || response.initial_prompt,
-        speaks_for: response.speaks_for || response.patientName || response.patient_name || response.name || 'Patient'
+        speaks_for:
+          response.speaks_for ||
+          response.patientName ||
+          response.patient_name ||
+          response.name ||
+          'Patient',
       };
 
       setSessionData(fixedResponse);
@@ -116,9 +121,7 @@ const SimulationChatPage: React.FC = () => {
       const systemMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `🏥 **Welcome to Simuatech**\n\nYou are now interacting with ${
-          fixedResponse.patientName
-        }. This is a safe learning environment where you can practice your clinical skills.\n\n**How to interact:**\n• Ask questions about symptoms, medical history, or concerns\n• Conduct a virtual examination by asking specific questions\n• Practice your diagnostic reasoning\n• The patient will respond realistically based on their condition\n\n**Tips:**\n• Start with open-ended questions like "What brings you in today?"\n• Be thorough in your questioning\n• Take your time - there's no rush\n\nType your first question below to begin the consultation. Good luck! 👩‍⚕️👨‍⚕️`,
+        content: `🏥 **Welcome to Simuatech**\n\nYou are now interacting with ${fixedResponse.patientName}. This is a safe learning environment where you can practice your clinical skills.\n\n**How to interact:**\n• Ask questions about symptoms, medical history, or concerns\n• Conduct a virtual examination by asking specific questions\n• Practice your diagnostic reasoning\n• The patient will respond realistically based on their condition\n\n**Tips:**\n• Start with open-ended questions like "What brings you in today?"\n• Be thorough in your questioning\n• Take your time - there's no rush\n\nType your first question below to begin the consultation. Good luck! 👩‍⚕️👨‍⚕️`,
         timestamp: new Date(),
         speaks_for: 'System',
       };
@@ -251,12 +254,15 @@ const SimulationChatPage: React.FC = () => {
           switch (data.type) {
             case 'chunk':
               if (!hasStarted) {
+                // Update the assistant message with the correct name and role from the backend
+                assistantMessage.speaks_for = data.name || data.speaks_for || sessionData?.patientName || 'Patient';
                 setMessages((prev) => [...prev, assistantMessage]);
                 hasStarted = true;
               }
 
               assistantMessage.content += data.content;
-              assistantMessage.speaks_for = data.speaks_for || assistantMessage.speaks_for;
+              // Use the name from the backend response, fallback to speaks_for or sessionData
+              assistantMessage.speaks_for = data.name || data.speaks_for || assistantMessage.speaks_for;
 
               setMessages((prev) =>
                 prev.map((msg) => (msg.id === assistantMessage.id ? { ...assistantMessage } : msg))
