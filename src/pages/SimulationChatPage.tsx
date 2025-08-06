@@ -717,18 +717,36 @@ const SimulationChatPage: React.FC = () => {
         </div>
       )}
 
-      {/* Compact Smart Suggestions */}
+      {/* Compact Smart Suggestions - Mobile Optimized */}
       {messages.length <= 2 && !isSessionEnded && (
-        <div className="bg-blue-50 border-t border-blue-200 px-3 sm:px-6 py-3">
+        <div className="bg-blue-50 border-t border-blue-200 px-3 sm:px-6 py-2 sm:py-3">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-2">
+            {/* Hide label on mobile, show only on larger screens */}
+            <div className="hidden sm:flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <span className="text-sm">💡</span>
-                <span className="text-xs sm:text-sm font-medium text-blue-800">Quick Starters:</span>
+                <span className="text-sm font-medium text-blue-800">Quick Starters:</span>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-1 sm:gap-2">
+            {/* Mobile: Show only 2 most important suggestions */}
+            <div className="flex sm:hidden flex-wrap gap-1">
+              {[
+                'What brings you in today?',
+                'Describe your symptoms',
+              ].map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => setInputMessage(suggestion)}
+                  className="text-xs px-2 py-1 bg-white text-blue-700 rounded-full border border-blue-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+
+            {/* Desktop: Show all suggestions */}
+            <div className="hidden sm:flex flex-wrap gap-2">
               {[
                 'What brings you in today?',
                 'Can you describe your symptoms?',
@@ -738,7 +756,7 @@ const SimulationChatPage: React.FC = () => {
                 <button
                   key={index}
                   onClick={() => setInputMessage(suggestion)}
-                  className="text-xs px-2 py-1 sm:px-3 bg-white text-blue-700 rounded-full border border-blue-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
+                  className="text-xs px-3 py-1 bg-white text-blue-700 rounded-full border border-blue-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
                 >
                   "{suggestion}"
                 </button>
