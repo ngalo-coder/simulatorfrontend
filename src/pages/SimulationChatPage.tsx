@@ -182,7 +182,7 @@ const SimulationChatPage: React.FC = () => {
       
       // Also force a re-render after a small delay
       setTimeout(() => {
-        setMessages(prevMessages => [...messages]);
+        setMessages(() => [...messages]);
       }, 50);
 
       // Update URL

@@ -2,18 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/apiService';
 
-interface ProgramArea {
-  name: string;
-  description: string;
-  icon: string;
-  specialties: string[];
-}
-
-interface Specialty {
-  name: string;
-  description: string;
-  caseCount: number;
-}
+// Removed unused interfaces - using dynamic data from API instead
 
 const CaseBrowsingPage: React.FC = () => {
   const navigate = useNavigate();
