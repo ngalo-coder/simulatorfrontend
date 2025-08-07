@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../hooks/useAuth';
+// import { useAuth } from '../hooks/useAuth'; // TODO: Use when implementing API calls
 
 interface PrivacySettings {
   showInLeaderboard: boolean;
