@@ -47,6 +47,7 @@ const authenticatedFetch = async (url: string, options: RequestInit = {}, autoLo
 export const api = {
   // Check if user is authenticated
   isAuthenticated: () => isTokenValid(),
+
   // Get user cases/progress data
   getUserProgress: async (userId: string) => {
     try {
@@ -155,26 +156,76 @@ export const api = {
     }
   },
 
-  // Start simulation
+  // Start simulation with enhanced debugging
   startSimulation: async (caseId: string) => {
     try {
+      console.log('📡 Starting simulation for case:', caseId);
+      
       const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/start`, {
         method: 'POST',
         body: JSON.stringify({ caseId })
       });
       
       if (!response.ok) {
-        throw new Error('Failed to start simulation');
+        console.error('❌ API Response not OK:', response.status, response.statusText);
+        throw new Error(`Failed to start simulation: ${response.status} ${response.statusText}`);
       }
       
-      const data = await response.json();
-      console.log('🔍 Raw API response in startSimulation:', data);
-      console.log('🔍 data.data exists?', !!data.data);
-      console.log('🔍 data.data content:', data.data);
-      console.log('🔍 Returning:', data.data || data);
-      return data.data || data;
+      // Get the raw response text first for debugging
+      const responseText = await response.text();
+      console.log('📡 Raw API Response Text:', responseText);
+      
+      // Parse the JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ Failed to parse JSON response:', parseError);
+        throw new Error('Invalid JSON response from server');
+      }
+      
+      console.log('📡 Parsed API Response:', data);
+      console.log('📡 Response structure analysis:');
+      console.log('  - Top level keys:', Object.keys(data));
+      console.log('  - Has data property:', 'data' in data);
+      console.log('  - data content:', data.data);
+      
+      // Check both possible response structures
+      const responseData = data.data || data;
+      console.log('📡 Final responseData:', responseData);
+      console.log('📡 Response data keys:', Object.keys(responseData));
+      
+      // Log all possible patient name fields
+      console.log('📡 Patient name analysis:');
+      console.log('  - patientName:', responseData.patientName);
+      console.log('  - patient_name:', responseData.patient_name);
+      console.log('  - name:', responseData.name);
+      console.log('  - speaks_for:', responseData.speaks_for);
+      
+      // Log all possible initial prompt fields
+      console.log('📡 Initial prompt analysis:');
+      console.log('  - initialPrompt:', responseData.initialPrompt);
+      console.log('  - initial_prompt:', responseData.initial_prompt);
+      console.log('  - prompt:', responseData.prompt);
+      console.log('  - message:', responseData.message);
+      
+      // Check if initialPrompt exists and has content
+      const initialPrompt = responseData.initialPrompt || 
+                           responseData.initial_prompt || 
+                           responseData.prompt || 
+                           responseData.message || 
+                           '';
+                           
+      console.log('📡 Resolved initial prompt:', {
+        value: initialPrompt,
+        type: typeof initialPrompt,
+        length: initialPrompt?.length || 0,
+        trimmedLength: initialPrompt?.trim()?.length || 0
+      });
+      
+      return responseData;
     } catch (error) {
-      console.error('Error starting simulation:', error);
+      console.error('❌ Error in startSimulation:', error);
       throw error;
     }
   },

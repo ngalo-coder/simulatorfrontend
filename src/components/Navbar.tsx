@@ -46,8 +46,11 @@ const Navbar: React.FC = () => {
                   <Link to="/dashboard" className={getLinkClasses('/dashboard')}>
                     Dashboard
                   </Link>
+                  <Link to="/browse-cases" className={getLinkClasses('/browse-cases')}>
+                    Browse Cases
+                  </Link>
                   <Link to="/simulation" className={getLinkClasses('/simulation')}>
-                    Cases
+                    All Cases
                   </Link>
                   <Link to="/progress" className={getLinkClasses('/progress')}>
                     Progress
@@ -137,11 +140,18 @@ const Navbar: React.FC = () => {
                   Dashboard
                 </Link>
                 <Link 
+                  to="/browse-cases" 
+                  className={`${getLinkClasses('/browse-cases')} block`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Browse Cases
+                </Link>
+                <Link 
                   to="/simulation" 
                   className={`${getLinkClasses('/simulation')} block`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Cases
+                  All Cases
                 </Link>
                 <Link 
                   to="/progress" 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { api } from '../services/apiService';
 
 interface Case {
@@ -16,12 +16,15 @@ interface Case {
 
 const SimulationPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
   const [startingSimulation, setStartingSimulation] = useState(false);
+  
+  // Initialize filters with preselected values from navigation state
   const [filters, setFilters] = useState({
-    program_area: '',
-    specialty: '',
+    program_area: location.state?.preselectedFilters?.program_area || '',
+    specialty: location.state?.preselectedFilters?.specialty || '',
     difficulty: '',
     search: ''
   });
@@ -112,12 +115,28 @@ const SimulationPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Patient Cases
-        </h1>
-        <p className="text-gray-600">
-          Select a case to begin your simulation experience
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Patient Cases
+            </h1>
+            <p className="text-gray-600">
+              {filters.program_area && filters.specialty 
+                ? `Showing cases for ${filters.specialty} in ${filters.program_area}`
+                : 'Select a case to begin your simulation experience'
+              }
+            </p>
+          </div>
+          {(filters.program_area || filters.specialty) && (
+            <Link 
+              to="/browse-cases"
+              className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
+            >
+              <span>←</span>
+              <span>Browse by Category</span>
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Filters */}

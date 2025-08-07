@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import CaseBrowsingPage from './pages/CaseBrowsingPage';
 import SimulationPage from './pages/SimulationPage';
 import SimulationChatPage from './pages/SimulationChatPage';
 import ProgressPage from './pages/ProgressPage';
@@ -39,6 +40,14 @@ function App() {
               } 
             />
             <Route 
+              path="/browse-cases" 
+              element={
+                <ProtectedRoute>
+                  <CaseBrowsingPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/simulation" 
               element={
                 <ProtectedRoute>
@@ -67,14 +76,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <LeaderboardPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/simulation" 
-              element={
-                <ProtectedRoute>
-                  <SimulationPage />
                 </ProtectedRoute>
               } 
             />

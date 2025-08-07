@@ -52,21 +52,30 @@ const SimulationChatPage: React.FC = () => {
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
+    console.log('📍 UseEffect triggered:', { 
+      caseId, 
+      sessionId, 
+      hasSessionData: !!sessionData,
+      sessionDataKeys: sessionData ? Object.keys(sessionData) : []
+    });
+    
     if (caseId && !sessionId && !sessionData) {
-      console.log('🔍 Starting new simulation for case:', caseId);
+      console.log('🚀 Starting new simulation for case:', caseId);
       startNewSimulation();
     } else if (sessionId && !sessionData) {
-      console.log('🔍 Loading existing session:', sessionId);
-      // Load existing session if needed
-      setSessionData({ sessionId });
+      console.log('🔄 Loading existing session:', sessionId);
+      // For existing sessions, set minimal session data to prevent re-triggering
+      setSessionData({ sessionId, patientName: 'Loading...' });
     }
 
+    // Cleanup function
     return () => {
       if (eventSourceRef.current) {
+        console.log('🧹 Cleaning up EventSource');
         eventSourceRef.current.close();
       }
     };
-  }, [caseId, sessionId]);
+  }, [caseId, sessionId]); // Keep sessionData out of dependencies
 
   useEffect(() => {
     scrollToBottom();
@@ -80,7 +89,7 @@ const SimulationChatPage: React.FC = () => {
     if (!caseId) return;
 
     // Prevent starting a new simulation if one is already in progress
-    if (sessionData && !isSessionEnded) {
+    if (sessionData && !isSessionEnded && sessionData.sessionId) {
       console.log('⚠️ Simulation already in progress, not starting a new one');
       return;
     }
@@ -89,102 +98,98 @@ const SimulationChatPage: React.FC = () => {
       setIsLoading(true);
       const response = await api.startSimulation(caseId);
 
-      // Debug: Log the response to see what we're getting
-      console.log('🔍 Full API Response:', response);
-      console.log('🔍 Patient Name from response:', response.patientName);
-      console.log('🔍 Response keys:', Object.keys(response));
-      console.log('🔍 Response type:', typeof response);
-      console.log('🔍 Is response an object?', response && typeof response === 'object');
+      console.log('🔍 API Response received:', response);
 
-      // Test if the patient name exists in different possible locations
-      console.log('🔍 Checking all possible patient name fields:');
-      console.log('  - response.patientName:', response.patientName);
-      console.log('  - response.patient_name:', response.patient_name);
-      console.log('  - response.name:', response.name);
-      console.log('  - response.data?.patientName:', response.data?.patientName);
+      // Handle different possible response structures from your backend
+      const sessionId = response.sessionId || response.session_id;
+      const patientName = response.patientName || 
+                         response.patient_name || 
+                         response.name || 
+                         response.speaks_for || 
+                         'Patient';
+      const initialPrompt = response.initialPrompt || 
+                           response.initial_prompt || 
+                           response.prompt || 
+                           response.message || 
+                           '';
+      const speaksFor = response.speaks_for || patientName;
 
-      // Fix response structure - ensure we have the correct data
+      if (!sessionId) {
+        throw new Error('No session ID received from server');
+      }
+
       const fixedResponse = {
-        sessionId: response.sessionId,
-        patientName: response.patientName || response.patient_name || response.name || 'Patient',
-        initialPrompt: response.initialPrompt || response.initial_prompt,
-        speaks_for:
-          response.speaks_for ||
-          response.patientName ||
-          response.patient_name ||
-          response.name ||
-          'Patient',
+        sessionId,
+        patientName,
+        initialPrompt,
+        speaks_for: speaksFor,
       };
 
+      console.log('✅ Setting session data:', fixedResponse);
       setSessionData(fixedResponse);
-      console.log('🔍 Set sessionData with fixed response:', fixedResponse);
+
+      const messages: Message[] = [];
 
       // Add system welcome message
       const systemMessage: Message = {
-        id: Date.now().toString(),
+        id: 'system-' + Date.now(),
         role: 'assistant',
-        content: `🏥 **Welcome to Simuatech**\n\nYou are now interacting with ${fixedResponse.patientName}. This is a safe learning environment where you can practice your clinical skills.\n\n**How to interact:**\n• Ask questions about symptoms, medical history, or concerns\n• Conduct a virtual examination by asking specific questions\n• Practice your diagnostic reasoning\n• The patient will respond realistically based on their condition\n\n**Tips:**\n• Start with open-ended questions like "What brings you in today?"\n• Be thorough in your questioning\n• Take your time - there's no rush\n\nType your first question below to begin the consultation. Good luck! 👩‍⚕️👨‍⚕️`,
+        content: `🏥 **Welcome to Simuatech**\n\nYou are now interacting with ${patientName}. This is a safe learning environment where you can practice your clinical skills.\n\n**How to interact:**\n• Ask questions about symptoms, medical history, or concerns\n• Conduct a virtual examination by asking specific questions\n• Practice your diagnostic reasoning\n• The patient will respond realistically based on their condition\n\n**Tips:**\n• Start with open-ended questions like "What brings you in today?"\n• Be thorough in your questioning\n• Take your time - there's no rush\n\nType your first question below to begin the consultation. Good luck! 👩‍⚕️👨‍⚕️`,
         timestamp: new Date(),
         speaks_for: 'System',
       };
+      messages.push(systemMessage);
 
-      const messages = [systemMessage];
+      // Add initial prompt from patient if it exists
+      console.log('🔍 Checking for initial prompt:', {
+        raw: initialPrompt,
+        trimmed: initialPrompt?.trim(),
+        length: initialPrompt?.length,
+        hasContent: !!(initialPrompt && initialPrompt.trim())
+      });
 
-      // Add initial message from patient if available
-      if (fixedResponse.initialPrompt && fixedResponse.initialPrompt.trim()) {
-        console.log('🔍 Adding initial prompt message');
+      if (initialPrompt && initialPrompt.trim()) {
+        console.log('✅ Adding patient initial message');
         const patientMessage: Message = {
-          id: (Date.now() + 1).toString(),
+          id: 'patient-initial-' + Date.now(),
           role: 'assistant',
-          content: fixedResponse.initialPrompt,
+          content: initialPrompt.trim(),
           timestamp: new Date(),
-          speaks_for: fixedResponse.speaks_for,
+          speaks_for: speaksFor,
         };
         messages.push(patientMessage);
       } else {
-        console.log('🔍 Adding default patient greeting');
-        // If no initial prompt, add a default patient greeting
-        const defaultPatientMessage: Message = {
-          id: (Date.now() + 1).toString(),
+        console.log('⚠️ No initial prompt, adding default greeting');
+        const defaultMessage: Message = {
+          id: 'patient-default-' + Date.now(),
           role: 'assistant',
-          content: `Hello, I'm ${fixedResponse.patientName}. Thank you for seeing me today.`,
+          content: `Hello, I'm ${patientName}. Thank you for seeing me today. How can I help you?`,
           timestamp: new Date(),
-          speaks_for: fixedResponse.speaks_for,
+          speaks_for: speaksFor,
         };
-        messages.push(defaultPatientMessage);
+        messages.push(defaultMessage);
       }
 
-      // Force add a test message to see if rendering works
-      const testMessage: Message = {
-        id: 'test-message',
-        role: 'assistant',
-        content: 'TEST: This is a test message to verify rendering works',
-        timestamp: new Date(),
-        speaks_for: 'Test Patient'
-      };
-      messages.push(testMessage);
-      
-      console.log('🔍 Final messages array:', messages);
-      console.log('🔍 Messages count:', messages.length);
-      console.log('🔍 Initial prompt exists?', !!fixedResponse.initialPrompt);
-      console.log('🔍 Initial prompt content:', fixedResponse.initialPrompt);
-      
-      // Debug each message individually
-      messages.forEach((msg, index) => {
-        console.log(`🔍 Message ${index}:`, {
-          id: msg.id,
-          role: msg.role,
-          speaks_for: msg.speaks_for,
-          content: msg.content.substring(0, 50) + '...'
-        });
-      });
-      
-      setMessages(messages);
+      console.log('📝 Setting messages:', messages.map(m => ({
+        id: m.id,
+        role: m.role,
+        speaks_for: m.speaks_for,
+        content: m.content.substring(0, 50) + '...'
+      })));
 
-      // Update URL to include session ID (without replace to avoid re-triggering effects)
-      navigate(`/simulation/${caseId}/session/${fixedResponse.sessionId}`);
+      // Set messages immediately after setting session data
+      setMessages(messages);
+      
+      // Also force a re-render after a small delay
+      setTimeout(() => {
+        setMessages(prevMessages => [...messages]);
+      }, 50);
+
+      // Update URL
+      navigate(`/simulation/${caseId}/session/${sessionId}`, { replace: true });
+
     } catch (error) {
-      console.error('Error starting simulation:', error);
+      console.error('❌ Error starting simulation:', error);
       alert('Failed to start simulation. Please try again.');
       navigate('/simulation');
     } finally {
@@ -505,7 +510,7 @@ const SimulationChatPage: React.FC = () => {
             >
               {/* Avatar */}
               <div
-                className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
+                className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold ${
                   message.role === 'user'
                     ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
                     : message.speaks_for === 'System'

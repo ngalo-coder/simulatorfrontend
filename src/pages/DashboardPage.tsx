@@ -40,14 +40,22 @@ const DashboardPage: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-semibold mb-3">Start New Case</h3>
           <p className="text-gray-600 mb-4">
-            Browse available patient cases and start a new simulation
+            Browse available patient cases by program area and specialty
           </p>
-          <Link 
-            to="/simulation" 
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors inline-block"
-          >
-            Browse Cases
-          </Link>
+          <div className="space-y-2">
+            <Link 
+              to="/browse-cases" 
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors inline-block w-full text-center"
+            >
+              Browse Cases
+            </Link>
+            <Link 
+              to="/simulation" 
+              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors inline-block w-full text-center text-sm"
+            >
+              View All Cases
+            </Link>
+          </div>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md">
