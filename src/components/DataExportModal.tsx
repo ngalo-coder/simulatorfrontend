@@ -7,7 +7,7 @@ interface DataExportModalProps {
 }
 
 const DataExportModal: React.FC<DataExportModalProps> = ({ onClose }) => {
-  const { user } = useAuth();
+  // const { user } = useAuth(); // Not needed for current implementation
   const [exportType, setExportType] = useState<'all' | 'progress' | 'sessions' | 'profile'>('all');
   const [format, setFormat] = useState<'json' | 'csv' | 'pdf'>('json');
   const [loading, setLoading] = useState(false);
