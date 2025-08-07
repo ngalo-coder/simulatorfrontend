@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { api } from '../services/apiService';
 
 interface DataExportModalProps {
   onClose: () => void;
@@ -16,42 +17,30 @@ const DataExportModal: React.FC<DataExportModalProps> = ({ onClose }) => {
     try {
       setLoading(true);
       
-      // TODO: Implement actual data export API call
-      // const response = await api.exportUserData(exportType, format);
+      // Call the real API
+      const exportData = await api.exportUserData(exportType, format);
       
-      // Simulate export process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create download
+      let dataStr: string;
+      let mimeType: string;
       
-      // Create mock download
-      const mockData = {
-        user: {
-          id: user?.id,
-          username: user?.username,
-          email: user?.email,
-          exportedAt: new Date().toISOString()
-        },
-        progress: {
-          totalCases: 45,
-          averageScore: 87,
-          completedSessions: 123
-        },
-        privacySettings: {
-          showInLeaderboard: true,
-          showRealName: false,
-          profileVisibility: 'educators'
-        }
-      };
+      if (format === 'json') {
+        dataStr = typeof exportData === 'string' ? exportData : JSON.stringify(exportData, null, 2);
+        mimeType = 'application/json';
+      } else if (format === 'csv') {
+        dataStr = typeof exportData === 'string' ? exportData : JSON.stringify(exportData);
+        mimeType = 'text/csv';
+      } else {
+        dataStr = JSON.stringify(exportData, null, 2);
+        mimeType = 'application/json';
+      }
       
-      const dataStr = format === 'json' 
-        ? JSON.stringify(mockData, null, 2)
-        : 'CSV format would be generated here';
-      
-      const dataBlob = new Blob([dataStr], { type: format === 'json' ? 'application/json' : 'text/csv' });
+      const dataBlob = new Blob([dataStr], { type: mimeType });
       const url = URL.createObjectURL(dataBlob);
       
       const link = document.createElement('a');
       link.href = url;
-      link.download = `simuatech-data-export-${exportType}.${format}`;
+      link.download = `simuatech-data-export-${exportType}-${Date.now()}.${format}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -60,6 +49,7 @@ const DataExportModal: React.FC<DataExportModalProps> = ({ onClose }) => {
       setExportComplete(true);
     } catch (error) {
       console.error('Error exporting data:', error);
+      alert('Failed to export data. Please try again.');
     } finally {
       setLoading(false);
     }

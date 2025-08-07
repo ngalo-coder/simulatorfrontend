@@ -173,6 +173,88 @@ export const api = {
     return Math.max(0, Math.floor(timeLeft / 60000));
   },
 
+  // Privacy Settings API
+  getPrivacySettings: async () => {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/privacy/settings`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch privacy settings');
+      }
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      console.error('Error fetching privacy settings:', error);
+      throw error;
+    }
+  },
+
+  updatePrivacySettings: async (settings: any) => {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/privacy/settings`, {
+        method: 'PUT',
+        body: JSON.stringify(settings)
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update privacy settings');
+      }
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      console.error('Error updating privacy settings:', error);
+      throw error;
+    }
+  },
+
+  exportUserData: async (exportType: string = 'all', format: string = 'json') => {
+    try {
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/privacy/export?exportType=${exportType}&format=${format}`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to export user data');
+      }
+      
+      if (format === 'json') {
+        return await response.json();
+      } else {
+        return await response.text();
+      }
+    } catch (error) {
+      console.error('Error exporting user data:', error);
+      throw error;
+    }
+  },
+
+  requestAccountDeletion: async () => {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/privacy/account`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to request account deletion');
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error requesting account deletion:', error);
+      throw error;
+    }
+  },
+
+  getPrivacyStatistics: async () => {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/privacy/statistics`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch privacy statistics');
+      }
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      console.error('Error fetching privacy statistics:', error);
+      throw error;
+    }
+  },
+
   // Get user cases/progress data
   getUserProgress: async (userId: string) => {
     try {

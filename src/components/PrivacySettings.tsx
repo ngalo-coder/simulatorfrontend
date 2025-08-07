@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// import { useAuth } from '../hooks/useAuth'; // TODO: Use when implementing API calls
+import { useAuth } from '../hooks/useAuth';
+import { api } from '../services/apiService';
 
 interface PrivacySettings {
   showInLeaderboard: boolean;
@@ -15,7 +16,7 @@ interface PrivacySettingsProps {
 }
 
 const PrivacySettingsModal: React.FC<PrivacySettingsProps> = ({ onClose }) => {
-  // const { user } = useAuth(); // TODO: Use when implementing API calls
+  const { user } = useAuth();
   const [settings, setSettings] = useState<PrivacySettings>({
     showInLeaderboard: true,
     showRealName: false,
@@ -33,11 +34,18 @@ const PrivacySettingsModal: React.FC<PrivacySettingsProps> = ({ onClose }) => {
 
   const fetchPrivacySettings = async () => {
     try {
-      // TODO: Implement API call to fetch user's privacy settings
-      // const response = await api.getPrivacySettings();
-      // setSettings(response);
+      const response = await api.getPrivacySettings();
+      setSettings({
+        showInLeaderboard: response.showInLeaderboard,
+        showRealName: response.showRealName,
+        shareProgressWithEducators: response.shareProgressWithEducators,
+        allowAnonymousAnalytics: response.allowAnonymousAnalytics,
+        dataRetentionPeriod: response.dataRetentionPeriod,
+        profileVisibility: response.profileVisibility
+      });
     } catch (error) {
       console.error('Error fetching privacy settings:', error);
+      // Keep default settings if fetch fails
     }
   };
 
@@ -51,14 +59,49 @@ const PrivacySettingsModal: React.FC<PrivacySettingsProps> = ({ onClose }) => {
   const saveSettings = async () => {
     try {
       setLoading(true);
-      // TODO: Implement API call to save privacy settings
-      // await api.updatePrivacySettings(settings);
+      await api.updatePrivacySettings(settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       console.error('Error saving privacy settings:', error);
+      alert('Failed to save privacy settings. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAccountDeletion = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data.'
+    );
+    
+    if (confirmed) {
+      const doubleConfirmed = window.confirm(
+        'This is your final warning. Deleting your account will permanently remove:\n\n' +
+        '• Your profile and account information\n' +
+        '• All your progress and performance data\n' +
+        '• Your session history and interactions\n' +
+        '• Your privacy settings\n\n' +
+        'Are you absolutely sure you want to proceed?'
+      );
+      
+      if (doubleConfirmed) {
+        try {
+          setLoading(true);
+          await api.requestAccountDeletion();
+          alert('Your account has been successfully deleted. You will be logged out now.');
+          
+          // Clear local storage and redirect to home
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('currentUser');
+          window.location.href = '/';
+        } catch (error) {
+          console.error('Error deleting account:', error);
+          alert('Failed to delete account. Please try again or contact support.');
+        } finally {
+          setLoading(false);
+        }
+      }
     }
   };
 
@@ -232,10 +275,19 @@ const PrivacySettingsModal: React.FC<PrivacySettingsProps> = ({ onClose }) => {
             </div>
 
             <div className="mt-4 flex space-x-3">
-              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+              <button 
+                onClick={() => {
+                  // This would open the data export modal
+                  alert('Data export functionality is available from the dashboard.');
+                }}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
                 Download My Data
               </button>
-              <button className="text-red-600 hover:text-red-800 text-sm font-medium">
+              <button 
+                onClick={handleAccountDeletion}
+                className="text-red-600 hover:text-red-800 text-sm font-medium"
+              >
                 Delete My Account
               </button>
             </div>
