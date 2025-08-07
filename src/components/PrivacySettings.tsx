@@ -15,7 +15,7 @@ interface PrivacySettingsProps {
 }
 
 const PrivacySettingsModal: React.FC<PrivacySettingsProps> = ({ onClose }) => {
-  const { user } = useAuth();
+  // const { user } = useAuth(); // TODO: Use when implementing API calls
   const [settings, setSettings] = useState<PrivacySettings>({
     showInLeaderboard: true,
     showRealName: false,
