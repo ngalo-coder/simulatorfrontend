@@ -10,13 +10,127 @@ const getAuthToken = (): string | null => {
   }
 };
 
+const getTokenExpiry = (): number | null => {
+  try {
+    const token = getAuthToken();
+    if (!token) return null;
+    
+    // Decode JWT token to get expiry
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000; // Convert to milliseconds
+  } catch (e) {
+    return null;
+  }
+};
+
+const isTokenExpired = (): boolean => {
+  const expiry = getTokenExpiry();
+  if (!expiry) return true;
+  
+  return Date.now() >= expiry;
+};
+
 const isTokenValid = (): boolean => {
   const token = getAuthToken();
   const userData = localStorage.getItem('currentUser');
-  return !!(token && userData);
+  return !!(token && userData && !isTokenExpired());
 };
 
+// Session expiry notification system
+let sessionWarningShown = false;
+let sessionExpiredShown = false;
+
+const checkTokenExpiry = () => {
+  const expiry = getTokenExpiry();
+  if (!expiry) return;
+  
+  const now = Date.now();
+  const timeUntilExpiry = expiry - now;
+  
+  // Show warning 5 minutes before expiry
+  if (timeUntilExpiry <= 5 * 60 * 1000 && timeUntilExpiry > 0 && !sessionWarningShown) {
+    sessionWarningShown = true;
+    showSessionWarning(Math.floor(timeUntilExpiry / 60000));
+  }
+  
+  // Token has expired
+  if (timeUntilExpiry <= 0 && !sessionExpiredShown) {
+    sessionExpiredShown = true;
+    handleSessionExpiry();
+  }
+};
+
+const showSessionWarning = (minutesLeft: number) => {
+  // Create a user-friendly notification
+  const notification = document.createElement('div');
+  notification.className = 'fixed top-4 right-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg shadow-lg z-50 max-w-sm';
+  notification.innerHTML = `
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <span class="text-yellow-400">⚠️</span>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm font-medium text-yellow-800">Session Expiring Soon</p>
+        <p class="text-sm text-yellow-700 mt-1">Your session will expire in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''}. Please save your work.</p>
+        <div class="mt-3 flex space-x-2">
+          <button onclick="window.location.reload()" class="bg-yellow-600 text-white px-3 py-1 rounded text-xs hover:bg-yellow-700">
+            Refresh Session
+          </button>
+          <button onclick="this.parentElement.parentElement.parentElement.parentElement.remove()" class="bg-gray-300 text-gray-700 px-3 py-1 rounded text-xs hover:bg-gray-400">
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Auto-remove after 10 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 10000);
+};
+
+const handleSessionExpiry = () => {
+  // Clear auth data
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('currentUser');
+  
+  // Show user-friendly message
+  const notification = document.createElement('div');
+  notification.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+  notification.innerHTML = `
+    <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
+      <div class="text-center">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-red-500 text-2xl">🔒</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Session Expired</h3>
+        <p class="text-gray-600 mb-6">Your session has expired for security reasons. Please sign in again to continue.</p>
+        <button onclick="window.location.href='/login'" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+          Sign In Again
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+};
+
+// Check token expiry every minute
+setInterval(checkTokenExpiry, 60000);
+
 const authenticatedFetch = async (url: string, options: RequestInit = {}, autoLogout: boolean = true): Promise<Response> => {
+  // Check if token is expired before making request
+  if (isTokenExpired()) {
+    console.log('Token expired, redirecting to login');
+    handleSessionExpiry();
+    throw new Error('Session expired');
+  }
+  
   const token = getAuthToken();
   const headers = new Headers(options.headers || {});
 
@@ -33,12 +147,11 @@ const authenticatedFetch = async (url: string, options: RequestInit = {}, autoLo
   
   console.log('Response status:', response.status, 'for URL:', url);
   
-  // Only auto-logout for auth-related endpoints or when explicitly requested
-  if (response.status === 401 && autoLogout && (url.includes('/auth/') || url.includes('/admin/'))) {
-    console.log('Auto-logout triggered for:', url);
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    window.location.href = '/login';
+  // Handle 401 responses (token expired or invalid)
+  if (response.status === 401 && autoLogout) {
+    console.log('401 Unauthorized - handling session expiry');
+    handleSessionExpiry();
+    throw new Error('Session expired');
   }
   
   return response;
@@ -47,6 +160,18 @@ const authenticatedFetch = async (url: string, options: RequestInit = {}, autoLo
 export const api = {
   // Check if user is authenticated
   isAuthenticated: () => isTokenValid(),
+  
+  // Check if token is expired
+  isTokenExpired: () => isTokenExpired(),
+  
+  // Get time until token expires (in minutes)
+  getTimeUntilExpiry: (): number => {
+    const expiry = getTokenExpiry();
+    if (!expiry) return 0;
+    
+    const timeLeft = expiry - Date.now();
+    return Math.max(0, Math.floor(timeLeft / 60000));
+  },
 
   // Get user cases/progress data
   getUserProgress: async (userId: string) => {

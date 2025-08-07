@@ -21,6 +21,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const checkTokenExpiry = () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return false;
+    
+    try {
+      // Decode JWT token to get expiry
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expiry = payload.exp * 1000; // Convert to milliseconds
+      
+      if (Date.now() >= expiry) {
+        console.log('Token expired, logging out user');
+        logout();
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error checking token expiry:', error);
+      logout();
+      return false;
+    }
+  };
+
   useEffect(() => {
     // Check for existing auth token on app load
     const token = localStorage.getItem('authToken');
@@ -28,7 +50,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     if (token && userData) {
       try {
-        setUser(JSON.parse(userData));
+        // Check if token is still valid
+        if (checkTokenExpiry()) {
+          setUser(JSON.parse(userData));
+        }
       } catch (error) {
         console.error('Error parsing user data:', error);
         localStorage.removeItem('authToken');
@@ -38,6 +63,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     setLoading(false);
   }, []);
+
+  // Check token expiry periodically
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(() => {
+      checkTokenExpiry();
+    }, 60000); // Check every minute
+    
+    return () => clearInterval(interval);
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
