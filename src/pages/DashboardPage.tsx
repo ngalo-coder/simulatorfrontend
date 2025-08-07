@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/apiService';
+import PrivacySettingsModal from '../components/PrivacySettings';
+import DataExportModal from '../components/DataExportModal';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [progressData, setProgressData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showPrivacySettings, setShowPrivacySettings] = useState(false);
+  const [showDataExport, setShowDataExport] = useState(false);
 
   useEffect(() => {
     const fetchProgressData = async () => {
@@ -203,6 +207,37 @@ const DashboardPage: React.FC = () => {
         </div>
       )}
 
+      {/* Privacy & Data Section */}
+      <div className="mt-8 bg-blue-50 border border-blue-200 p-6 rounded-lg">
+        <h3 className="text-lg font-semibold mb-3 flex items-center">
+          <span className="mr-2">🔒</span>
+          Privacy & Data Control
+        </h3>
+        <p className="text-gray-700 mb-4">
+          Your privacy is important to us. Control how your data is used and who can see your progress.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => setShowPrivacySettings(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+          >
+            Privacy Settings
+          </button>
+          <button
+            onClick={() => setShowDataExport(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+          >
+            Export My Data
+          </button>
+          <Link 
+            to="/leaderboard" 
+            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors inline-block"
+          >
+            Leaderboard Settings
+          </Link>
+        </div>
+      </div>
+
       {user?.role === 'admin' && (
         <div className="mt-8 bg-yellow-50 border border-yellow-200 p-6 rounded-lg">
           <h3 className="text-lg font-semibold mb-3">Admin Actions</h3>
@@ -213,6 +248,16 @@ const DashboardPage: React.FC = () => {
             Admin Dashboard
           </Link>
         </div>
+      )}
+
+      {/* Privacy Settings Modal */}
+      {showPrivacySettings && (
+        <PrivacySettingsModal onClose={() => setShowPrivacySettings(false)} />
+      )}
+
+      {/* Data Export Modal */}
+      {showDataExport && (
+        <DataExportModal onClose={() => setShowDataExport(false)} />
       )}
     </div>
   );

@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/apiService';
+import PrivacySettingsModal from '../components/PrivacySettings';
 
 interface LeaderboardEntry {
   userId: string;
   name: string;
+  displayName: string;
+  isAnonymous: boolean;
   totalCases: number;
   excellentCount: number;
   excellentRate: string;
   averageScore: string;
   isContributor: boolean;
   rank: number;
+  privacyLevel: 'public' | 'educators' | 'private';
 }
 
 const LeaderboardPage: React.FC = () => {
@@ -19,6 +23,8 @@ const LeaderboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('');
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [showPrivacySettings, setShowPrivacySettings] = useState(false);
+  const [viewMode, setViewMode] = useState<'public' | 'anonymous'>('public');
 
   useEffect(() => {
     fetchSpecialties();
@@ -40,13 +46,23 @@ const LeaderboardPage: React.FC = () => {
       // Fetch real leaderboard data from API
       const data = await api.getLeaderboard(selectedSpecialty, 20);
       
-      // Add rank numbers to the data
-      const rankedData = data.map((entry: any, index: number) => ({
-        ...entry,
-        rank: index + 1,
-        userId: entry.userId?._id || entry.userId,
-        name: entry.name || entry.userId?.username || 'Anonymous User'
-      }));
+      // Add rank numbers and privacy handling to the data
+      const rankedData = data.map((entry: any, index: number) => {
+        const isAnonymous = !entry.showRealName || entry.privacyLevel === 'private';
+        const displayName = isAnonymous 
+          ? `Student ${String.fromCharCode(65 + (index % 26))}${Math.floor(index / 26) + 1}` 
+          : (entry.name || entry.userId?.username || 'Anonymous User');
+        
+        return {
+          ...entry,
+          rank: index + 1,
+          userId: entry.userId?._id || entry.userId,
+          name: entry.name || entry.userId?.username || 'Anonymous User',
+          displayName,
+          isAnonymous,
+          privacyLevel: entry.privacyLevel || 'public'
+        };
+      });
 
       setLeaderboard(rankedData);
     } catch (error) {
@@ -103,24 +119,71 @@ const LeaderboardPage: React.FC = () => {
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Leaderboard</h1>
-        <p className="text-gray-600">See how you rank among other learners</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Leaderboard</h1>
+            <p className="text-gray-600">See how you rank among other learners</p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowPrivacySettings(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <span>🔒</span>
+              <span>Privacy Settings</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters and Privacy Notice */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <div className="flex items-center space-x-4">
-          <label className="text-sm font-medium text-gray-700">Filter by Specialty:</label>
-          <select
-            value={selectedSpecialty}
-            onChange={(e) => setSelectedSpecialty(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Specialties</option>
-            {specialties.map(specialty => (
-              <option key={specialty} value={specialty}>{specialty}</option>
-            ))}
-          </select>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+          <div className="flex items-center space-x-4">
+            <label className="text-sm font-medium text-gray-700">Filter by Specialty:</label>
+            <select
+              value={selectedSpecialty}
+              onChange={(e) => setSelectedSpecialty(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Specialties</option>
+              {specialties.map(specialty => (
+                <option key={specialty} value={specialty}>{specialty}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">View:</label>
+              <select
+                value={viewMode}
+                onChange={(e) => setViewMode(e.target.value as 'public' | 'anonymous')}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="public">Public Names</option>
+                <option value="anonymous">Anonymous Only</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center text-xs text-gray-500">
+              <span className="mr-1">🔒</span>
+              <span>Privacy Protected</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-sm text-blue-800">
+            <span className="font-medium">Privacy Notice:</span> Only users who have opted into leaderboard visibility are shown. 
+            Names are anonymized based on individual privacy preferences. 
+            <button 
+              onClick={() => setShowPrivacySettings(true)}
+              className="text-blue-600 hover:text-blue-800 underline ml-1"
+            >
+              Manage your privacy settings
+            </button>
+          </p>
         </div>
       </div>
 
@@ -157,9 +220,12 @@ const LeaderboardPage: React.FC = () => {
                   <div>
                     <div className="flex items-center space-x-2">
                       <h3 className="font-semibold text-gray-900">
-                        {entry.name}
+                        {viewMode === 'anonymous' || entry.isAnonymous ? entry.displayName : entry.name}
                         {entry.userId === user?.id && (
                           <span className="ml-2 text-sm text-blue-600 font-normal">(You)</span>
+                        )}
+                        {entry.isAnonymous && viewMode === 'public' && (
+                          <span className="ml-2 text-xs text-gray-500">(Anonymous)</span>
                         )}
                       </h3>
                       {entry.isContributor && (
@@ -167,9 +233,17 @@ const LeaderboardPage: React.FC = () => {
                           Contributor
                         </span>
                       )}
+                      {entry.privacyLevel === 'private' && (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                          🔒 Private
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-600">
                       {entry.totalCases} cases completed
+                      {entry.privacyLevel === 'educators' && (
+                        <span className="ml-2 text-xs text-blue-600">• Educators can view details</span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -228,6 +302,11 @@ const LeaderboardPage: React.FC = () => {
           Start Practicing
         </button>
       </div>
+
+      {/* Privacy Settings Modal */}
+      {showPrivacySettings && (
+        <PrivacySettingsModal onClose={() => setShowPrivacySettings(false)} />
+      )}
     </div>
   );
 };

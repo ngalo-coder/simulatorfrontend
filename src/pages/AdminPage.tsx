@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
+import AdminUserManagement from '../components/AdminUserManagement';
 
 interface SystemStats {
   totalUsers: number;
@@ -232,19 +233,7 @@ const AdminPage: React.FC = () => {
 
       {/* Users Tab */}
       {activeTab === 'users' && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">User Management</h2>
-          <div className="text-center py-12 text-gray-500">
-            <p className="text-lg mb-2">User Management Interface</p>
-            <p>This section will contain user management tools including:</p>
-            <ul className="text-left mt-4 space-y-2 max-w-md mx-auto">
-              <li>• View all registered users</li>
-              <li>• Edit user roles and permissions</li>
-              <li>• Monitor user activity</li>
-              <li>• Manage user accounts</li>
-            </ul>
-          </div>
-        </div>
+        <AdminUserManagement />
       )}
 
       {/* Cases Tab */}
