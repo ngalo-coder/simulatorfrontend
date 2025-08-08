@@ -145,11 +145,13 @@ npm run preview      # Preview production build
 npm run lint         # Run ESLint
 npm run type-check   # Run TypeScript compiler
 
-# Testing
-npm run test         # Run test suite
-npm run test:watch   # Run tests in watch mode
-npm run test:coverage # Generate coverage report
+# Testing (Planned)
+npm run test         # Test suite (not yet implemented)
+npm run test:watch   # Test watch mode (not yet implemented)
+npm run test:coverage # Test coverage (not yet implemented)
 ```
+
+> **Note**: Testing infrastructure is planned for future implementation. Currently using TypeScript for compile-time validation.
 
 ### Code Quality
 

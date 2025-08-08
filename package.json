@@ -8,7 +8,11 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "type-check": "tsc --noEmit",
+    "test": "echo 'Tests not yet implemented. Run npm run type-check for TypeScript validation.'",
+    "test:watch": "echo 'Test watch mode not yet implemented.'",
+    "test:coverage": "echo 'Test coverage not yet implemented.'"
   },
   "dependencies": {
     "clsx": "^2.0.0",
