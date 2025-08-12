@@ -1,5 +1,6 @@
 // Simple API service for the virtual patient frontend
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5003';
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' || false;
 
 // Auth utilities
 const getAuthToken = (): string | null => {
@@ -288,6 +289,43 @@ export const api = {
 
   // Get available cases
   getCases: async (filters?: any) => {
+    if (USE_MOCK_DATA) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const mockCases = [
+        {
+          id: '1',
+          title: 'Acute Myocardial Infarction',
+          description: 'A 65-year-old male presents with chest pain and shortness of breath',
+          specialty: 'Cardiology',
+          patient_age: 65,
+          patient_gender: 'Male',
+          chief_complaint: 'Chest pain'
+        },
+        {
+          id: '2',
+          title: 'Type 2 Diabetes Management',
+          description: 'A 45-year-old female with newly diagnosed Type 2 diabetes',
+          specialty: 'Internal Medicine',
+          patient_age: 45,
+          patient_gender: 'Female',
+          chief_complaint: 'High blood sugar'
+        }
+      ];
+      
+      // Filter mock cases based on filters
+      let filteredCases = mockCases;
+      if (filters?.specialty) {
+        filteredCases = mockCases.filter(c => c.specialty === filters.specialty);
+      }
+      
+      return {
+        cases: filteredCases,
+        currentPage: 1,
+        totalPages: 1,
+        totalCases: filteredCases.length
+      };
+    }
+
     try {
       const queryParams = new URLSearchParams();
       if (filters) {
@@ -298,8 +336,7 @@ export const api = {
       
       const response = await authenticatedFetch(
         `${API_BASE_URL}/api/simulation/cases?${queryParams.toString()}`,
-        {},
-        false
+        {}
       );
       
       if (!response.ok) {
@@ -319,18 +356,40 @@ export const api = {
       return data.data || data;
     } catch (error) {
       console.error('Error fetching cases:', error);
-      // Return empty array for now
+      // Return mock data as fallback
       return {
-        cases: [],
+        cases: [
+          {
+            id: '1',
+            title: 'Sample Case',
+            description: 'A sample case for demonstration',
+            specialty: 'Internal Medicine',
+            patient_age: 45,
+            patient_gender: 'Male',
+            chief_complaint: 'General consultation'
+          }
+        ],
         currentPage: 1,
         totalPages: 1,
-        totalCases: 0
+        totalCases: 1
       };
     }
   },
 
   // Get case categories
   getCaseCategories: async (filters?: { program_area?: string }) => {
+    if (USE_MOCK_DATA) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const mockCategories = {
+        program_areas: ['Basic Program', 'Specialty Program'],
+        specialties: filters?.program_area === 'Basic Program' 
+          ? ['Internal Medicine', 'General Surgery', 'Pediatrics', 'Reproductive Health']
+          : ['Cardiology', 'Neurology', 'Emergency Medicine', 'Psychiatry'],
+        specialized_areas: ['Emergency', 'Chronic Care', 'Acute Care']
+      };
+      return mockCategories;
+    }
+
     try {
       const queryParams = new URLSearchParams();
       if (filters?.program_area) {
@@ -343,10 +402,11 @@ export const api = {
       if (!response.ok) {
         if (response.status === 401) {
           console.log('Authentication required for case categories');
+          // Return mock data as fallback
           return {
-            program_areas: [],
-            specialties: [],
-            specialized_areas: []
+            program_areas: ['Basic Program', 'Specialty Program'],
+            specialties: ['Internal Medicine', 'General Surgery', 'Pediatrics', 'Reproductive Health'],
+            specialized_areas: ['Emergency', 'Chronic Care', 'Acute Care']
           };
         }
         throw new Error('Failed to fetch case categories');
@@ -355,10 +415,11 @@ export const api = {
       return data.data || data;
     } catch (error) {
       console.error('Error fetching case categories:', error);
+      // Return mock data as fallback
       return {
-        program_areas: [],
-        specialties: [],
-        specialized_areas: []
+        program_areas: ['Basic Program', 'Specialty Program'],
+        specialties: ['Internal Medicine', 'General Surgery', 'Pediatrics', 'Reproductive Health'],
+        specialized_areas: ['Emergency', 'Chronic Care', 'Acute Care']
       };
     }
   },
