@@ -2,36 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/apiService';
 import { formatDate, formatScore, getPerformanceColor } from '../utils/helpers';
-
-interface ProgressData {
-  progress: {
-    totalCasesCompleted: number;
-    overallAverageScore: number;
-    beginnerCasesCompleted: number;
-    intermediateCasesCompleted: number;
-    advancedCasesCompleted: number;
-    beginnerAverageScore: number;
-    intermediateAverageScore: number;
-    advancedAverageScore: number;
-    currentProgressionLevel: string;
-  };
-  recentMetrics: Array<{
-    evaluated_at: string;
-    metrics: {
-      overall_score: number;
-    };
-    case_ref: {
-      case_metadata: {
-        title: string;
-        specialty: string;
-      };
-    };
-  }>;
-}
+import { ClinicianProgressResponse } from '../types';
 
 const ProgressPage: React.FC = () => {
   const { user } = useAuth();
-  const [progressData, setProgressData] = useState<ProgressData | null>(null);
+  const [progressData, setProgressData] = useState<ClinicianProgressResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
@@ -85,7 +60,7 @@ const ProgressPage: React.FC = () => {
 
   const calculateTotalHours = (): number => {
     // Estimate 20 minutes per case on average
-    return Math.round((progressData?.progress?.totalCasesCompleted || 0) * 20 / 60 * 10) / 10;
+    return Math.round((progressData?.totalCasesCompleted || 0) * 20 / 60 * 10) / 10;
   };
 
   if (loading) {
@@ -121,7 +96,7 @@ const ProgressPage: React.FC = () => {
     );
   }
 
-  const progressLevel = getProgressLevel(progressData?.progress?.overallAverageScore || 0);
+  const progressLevel = getProgressLevel(progressData?.overallAverageScore || 0);
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -135,21 +110,21 @@ const ProgressPage: React.FC = () => {
       <div className="grid md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-2xl font-bold text-blue-600 mb-1">
-            {progressData?.progress?.totalCasesCompleted || 0}
+            {progressData?.totalCasesCompleted || 0}
           </div>
           <div className="text-sm text-gray-600">Cases Completed</div>
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className={`text-2xl font-bold mb-1 ${getPerformanceColor(progressData?.progress?.overallAverageScore || 0)}`}>
-            {formatScore(progressData?.progress?.overallAverageScore || 0)}
+          <div className={`text-2xl font-bold mb-1 ${getPerformanceColor(progressData?.overallAverageScore || 0)}`}>
+            {formatScore(progressData?.overallAverageScore || 0)}
           </div>
           <div className="text-sm text-gray-600">Average Score</div>
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-2xl font-bold text-purple-600 mb-1">
-            {progressData?.recentMetrics?.length || 0}
+            {progressData?.recentPerformance?.length || 0}
           </div>
           <div className="text-sm text-gray-600">Recent Cases</div>
         </div>
@@ -176,12 +151,12 @@ const ProgressPage: React.FC = () => {
         <div className="mt-4">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>Progress to Next Level</span>
-            <span>{formatScore(progressData?.progress?.overallAverageScore || 0)}</span>
+            <span>{formatScore(progressData?.overallAverageScore || 0)}</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${Math.min((progressData?.progress?.overallAverageScore || 0), 100)}%` }}
+              style={{ width: `${Math.min((progressData?.overallAverageScore || 0), 100)}%` }}
             ></div>
           </div>
         </div>
@@ -194,7 +169,7 @@ const ProgressPage: React.FC = () => {
           
           {progressData?.specialtyProgress && progressData.specialtyProgress.length > 0 ? (
             <div className="space-y-4">
-              {progressData.specialtyProgress.map((specialty, index) => (
+              {progressData.specialtyProgress.map((specialty: { specialty: string; casesCompleted: number; averageScore: number }, index: number) => (
                 <div key={index} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-medium text-gray-900">{specialty.specialty}</h3>
@@ -231,23 +206,20 @@ const ProgressPage: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Recent Performance</h2>
           
-          {progressData?.recentMetrics && progressData.recentMetrics.length > 0 ? (
+          {progressData?.recentPerformance && progressData.recentPerformance.length > 0 ? (
             <div className="space-y-3">
-              {progressData.recentMetrics.slice(0, 8).map((metric, index) => (
+              {progressData.recentPerformance.slice(0, 8).map((metric: { caseTitle: string; completedAt: Date; score: number }, index: number) => (
                 <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 text-sm">
-                      {metric.case_ref?.case_metadata?.title || 'Unknown Case'}
+                      {metric.caseTitle || 'Unknown Case'}
                     </h4>
                     <p className="text-xs text-gray-600">
-                      {metric.case_ref?.case_metadata?.specialty}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {formatDate(metric.evaluated_at)}
+                      {formatDate(metric.completedAt)}
                     </p>
                   </div>
-                  <div className={`font-bold text-sm ${getPerformanceColor(metric.metrics?.overall_score || 0)}`}>
-                    {formatScore(metric.metrics?.overall_score || 0)}
+                  <div className={`font-bold text-sm ${getPerformanceColor(metric.score || 0)}`}>
+                    {formatScore(metric.score || 0)}
                   </div>
                 </div>
               ))}
@@ -262,7 +234,7 @@ const ProgressPage: React.FC = () => {
       </div>
 
       {/* Call to Action */}
-      {(!progressData?.progress?.totalCasesCompleted || progressData.progress.totalCasesCompleted === 0) && (
+      {(!progressData?.totalCasesCompleted || progressData.totalCasesCompleted === 0) && (
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
           <h3 className="text-lg font-semibold text-blue-800 mb-2">Ready to Start Learning?</h3>
           <p className="text-blue-600 mb-4">
