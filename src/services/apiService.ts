@@ -15,7 +15,7 @@ const getTokenExpiry = (): number | null => {
   try {
     const token = getAuthToken();
     if (!token) return null;
-    
+
     // Decode JWT token to get expiry
     const payload = JSON.parse(atob(token.split('.')[1]));
     return payload.exp * 1000; // Convert to milliseconds
@@ -27,7 +27,7 @@ const getTokenExpiry = (): number | null => {
 const isTokenExpired = (): boolean => {
   const expiry = getTokenExpiry();
   if (!expiry) return true;
-  
+
   return Date.now() >= expiry;
 };
 
@@ -44,16 +44,16 @@ let sessionExpiredShown = false;
 const checkTokenExpiry = () => {
   const expiry = getTokenExpiry();
   if (!expiry) return;
-  
+
   const now = Date.now();
   const timeUntilExpiry = expiry - now;
-  
+
   // Show warning 5 minutes before expiry
   if (timeUntilExpiry <= 5 * 60 * 1000 && timeUntilExpiry > 0 && !sessionWarningShown) {
     sessionWarningShown = true;
     showSessionWarning(Math.floor(timeUntilExpiry / 60000));
   }
-  
+
   // Token has expired
   if (timeUntilExpiry <= 0 && !sessionExpiredShown) {
     sessionExpiredShown = true;
@@ -64,7 +64,8 @@ const checkTokenExpiry = () => {
 const showSessionWarning = (minutesLeft: number) => {
   // Create a user-friendly notification
   const notification = document.createElement('div');
-  notification.className = 'fixed top-4 right-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg shadow-lg z-50 max-w-sm';
+  notification.className =
+    'fixed top-4 right-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg shadow-lg z-50 max-w-sm';
   notification.innerHTML = `
     <div class="flex">
       <div class="flex-shrink-0">
@@ -72,7 +73,9 @@ const showSessionWarning = (minutesLeft: number) => {
       </div>
       <div class="ml-3">
         <p class="text-sm font-medium text-yellow-800">Session Expiring Soon</p>
-        <p class="text-sm text-yellow-700 mt-1">Your session will expire in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''}. Please save your work.</p>
+        <p class="text-sm text-yellow-700 mt-1">Your session will expire in ${minutesLeft} minute${
+    minutesLeft !== 1 ? 's' : ''
+  }. Please save your work.</p>
         <div class="mt-3 flex space-x-2">
           <button onclick="window.location.reload()" class="bg-yellow-600 text-white px-3 py-1 rounded text-xs hover:bg-yellow-700">
             Refresh Session
@@ -84,9 +87,9 @@ const showSessionWarning = (minutesLeft: number) => {
       </div>
     </div>
   `;
-  
+
   document.body.appendChild(notification);
-  
+
   // Auto-remove after 10 seconds
   setTimeout(() => {
     if (notification.parentNode) {
@@ -99,10 +102,11 @@ const handleSessionExpiry = () => {
   // Clear auth data
   localStorage.removeItem('authToken');
   localStorage.removeItem('currentUser');
-  
+
   // Show user-friendly message
   const notification = document.createElement('div');
-  notification.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+  notification.className =
+    'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
   notification.innerHTML = `
     <div class="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
       <div class="text-center">
@@ -117,59 +121,68 @@ const handleSessionExpiry = () => {
       </div>
     </div>
   `;
-  
+
   document.body.appendChild(notification);
 };
 
 // Check token expiry every minute
 setInterval(checkTokenExpiry, 60000);
 
-const authenticatedFetch = async (url: string, options: RequestInit = {}, autoLogout: boolean = true): Promise<Response> => {
+const authenticatedFetch = async (
+  url: string,
+  options: RequestInit = {},
+  autoLogout: boolean = true
+): Promise<Response> => {
   // Check if token is expired before making request
   if (isTokenExpired()) {
     console.log('Token expired, redirecting to login');
     handleSessionExpiry();
     throw new Error('Session expired');
   }
-  
+
   const token = getAuthToken();
   const headers = new Headers(options.headers || {});
 
   if (token) {
     headers.append('Authorization', `Bearer ${token}`);
-    console.log('Making authenticated request to:', url, 'with token:', token.substring(0, 20) + '...');
+    console.log(
+      'Making authenticated request to:',
+      url,
+      'with token:',
+      token.substring(0, 20) + '...'
+    );
   } else {
     console.log('Making unauthenticated request to:', url);
   }
-  
+
   headers.append('Content-Type', 'application/json');
 
   const response = await fetch(url, { ...options, headers });
-  
+
   console.log('Response status:', response.status, 'for URL:', url);
-  
+
   // Handle 401 responses (token expired or invalid)
   if (response.status === 401 && autoLogout) {
     console.log('401 Unauthorized - handling session expiry');
     handleSessionExpiry();
     throw new Error('Session expired');
   }
-  
+
   return response;
 };
 
 export const api = {
   // Check if user is authenticated
   isAuthenticated: () => isTokenValid(),
-  
+
   // Check if token is expired
   isTokenExpired: () => isTokenExpired(),
-  
+
   // Get time until token expires (in minutes)
   getTimeUntilExpiry: (): number => {
     const expiry = getTokenExpiry();
     if (!expiry) return 0;
-    
+
     const timeLeft = expiry - Date.now();
     return Math.max(0, Math.floor(timeLeft / 60000));
   },
@@ -193,7 +206,7 @@ export const api = {
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/api/privacy/settings`, {
         method: 'PUT',
-        body: JSON.stringify(settings)
+        body: JSON.stringify(settings),
       });
       if (!response.ok) {
         throw new Error('Failed to update privacy settings');
@@ -214,7 +227,7 @@ export const api = {
       if (!response.ok) {
         throw new Error('Failed to export user data');
       }
-      
+
       if (format === 'json') {
         return await response.json();
       } else {
@@ -229,7 +242,7 @@ export const api = {
   requestAccountDeletion: async () => {
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/api/privacy/account`, {
-        method: 'DELETE'
+        method: 'DELETE',
       });
       if (!response.ok) {
         throw new Error('Failed to request account deletion');
@@ -268,7 +281,7 @@ export const api = {
             totalCasesCompleted: 0,
             overallAverageScore: 0,
             specialtyProgress: [],
-            recentPerformance: []
+            recentPerformance: [],
           };
         }
         throw new Error('Failed to fetch user progress');
@@ -282,7 +295,7 @@ export const api = {
         totalCasesCompleted: 0,
         overallAverageScore: 0,
         specialtyProgress: [],
-        recentPerformance: []
+        recentPerformance: [],
       };
     }
   },
@@ -290,7 +303,7 @@ export const api = {
   // Get available cases
   getCases: async (filters?: any) => {
     if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       const mockCases = [
         {
           id: '1',
@@ -299,7 +312,7 @@ export const api = {
           specialty: 'Cardiology',
           patient_age: 65,
           patient_gender: 'Male',
-          chief_complaint: 'Chest pain'
+          chief_complaint: 'Chest pain',
         },
         {
           id: '2',
@@ -308,21 +321,21 @@ export const api = {
           specialty: 'Internal Medicine',
           patient_age: 45,
           patient_gender: 'Female',
-          chief_complaint: 'High blood sugar'
-        }
+          chief_complaint: 'High blood sugar',
+        },
       ];
-      
+
       // Filter mock cases based on filters
       let filteredCases = mockCases;
       if (filters?.specialty) {
-        filteredCases = mockCases.filter(c => c.specialty === filters.specialty);
+        filteredCases = mockCases.filter((c) => c.specialty === filters.specialty);
       }
-      
+
       return {
         cases: filteredCases,
         currentPage: 1,
         totalPages: 1,
-        totalCases: filteredCases.length
+        totalCases: filteredCases.length,
       };
     }
 
@@ -333,12 +346,12 @@ export const api = {
           if (value) queryParams.append(key, value.toString());
         });
       }
-      
+
       const response = await authenticatedFetch(
         `${API_BASE_URL}/api/simulation/cases?${queryParams.toString()}`,
         {}
       );
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           console.log('Authentication required for cases');
@@ -346,12 +359,12 @@ export const api = {
             cases: [],
             currentPage: 1,
             totalPages: 1,
-            totalCases: 0
+            totalCases: 0,
           };
         }
         throw new Error('Failed to fetch cases');
       }
-      
+
       const data = await response.json();
       return data.data || data;
     } catch (error) {
@@ -366,12 +379,12 @@ export const api = {
             specialty: 'Internal Medicine',
             patient_age: 45,
             patient_gender: 'Male',
-            chief_complaint: 'General consultation'
-          }
+            chief_complaint: 'General consultation',
+          },
         ],
         currentPage: 1,
         totalPages: 1,
-        totalCases: 1
+        totalCases: 1,
       };
     }
   },
@@ -379,13 +392,14 @@ export const api = {
   // Get case categories
   getCaseCategories: async (filters?: { program_area?: string }) => {
     if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
       const mockCategories = {
         program_areas: ['Basic Program', 'Specialty Program'],
-        specialties: filters?.program_area === 'Basic Program' 
-          ? ['Internal Medicine', 'General Surgery', 'Pediatrics', 'Reproductive Health']
-          : ['Cardiology', 'Neurology', 'Emergency Medicine', 'Psychiatry'],
-        specialized_areas: ['Emergency', 'Chronic Care', 'Acute Care']
+        specialties:
+          filters?.program_area === 'Basic Program'
+            ? ['Internal Medicine', 'General Surgery', 'Pediatrics', 'Reproductive Health']
+            : ['Cardiology', 'Neurology', 'Emergency Medicine', 'Psychiatry'],
+        specialized_areas: ['Emergency', 'Chronic Care', 'Acute Care'],
       };
       return mockCategories;
     }
@@ -395,18 +409,25 @@ export const api = {
       if (filters?.program_area) {
         queryParams.append('program_area', filters.program_area);
       }
-      
-      const endpoint = `/api/simulation/case-categories${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+      const endpoint = `/api/simulation/case-categories${
+        queryParams.toString() ? `?${queryParams.toString()}` : ''
+      }`;
       const response = await authenticatedFetch(`${API_BASE_URL}${endpoint}`, {});
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           console.log('Authentication required for case categories');
           // Return mock data as fallback
           return {
             program_areas: ['Basic Program', 'Specialty Program'],
-            specialties: ['Internal Medicine', 'General Surgery', 'Pediatrics', 'Reproductive Health'],
-            specialized_areas: ['Emergency', 'Chronic Care', 'Acute Care']
+            specialties: [
+              'Internal Medicine',
+              'General Surgery',
+              'Pediatrics',
+              'Reproductive Health',
+            ],
+            specialized_areas: ['Emergency', 'Chronic Care', 'Acute Care'],
           };
         }
         throw new Error('Failed to fetch case categories');
@@ -419,7 +440,7 @@ export const api = {
       return {
         program_areas: ['Basic Program', 'Specialty Program'],
         specialties: ['Internal Medicine', 'General Surgery', 'Pediatrics', 'Reproductive Health'],
-        specialized_areas: ['Emergency', 'Chronic Care', 'Acute Care']
+        specialized_areas: ['Emergency', 'Chronic Care', 'Acute Care'],
       };
     }
   },
@@ -428,21 +449,21 @@ export const api = {
   startSimulation: async (caseId: string) => {
     try {
       console.log('📡 Starting simulation for case:', caseId);
-      
+
       const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/start`, {
         method: 'POST',
-        body: JSON.stringify({ caseId })
+        body: JSON.stringify({ caseId }),
       });
-      
+
       if (!response.ok) {
         console.error('❌ API Response not OK:', response.status, response.statusText);
         throw new Error(`Failed to start simulation: ${response.status} ${response.statusText}`);
       }
-      
+
       // Get the raw response text first for debugging
       const responseText = await response.text();
       console.log('📡 Raw API Response Text:', responseText);
-      
+
       // Parse the JSON
       let data;
       try {
@@ -451,46 +472,47 @@ export const api = {
         console.error('❌ Failed to parse JSON response:', parseError);
         throw new Error('Invalid JSON response from server');
       }
-      
+
       console.log('📡 Parsed API Response:', data);
       console.log('📡 Response structure analysis:');
       console.log('  - Top level keys:', Object.keys(data));
       console.log('  - Has data property:', 'data' in data);
       console.log('  - data content:', data.data);
-      
+
       // Check both possible response structures
       const responseData = data.data || data;
       console.log('📡 Final responseData:', responseData);
       console.log('📡 Response data keys:', Object.keys(responseData));
-      
+
       // Log all possible patient name fields
       console.log('📡 Patient name analysis:');
       console.log('  - patientName:', responseData.patientName);
       console.log('  - patient_name:', responseData.patient_name);
       console.log('  - name:', responseData.name);
       console.log('  - speaks_for:', responseData.speaks_for);
-      
+
       // Log all possible initial prompt fields
       console.log('📡 Initial prompt analysis:');
       console.log('  - initialPrompt:', responseData.initialPrompt);
       console.log('  - initial_prompt:', responseData.initial_prompt);
       console.log('  - prompt:', responseData.prompt);
       console.log('  - message:', responseData.message);
-      
+
       // Check if initialPrompt exists and has content
-      const initialPrompt = responseData.initialPrompt || 
-                           responseData.initial_prompt || 
-                           responseData.prompt || 
-                           responseData.message || 
-                           '';
-                           
+      const initialPrompt =
+        responseData.initialPrompt ||
+        responseData.initial_prompt ||
+        responseData.prompt ||
+        responseData.message ||
+        '';
+
       console.log('📡 Resolved initial prompt:', {
         value: initialPrompt,
         type: typeof initialPrompt,
         length: initialPrompt?.length || 0,
-        trimmedLength: initialPrompt?.trim()?.length || 0
+        trimmedLength: initialPrompt?.trim()?.length || 0,
       });
-      
+
       return responseData;
     } catch (error) {
       console.error('❌ Error in startSimulation:', error);
@@ -503,13 +525,13 @@ export const api = {
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/api/simulation/end`, {
         method: 'POST',
-        body: JSON.stringify({ sessionId })
+        body: JSON.stringify({ sessionId }),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to end simulation');
       }
-      
+
       const data = await response.json();
       return data.data || data;
     } catch (error) {
@@ -524,13 +546,13 @@ export const api = {
       const queryParams = new URLSearchParams();
       if (specialty) queryParams.append('specialty', specialty);
       queryParams.append('limit', limit.toString());
-      
+
       const response = await authenticatedFetch(
         `${API_BASE_URL}/api/performance/leaderboard?${queryParams.toString()}`,
         {},
         false
       );
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           console.log('Authentication required for leaderboard');
@@ -538,7 +560,7 @@ export const api = {
         }
         throw new Error('Failed to fetch leaderboard');
       }
-      
+
       const data = await response.json();
       return data || [];
     } catch (error) {
@@ -562,10 +584,10 @@ export const api = {
         totalUsers: 0,
         totalCases: 0,
         totalSessions: 0,
-        activeUsers: 0
+        activeUsers: 0,
       };
     }
-  }
+  },
 };
 
 export default api;
