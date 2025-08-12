@@ -258,7 +258,7 @@ export const api = {
   // Get user cases/progress data
   getUserProgress: async (userId: string) => {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/progress/${userId}`, {}, false);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/progress/${userId}`, {});
       if (!response.ok) {
         // If it's a 401, it might just mean no progress data exists yet
         if (response.status === 401) {
@@ -338,7 +338,7 @@ export const api = {
       }
       
       const endpoint = `/api/simulation/case-categories${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-      const response = await authenticatedFetch(`${API_BASE_URL}${endpoint}`, {}, false);
+      const response = await authenticatedFetch(`${API_BASE_URL}${endpoint}`, {});
       
       if (!response.ok) {
         if (response.status === 401) {

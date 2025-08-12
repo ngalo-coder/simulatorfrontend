@@ -20,10 +20,13 @@ const SimulationPage: React.FC = () => {
   const [startingSimulation, setStartingSimulation] = useState(false);
   
   // Initialize filters with preselected values from navigation state
-  const [filters, setFilters] = useState({
-    program_area: location.state?.preselectedFilters?.program_area || '',
-    specialty: location.state?.preselectedFilters?.specialty || '',
-    search: ''
+  const [filters, setFilters] = useState(() => {
+    const preselectedFilters = location.state?.preselectedFilters;
+    return {
+      program_area: preselectedFilters?.program_area || '',
+      specialty: preselectedFilters?.specialty || '',
+      search: ''
+    };
   });
   
   // Check if user came with preselected filters (direct navigation from case browsing)
@@ -55,7 +58,7 @@ const SimulationPage: React.FC = () => {
     if (filters.program_area) {
       fetchSpecialtiesForProgramArea(filters.program_area);
       setFilters(prev => ({ ...prev, specialty: '' })); // Reset specialty when program area changes
-    } else {
+    } else if (categories.specialties && Array.isArray(categories.specialties)) {
       setAvailableSpecialties(categories.specialties);
     }
   }, [filters.program_area, categories.specialties]);
@@ -63,17 +66,30 @@ const SimulationPage: React.FC = () => {
   const fetchCategories = async () => {
     try {
       const response = await api.getCaseCategories();
-      setCategories(response);
-      setAvailableSpecialties(response.specialties || []);
+      if (response) {
+        setCategories(response);
+        setAvailableSpecialties(response.specialties || []);
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
+      // Set default empty categories to prevent crashes
+      setCategories({
+        program_areas: [],
+        specialties: [],
+        specialized_areas: []
+      });
+      setAvailableSpecialties([]);
     }
   };
 
   const fetchSpecialtiesForProgramArea = async (programArea: string) => {
     try {
       const response = await api.getCaseCategories({ program_area: programArea });
-      setAvailableSpecialties(response.specialties || []);
+      if (response && response.specialties) {
+        setAvailableSpecialties(response.specialties);
+      } else {
+        setAvailableSpecialties([]);
+      }
     } catch (error) {
       console.error('Error fetching specialties for program area:', error);
       setAvailableSpecialties([]);
@@ -84,9 +100,14 @@ const SimulationPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.getCases(filters);
-      setCases(response.cases || []);
+      if (response && Array.isArray(response.cases)) {
+        setCases(response.cases);
+      } else {
+        setCases([]);
+      }
     } catch (error) {
       console.error('Error fetching cases:', error);
+      setCases([]);
     } finally {
       setLoading(false);
     }
