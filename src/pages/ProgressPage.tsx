@@ -24,7 +24,6 @@ interface ProgressData {
       case_metadata: {
         title: string;
         specialty: string;
-        difficulty: string;
       };
     };
   }>;
@@ -189,85 +188,41 @@ const ProgressPage: React.FC = () => {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Progress by Difficulty */}
+        {/* Progress by Specialty */}
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Progress by Difficulty</h2>
+          <h2 className="text-xl font-semibold mb-4">Progress by Specialty</h2>
           
-          {progressData?.progress ? (
+          {progressData?.specialtyProgress && progressData.specialtyProgress.length > 0 ? (
             <div className="space-y-4">
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium text-gray-900">Beginner</h3>
-                  <span className={`text-sm font-medium ${getPerformanceColor(progressData.progress.beginnerAverageScore)}`}>
-                    {formatScore(progressData.progress.beginnerAverageScore)}
-                  </span>
+              {progressData.specialtyProgress.map((specialty, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium text-gray-900">{specialty.specialty}</h3>
+                    <span className={`text-sm font-medium ${getPerformanceColor(specialty.averageScore)}`}>
+                      {formatScore(specialty.averageScore)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>{specialty.casesCompleted} cases completed</span>
+                  </div>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        specialty.averageScore >= 90 ? 'bg-green-500' :
+                        specialty.averageScore >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${Math.min(specialty.averageScore, 100)}%` }}
+                    ></div>
+                  </div>
                 </div>
-                
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
-                  <span>{progressData.progress.beginnerCasesCompleted} cases completed</span>
-                </div>
-                
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      progressData.progress.beginnerAverageScore >= 90 ? 'bg-green-500' :
-                      progressData.progress.beginnerAverageScore >= 70 ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${Math.min(progressData.progress.beginnerAverageScore, 100)}%` }}
-                  ></div>
-                </div>
-              </div>
-              
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium text-gray-900">Intermediate</h3>
-                  <span className={`text-sm font-medium ${getPerformanceColor(progressData.progress.intermediateAverageScore)}`}>
-                    {formatScore(progressData.progress.intermediateAverageScore)}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
-                  <span>{progressData.progress.intermediateCasesCompleted} cases completed</span>
-                </div>
-                
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      progressData.progress.intermediateAverageScore >= 90 ? 'bg-green-500' :
-                      progressData.progress.intermediateAverageScore >= 70 ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${Math.min(progressData.progress.intermediateAverageScore, 100)}%` }}
-                  ></div>
-                </div>
-              </div>
-              
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium text-gray-900">Advanced</h3>
-                  <span className={`text-sm font-medium ${getPerformanceColor(progressData.progress.advancedAverageScore)}`}>
-                    {formatScore(progressData.progress.advancedAverageScore)}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
-                  <span>{progressData.progress.advancedCasesCompleted} cases completed</span>
-                </div>
-                
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      progressData.progress.advancedAverageScore >= 90 ? 'bg-green-500' :
-                      progressData.progress.advancedAverageScore >= 70 ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${Math.min(progressData.progress.advancedAverageScore, 100)}%` }}
-                  ></div>
-                </div>
-              </div>
+              ))}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <p>No progress data yet.</p>
-              <p className="text-sm mt-2">Complete some cases to see your progress by difficulty.</p>
+              <p>No specialty progress data yet.</p>
+              <p className="text-sm mt-2">Complete some cases to see your progress by specialty.</p>
             </div>
           )}
         </div>
@@ -285,7 +240,7 @@ const ProgressPage: React.FC = () => {
                       {metric.case_ref?.case_metadata?.title || 'Unknown Case'}
                     </h4>
                     <p className="text-xs text-gray-600">
-                      {metric.case_ref?.case_metadata?.specialty} • {metric.case_ref?.case_metadata?.difficulty}
+                      {metric.case_ref?.case_metadata?.specialty}
                     </p>
                     <p className="text-xs text-gray-600">
                       {formatDate(metric.evaluated_at)}

@@ -18,81 +18,84 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import SessionManager from './components/SessionManager';
 import { useNotification } from './components/NotificationToast';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   const { NotificationContainer } = useNotification();
 
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <NotificationContainer />
-        <SessionManager />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/browse-cases" 
-              element={
-                <ProtectedRoute>
-                  <CaseBrowsingPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/simulation" 
-              element={
-                <ProtectedRoute>
-                  <SimulationPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/simulation/:caseId/session/:sessionId?" 
-              element={
-                <ProtectedRoute>
-                  <SimulationChatPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/progress" 
-              element={
-                <ProtectedRoute>
-                  <ProgressPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/leaderboard" 
-              element={
-                <ProtectedRoute>
-                  <LeaderboardPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin" 
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminPage />
-                </ProtectedRoute>
-              } 
-            />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+          <Navbar />
+          <NotificationContainer />
+          <SessionManager />
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/browse-cases" 
+                element={
+                  <ProtectedRoute>
+                    <CaseBrowsingPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/simulation" 
+                element={
+                  <ProtectedRoute>
+                    <SimulationPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/simulation/:caseId/session/:sessionId?" 
+                element={
+                  <ProtectedRoute>
+                    <SimulationChatPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/progress" 
+                element={
+                  <ProtectedRoute>
+                    <ProgressPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/leaderboard" 
+                element={
+                  <ProtectedRoute>
+                    <LeaderboardPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminPage />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </main>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }
 

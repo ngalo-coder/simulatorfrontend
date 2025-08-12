@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import ThemeToggle from './ThemeToggle';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -19,20 +20,20 @@ const Navbar: React.FC = () => {
 
   const getLinkClasses = (path: string) => {
     const baseClasses = "px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200";
-    const activeClasses = "bg-blue-100 text-blue-700";
-    const inactiveClasses = "text-gray-700 hover:text-blue-600 hover:bg-gray-100";
+    const activeClasses = "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300";
+    const inactiveClasses = "text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700";
     
     return `${baseClasses} ${isActivePath(path) ? activeClasses : inactiveClasses}`;
   };
 
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50">
+    <nav className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
-              <div className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
+              <div className="text-xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                 🏥 Simuatech
               </div>
             </Link>
@@ -81,35 +82,35 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* User Menu (Desktop) */}
-          {user && (
-            <div className="hidden md:block">
-              <div className="ml-4 flex items-center md:ml-6">
-                <div className="flex items-center space-x-3">
-                  <div className="text-sm">
-                    <span className="text-gray-500">Welcome,</span>
-                    <span className="ml-1 font-medium text-gray-900">{user.username}</span>
-                    {user.role === 'admin' && (
-                      <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                        Admin
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="bg-red-600 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-red-700 transition-colors duration-200"
-                  >
-                    Logout
-                  </button>
+          <div className="hidden md:flex items-center space-x-4">
+            <ThemeToggle />
+            {user && (
+              <div className="flex items-center space-x-3">
+                <div className="text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Welcome,</span>
+                  <span className="ml-1 font-medium text-gray-900 dark:text-gray-100">{user.username}</span>
+                  {user.role === 'admin' && (
+                    <span className="ml-2 px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs rounded-full">
+                      Admin
+                    </span>
+                  )}
                 </div>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-600 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-red-700 transition-colors duration-200"
+                >
+                  Logout
+                </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-2">
+            <ThemeToggle />
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="bg-gray-100 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="bg-gray-100 dark:bg-gray-700 inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors duration-200"
             >
               <span className="sr-only">Open main menu</span>
               {!isMobileMenuOpen ? (
@@ -129,7 +130,7 @@ const Navbar: React.FC = () => {
       {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 border-t">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 transition-colors duration-200">
             {user ? (
               <>
                 <Link 
@@ -176,11 +177,11 @@ const Navbar: React.FC = () => {
                     Admin
                   </Link>
                 )}
-                <div className="border-t border-gray-200 pt-4 pb-3">
+                <div className="border-t border-gray-200 dark:border-gray-600 pt-4 pb-3">
                   <div className="flex items-center px-3">
                     <div className="text-sm">
-                      <div className="font-medium text-gray-900">{user.username}</div>
-                      <div className="text-gray-500">{user.role}</div>
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{user.username}</div>
+                      <div className="text-gray-500 dark:text-gray-400">{user.role}</div>
                     </div>
                   </div>
                   <div className="mt-3 px-3">

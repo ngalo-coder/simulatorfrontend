@@ -691,7 +691,7 @@ const SimulationChatPage: React.FC = () => {
                     <div className="text-sm text-blue-700 space-y-2">
                       <p>• Review your performance metrics in the Progress section</p>
                       <p>• Try similar cases to reinforce your learning</p>
-                      <p>• Challenge yourself with cases of increasing difficulty</p>
+                      <p>• Challenge yourself with more complex cases</p>
                     </div>
                   </div>
                 </div>

@@ -10,8 +10,6 @@ export interface PatientCase {
   title: string;
   description: string;
   category: string;
-  difficulty: string;
-  estimated_time: string;
   program_area: string;
   specialized_area: string;
   patient_age: number;
@@ -126,7 +124,6 @@ export interface ProgressRecommendation {
     caseId: string;
     title: string;
     specialty: string;
-    difficulty: string;
     reason: string;
   }>;
   improvementAreas: string[];
