@@ -19,9 +19,22 @@ const SimulationPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [startingSimulation, setStartingSimulation] = useState(false);
   
-  // Initialize filters with preselected values from navigation state
+  // Initialize filters with preselected values from navigation state or specialty context
   const [filters, setFilters] = useState(() => {
     const preselectedFilters = location.state?.preselectedFilters;
+    
+    // If no preselected filters, try to use specialty context for smart "All Cases"
+    if (!preselectedFilters?.program_area && !preselectedFilters?.specialty) {
+      const context = api.getSpecialtyContext();
+      if (context) {
+        return {
+          program_area: context.programArea,
+          specialty: context.specialty,
+          search: ''
+        };
+      }
+    }
+    
     return {
       program_area: preselectedFilters?.program_area || '',
       specialty: preselectedFilters?.specialty || '',
@@ -33,6 +46,13 @@ const SimulationPage: React.FC = () => {
   const hasPreselectedFilters = Boolean(
     location.state?.preselectedFilters?.program_area && 
     location.state?.preselectedFilters?.specialty
+  );
+  
+  // Check if we're using specialty context (smart "All Cases")
+  const isUsingSpecialtyContext = Boolean(
+    !hasPreselectedFilters && 
+    filters.program_area && 
+    filters.specialty
   );
   const [categories, setCategories] = useState<{
     program_areas: string[];
@@ -148,22 +168,48 @@ const SimulationPage: React.FC = () => {
                   Ready to practice? Choose a case below to start your simulation.
                 </p>
               </>
+            ) : isUsingSpecialtyContext ? (
+              <>
+                <div className="flex items-center space-x-3 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    All {filters.specialty} Cases
+                  </h1>
+                  <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                    {filters.program_area}
+                  </span>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                    Smart Filter
+                  </span>
+                </div>
+                <p className="text-gray-600">
+                  Showing all cases in {filters.specialty}. Want to see cases from other specialties?{' '}
+                  <button 
+                    onClick={() => {
+                      api.clearSpecialtyContext();
+                      setFilters({ program_area: '', specialty: '', search: '' });
+                    }}
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Clear filter
+                  </button>
+                </p>
+              </>
             ) : (
               <>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Patient Cases
+                  All Patient Cases
                 </h1>
                 <p className="text-gray-600">
                   {filters.program_area && filters.specialty 
                     ? `Showing cases for ${filters.specialty} in ${filters.program_area}`
-                    : 'Select a case to begin your simulation experience'
+                    : 'Browse all available cases or use filters to narrow your selection'
                   }
                 </p>
               </>
             )}
           </div>
           <div className="flex items-center space-x-3">
-            {hasPreselectedFilters && (
+            {(hasPreselectedFilters || isUsingSpecialtyContext) && (
               <Link 
                 to="/browse-cases"
                 className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
@@ -172,7 +218,7 @@ const SimulationPage: React.FC = () => {
                 <span>Change Specialty</span>
               </Link>
             )}
-            {!hasPreselectedFilters && (filters.program_area || filters.specialty) && (
+            {!hasPreselectedFilters && !isUsingSpecialtyContext && (filters.program_area || filters.specialty) && (
               <Link 
                 to="/browse-cases"
                 className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
@@ -185,8 +231,8 @@ const SimulationPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters - Only show if user didn't come with preselected filters */}
-      {!hasPreselectedFilters && (
+      {/* Filters - Only show if user didn't come with preselected filters and not using specialty context */}
+      {!hasPreselectedFilters && !isUsingSpecialtyContext && (
         <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <h3 className="text-lg font-semibold mb-4">Filter Cases</h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -288,8 +334,8 @@ const SimulationPage: React.FC = () => {
       </div>
       )}
 
-      {/* Simple search for preselected filters */}
-      {hasPreselectedFilters && (
+      {/* Simple search for preselected filters or specialty context */}
+      {(hasPreselectedFilters || isUsingSpecialtyContext) && (
         <div className="bg-white p-4 rounded-lg shadow-md mb-6">
           <div className="flex items-center space-x-4">
             <div className="flex-1">
@@ -321,7 +367,7 @@ const SimulationPage: React.FC = () => {
         </div>
       ) : cases.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          {hasPreselectedFilters ? (
+          {(hasPreselectedFilters || isUsingSpecialtyContext) ? (
             <>
               <p className="text-gray-600 mb-2">No cases found in {filters.specialty}.</p>
               <p className="text-sm text-gray-500 mb-4">
@@ -345,6 +391,17 @@ const SimulationPage: React.FC = () => {
                 >
                   Browse Other Specialties
                 </Link>
+                {isUsingSpecialtyContext && (
+                  <button
+                    onClick={() => {
+                      api.clearSpecialtyContext();
+                      setFilters({ program_area: '', specialty: '', search: '' });
+                    }}
+                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+                  >
+                    Show All Cases
+                  </button>
+                )}
               </div>
             </>
           ) : (

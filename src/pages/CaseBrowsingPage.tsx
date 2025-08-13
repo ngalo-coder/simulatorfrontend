@@ -94,6 +94,9 @@ const CaseBrowsingPage: React.FC = () => {
   };
 
   const handleSpecialtySelect = (specialty: string) => {
+    // Save the specialty context for smart "All Cases" functionality
+    api.setSpecialtyContext(selectedProgramArea, specialty);
+    
     // Navigate to the main simulation page with pre-selected filters
     navigate('/simulation', { 
       state: { 
@@ -279,10 +282,24 @@ const CaseBrowsingPage: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Access</h3>
         <div className="flex flex-wrap gap-3">
           <button
-            onClick={() => navigate('/simulation')}
+            onClick={() => {
+              // Check if there's a current specialty context
+              const context = api.getSpecialtyContext();
+              if (context) {
+                // Navigate with context awareness - will show all cases in the current specialty
+                navigate('/simulation');
+              } else {
+                // Clear any context and show truly all cases
+                api.clearSpecialtyContext();
+                navigate('/simulation');
+              }
+            }}
             className="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:border-gray-400 transition-colors text-sm"
           >
-            Browse All Cases
+            {(() => {
+              const context = api.getSpecialtyContext();
+              return context ? `All ${context.specialty} Cases` : 'Browse All Cases';
+            })()}
           </button>
           <button
             onClick={() => navigate('/dashboard')}
