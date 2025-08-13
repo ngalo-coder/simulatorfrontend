@@ -65,22 +65,8 @@ const CaseBrowsingPage: React.FC = () => {
       const response = await api.getCaseCategories({ program_area: programArea });
       setSpecialties(response.specialties || []);
       
-      // Fetch case counts for each specialty
-      const counts: Record<string, number> = {};
-      for (const specialty of response.specialties || []) {
-        try {
-          const casesResponse = await api.getCases({ 
-            program_area: programArea, 
-            specialty: specialty,
-            limit: 1 // We only need the count
-          });
-          counts[specialty] = casesResponse.totalCases || 0;
-        } catch (error) {
-          console.error(`Error fetching count for ${specialty}:`, error);
-          counts[specialty] = 0;
-        }
-      }
-      setSpecialtyCounts(counts);
+      // Use case counts from backend response (no need for individual API calls)
+      setSpecialtyCounts(response.specialty_counts || {});
     } catch (error) {
       console.error('Error fetching specialties:', error);
     } finally {

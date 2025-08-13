@@ -176,7 +176,10 @@ const SPECIALTY_CONTEXT_KEY = 'currentSpecialtyContext';
 
 const setSpecialtyContext = (programArea: string, specialty: string) => {
   try {
-    localStorage.setItem(SPECIALTY_CONTEXT_KEY, JSON.stringify({ programArea, specialty, timestamp: Date.now() }));
+    localStorage.setItem(
+      SPECIALTY_CONTEXT_KEY,
+      JSON.stringify({ programArea, specialty, timestamp: Date.now() })
+    );
   } catch (e) {
     console.warn('Failed to save specialty context:', e);
   }
@@ -186,14 +189,14 @@ const getSpecialtyContext = () => {
   try {
     const stored = localStorage.getItem(SPECIALTY_CONTEXT_KEY);
     if (!stored) return null;
-    
+
     const context = JSON.parse(stored);
     // Context expires after 1 hour
     if (Date.now() - context.timestamp > 60 * 60 * 1000) {
       localStorage.removeItem(SPECIALTY_CONTEXT_KEY);
       return null;
     }
-    
+
     return { programArea: context.programArea, specialty: context.specialty };
   } catch (e) {
     return null;
