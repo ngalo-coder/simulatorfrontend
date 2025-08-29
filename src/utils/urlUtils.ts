@@ -175,7 +175,7 @@ export function parseSimulationUrl(url: string): { caseId?: string; sessionId?: 
  * @param returnUrl - The URL to return to
  * @returns Specialty context object
  */
-export function createSpecialtyContext(specialty?: string, returnUrl?: string) {
+export function createSpecialtyContext(specialty?: string | null, returnUrl?: string) {
   if (!specialty && !returnUrl) {
     return null;
   }
