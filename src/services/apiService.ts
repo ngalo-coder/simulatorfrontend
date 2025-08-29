@@ -350,7 +350,9 @@ export const api = {
       const queryParams = new URLSearchParams();
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
-          if (value) queryParams.append(key, value.toString());
+          if (value !== undefined && value !== null && value !== '') {
+            queryParams.append(key, value.toString());
+          }
         });
       }
 
@@ -367,13 +369,25 @@ export const api = {
             currentPage: 1,
             totalPages: 1,
             totalCases: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
           };
         }
         throw new Error('Failed to fetch cases');
       }
 
       const data = await response.json();
-      return data.data || data;
+      const responseData = data.data || data;
+      
+      // Ensure we have all required pagination fields
+      return {
+        cases: responseData.cases || [],
+        currentPage: responseData.currentPage || 1,
+        totalPages: responseData.totalPages || 1,
+        totalCases: responseData.totalCases || (responseData.cases ? responseData.cases.length : 0),
+        hasNextPage: responseData.hasNextPage || false,
+        hasPrevPage: responseData.hasPrevPage || false,
+      };
     } catch (error) {
       console.error('Error fetching cases:', error);
       // Return empty data on error
@@ -382,6 +396,8 @@ export const api = {
         currentPage: 1,
         totalPages: 1,
         totalCases: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
       };
     }
   },

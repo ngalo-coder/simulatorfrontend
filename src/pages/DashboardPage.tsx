@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/apiService';
+import { specialtyToSlug } from '../utils/urlUtils';
 import PrivacySettingsModal from '../components/PrivacySettings';
 import DataExportModal from '../components/DataExportModal';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [progressData, setProgressData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showPrivacySettings, setShowPrivacySettings] = useState(false);
   const [showDataExport, setShowDataExport] = useState(false);
+  const [specialties, setSpecialties] = useState<string[]>([]);
+  const [specialtyCounts, setSpecialtyCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const fetchProgressData = async () => {
@@ -26,8 +30,41 @@ const DashboardPage: React.FC = () => {
       }
     };
 
+    const fetchSpecialties = async () => {
+      try {
+        const categoriesData = await api.getCaseCategories();
+        setSpecialties(categoriesData.specialties || []);
+        setSpecialtyCounts(categoriesData.specialty_counts || {});
+      } catch (error) {
+        console.error('Error fetching specialties:', error);
+      }
+    };
+
     fetchProgressData();
+    fetchSpecialties();
   }, [user?.id]);
+
+  const handleSpecialtyNavigation = (specialty: string) => {
+    // Clear any existing specialty context
+    api.clearSpecialtyContext();
+    
+    // Navigate to specialty-specific route
+    const slug = specialtyToSlug(specialty);
+    navigate(`/${slug}`);
+  };
+
+  const handleViewAllCases = () => {
+    // Check if there's a current specialty context
+    const context = api.getSpecialtyContext();
+    if (context) {
+      // Navigate to the specialty-specific route
+      const slug = specialtyToSlug(context.specialty);
+      navigate(`/${slug}`);
+    } else {
+      // Navigate to generic simulation page
+      navigate('/simulation');
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -53,12 +90,15 @@ const DashboardPage: React.FC = () => {
             >
               Browse Cases
             </Link>
-            <Link 
-              to="/simulation" 
-              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors inline-block w-full text-center text-sm"
+            <button
+              onClick={handleViewAllCases}
+              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors w-full text-sm"
             >
-              View All Cases
-            </Link>
+              {(() => {
+                const context = api.getSpecialtyContext();
+                return context ? `View ${context.specialty} Cases` : 'View All Cases';
+              })()}
+            </button>
           </div>
         </div>
 
@@ -88,6 +128,47 @@ const DashboardPage: React.FC = () => {
           </Link>
         </div>
       </div>
+
+      {/* Quick Access to Specialties */}
+      {specialties.length > 0 && (
+        <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4">Quick Access by Specialty</h3>
+          <p className="text-gray-600 mb-4">
+            Jump directly to cases in your preferred medical specialties
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {specialties.slice(0, 8).map((specialty) => {
+              const caseCount = specialtyCounts[specialty] || 0;
+              
+              return (
+                <button
+                  key={specialty}
+                  onClick={() => handleSpecialtyNavigation(specialty)}
+                  className="p-3 text-left border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                  disabled={caseCount === 0}
+                >
+                  <div className="font-medium text-sm text-gray-900 mb-1">
+                    {specialty}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {caseCount} case{caseCount !== 1 ? 's' : ''}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {specialties.length > 8 && (
+            <div className="mt-4 text-center">
+              <Link 
+                to="/browse-cases"
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                View all {specialties.length} specialties →
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="bg-blue-50 p-6 rounded-lg">
         <h3 className="text-lg font-semibold mb-3">Quick Stats</h3>
@@ -135,9 +216,14 @@ const DashboardPage: React.FC = () => {
               <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
                 <div>
                   <h4 className="font-medium">{metric.case_ref?.case_metadata?.title || 'Unknown Case'}</h4>
-                  <p className="text-sm text-gray-600">
-                    {metric.case_ref?.case_metadata?.specialty}
-                  </p>
+                  {metric.case_ref?.case_metadata?.specialty && (
+                    <button
+                      onClick={() => handleSpecialtyNavigation(metric.case_ref.case_metadata.specialty)}
+                      className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      {metric.case_ref.case_metadata.specialty}
+                    </button>
+                  )}
                   <p className="text-sm text-gray-600">
                     Completed on {new Date(metric.evaluated_at).toLocaleDateString()}
                   </p>

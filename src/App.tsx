@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage';
 import CaseBrowsingPage from './pages/CaseBrowsingPage';
 import SimulationPage from './pages/SimulationPage';
 import SimulationChatPage from './pages/SimulationChatPage';
+import LazySpecialtyPage from './components/LazySpecialtyPage';
 import ProgressPage from './pages/ProgressPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import AdminPage from './pages/AdminPage';
@@ -17,6 +18,8 @@ import AdminPage from './pages/AdminPage';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import SessionManager from './components/SessionManager';
+import SpecialtyRouteGuard from './components/SpecialtyRouteGuard';
+import SpecialtyErrorBoundary from './components/SpecialtyErrorBoundary';
 import { useNotification } from './components/NotificationToast';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -60,7 +63,15 @@ function App() {
                 } 
               />
               <Route 
-                path="/simulation/:caseId/session/:sessionId?" 
+                path="/simulation/:caseId" 
+                element={
+                  <ProtectedRoute>
+                    <SimulationChatPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/simulation/:caseId/session/:sessionId" 
                 element={
                   <ProtectedRoute>
                     <SimulationChatPage />
@@ -88,6 +99,18 @@ function App() {
                 element={
                   <ProtectedRoute requireAdmin>
                     <AdminPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/:specialty" 
+                element={
+                  <ProtectedRoute>
+                    <SpecialtyErrorBoundary>
+                      <SpecialtyRouteGuard>
+                        <LazySpecialtyPage />
+                      </SpecialtyRouteGuard>
+                    </SpecialtyErrorBoundary>
                   </ProtectedRoute>
                 } 
               />

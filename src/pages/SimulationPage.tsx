@@ -137,8 +137,28 @@ const SimulationPage: React.FC = () => {
     try {
       setStartingSimulation(true);
       const response = await api.startSimulation(case_.id);
-      // Navigate to simulation interface with session ID
-      navigate(`/simulation/${case_.id}/session/${response.sessionId}`);
+      
+      // Determine return URL based on current context
+      let returnUrl = '/simulation';
+      if (hasPreselectedFilters && filters.specialty) {
+        // If we have preselected filters, try to construct specialty URL
+        const specialtySlug = filters.specialty.toLowerCase().replace(/\s+/g, '_');
+        returnUrl = `/${specialtySlug}`;
+      } else if (isUsingSpecialtyContext && filters.specialty) {
+        // If using specialty context, construct specialty URL
+        const specialtySlug = filters.specialty.toLowerCase().replace(/\s+/g, '_');
+        returnUrl = `/${specialtySlug}`;
+      }
+      
+      // Navigate to simulation interface with session ID and specialty context
+      navigate(`/simulation/${case_.id}/session/${response.sessionId}`, {
+        state: {
+          specialtyContext: {
+            specialty: filters.specialty,
+            returnUrl: returnUrl
+          }
+        }
+      });
     } catch (error) {
       console.error('Error starting simulation:', error);
       alert('Failed to start simulation. Please try again.');

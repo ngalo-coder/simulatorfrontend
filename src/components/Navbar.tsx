@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useSpecialtyContext } from '../hooks/useSpecialtyContext';
 import ThemeToggle from './ThemeToggle';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentSpecialty, currentSpecialtySlug } = useSpecialtyContext();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -15,6 +17,10 @@ const Navbar: React.FC = () => {
   };
 
   const isActivePath = (path: string) => {
+    // Special handling for specialty routes
+    if (currentSpecialtySlug && location.pathname === `/${currentSpecialtySlug}`) {
+      return path === '/browse-cases' || path === '/simulation';
+    }
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
@@ -30,13 +36,25 @@ const Navbar: React.FC = () => {
     <nav className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0">
+          {/* Logo and Specialty Context */}
+          <div className="flex-shrink-0 flex items-center space-x-4">
             <Link to="/" className="flex items-center">
               <div className="text-xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                 🏥 Simuatech
               </div>
             </Link>
+            
+            {/* Current Specialty Indicator */}
+            {currentSpecialty && (
+              <div className="hidden lg:flex items-center space-x-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                  Current:
+                </span>
+                <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                  {currentSpecialty}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Desktop Navigation */}
