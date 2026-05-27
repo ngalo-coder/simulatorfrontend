@@ -383,31 +383,6 @@ const AdminPage: React.FC = () => {
             <Card variant="elevated" padding="md" hover={true} className="group">
               <div className="relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 transform translate-x-12 -translate-y-12 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
-                  <div className="w-full h-full rounded-full bg-info-500"></div>
-                </div>
-                <div className="relative z-10">
-                  <div className="w-14 h-14 bg-gradient-to-br from-info-500 to-info-600 rounded-medical-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-2xl">📊</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Performance Analytics</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
-                    View detailed usage and performance analytics with comprehensive reporting tools
-                  </p>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={() => setActiveTab('analytics')}
-                    className="w-full hover-lift"
-                  >
-                    View Analytics
-                  </Button>
-                </div>
-              </div>
-            </Card>
-
-            <Card variant="elevated" padding="md" hover={true} className="group">
-              <div className="relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 transform translate-x-12 -translate-y-12 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
                   <div className="w-full h-full rounded-full bg-warning-500"></div>
                 </div>
                 <div className="relative z-10">
@@ -490,14 +465,9 @@ const AdminPage: React.FC = () => {
         <AdminCaseManagement />
       )}
 
-      {/* Specialties Tab */}
+            {/* Specialties Tab */}
       {activeTab === 'specialties' && (
         <AdminSpecialtyManagement />
-      )}
-
-      {/* Analytics Tab */}
-      {activeTab === 'analytics' && (
-        <AdminAnalytics />
       )}
       </div>
     </div>

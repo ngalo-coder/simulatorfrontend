@@ -1,6 +1,6 @@
 /**
  * Admin API services
- * Uses the unified /api/users, /api/dashboard, /api/cases, /api/analytics resource endpoints.
+ * Uses the unified /api/users, /api/dashboard, /api/cases resource endpoints.
  *
  * UPDATED: Removed non-existent backend endpoints:
  * - adminResetPassword, getAdminStatistics, exportUsers, getPrograms,
