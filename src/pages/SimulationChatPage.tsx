@@ -653,7 +653,7 @@ const SimulationChatPage: React.FC = () => {
 
     console.log('🔍 Testing backend connectivity...');
     try {
-      const testResponse = await fetch(`${import.meta.env.VITE_API_URL}/health`, {
+            const testResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/cases/published`, {
         method: 'GET'
       });
       console.log('🌐 Backend connectivity test:', testResponse.status);
