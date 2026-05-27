@@ -39,22 +39,14 @@ const FeedbackPage: React.FC = () => {
         setLoading(true);
         setError('');
 
-                // Fetch feedback types
-        const typesResponse = await fetch('/api/progress/help/categories');
+                                // Fetch feedback types (using users endpoint as fallback)
+        const typesResponse = await fetch('/api/users/registration-config');
         if (typesResponse.ok) {
           const typesData = await typesResponse.json();
-          setFeedbackTypes(typesData.data);
+          setFeedbackTypes(typesData.data || {});
         }
 
-        // Fetch user's feedback history
-        const historyResponse = await fetch('/api/progress/activity', {
-          credentials: 'include'
-        });
-
-        if (historyResponse.ok) {
-          const historyData = await historyResponse.json();
-          setFeedbackHistory(historyData.data || []);
-        }
+        // Fetch user's feedback history - API removed
       } catch (error) {
         console.error('Error fetching feedback data:', error);
         setError('Failed to load feedback data. Please try again.');

@@ -144,7 +144,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
         }
       };
 
-            const response = await fetch('/api/progress/guidance', {
+            const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -18,30 +18,10 @@ const ProgressPage: React.FC = () => {
     fetchProgressData();
   }, [user?.id]);
 
-  const fetchProgressData = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      
-            // Fetch progress data and retake statistics in parallel
-      const [progressResponse, performanceData] = await Promise.all([
-        api.getUserProgress(),
-        api.getPerformanceData(user?.id || '').catch(() => null)
-      ]);
-      
-      setProgressData(progressResponse);
-      
-      // Calculate retake statistics from performance data
-      if (performanceData?.recentMetrics) {
-        const retakeMetrics = calculateRetakeStats(performanceData.recentMetrics);
-        setRetakeStats(retakeMetrics);
-      }
-    } catch (err) {
-      setError('Failed to load progress data');
-      console.error('Error fetching progress:', err);
-    } finally {
-      setLoading(false);
-    }
+    const fetchProgressData = async () => {
+    // Progress API has been removed from the backend
+    setLoading(false);
+    setError('Progress tracking is currently unavailable');
   };
 
   const calculateRetakeStats = (metrics: any[]) => {
@@ -127,33 +107,9 @@ const ProgressPage: React.FC = () => {
     return Math.round((progressData?.totalCasesCompleted || 0) * 20 / 60 * 10) / 10;
   };
 
-    const handleDownloadPDF = async () => {
-    try {
-      setDownloadingPDF(true);
-      // Use httpClient directly or trigger a download via window.open
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/progress/download-pdf', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `progress-report-${new Date().toISOString().split('T')[0]}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } else {
-        throw new Error('Download failed');
-      }
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      setError('Failed to download progress report. Please try again.');
-    } finally {
-      setDownloadingPDF(false);
-    }
+        const handleDownloadPDF = async () => {
+    // PDF download API has been removed
+    setError('Progress report download is currently unavailable');
   };
 
   if (loading) {

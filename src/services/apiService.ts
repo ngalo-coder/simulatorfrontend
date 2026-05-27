@@ -64,7 +64,7 @@ export const api = {
   getUserById: (id: string) => userService.getUserById(id),
   updateUser: (id: string, d: any) => userService.updateUser(id, d),
   deleteUser: (id: string) => userService.deleteUser(id),
-  getUserProgress: () => performanceService.getPerformanceData(),
+  getUserProgress: () => Promise.reject(new Error('Progress API has been removed')),
 
   getPrivacySettings: () => httpClient.get<{ success: boolean; data: any }>('/api/privacy/settings'),
   updatePrivacySettings: (s: any) => httpClient.put<{ success: boolean; data: any }>('/api/privacy/settings', s),
@@ -86,9 +86,9 @@ export const api = {
   calculateImprovement: (oId: string, rId: string) => simulationService.calculateImprovement(oId, rId),
   calculateImprovementMetrics: (oId: string, rId: string) => simulationService.calculateImprovement(oId, rId),
 
-  getPerformanceData: (userId?: string) => performanceService.getPerformanceData(userId),
-  getLeaderboard: (p?: any) => performanceService.getLeaderboard(p),
-  evaluate: (sId: string) => performanceService.evaluate(sId),
+  getPerformanceData: (_userId?: string) => Promise.reject(new Error('Progress API has been removed')),
+  getLeaderboard: (_p?: any) => Promise.reject(new Error('Leaderboard API has been removed')),
+  evaluate: (_sId: string) => Promise.reject(new Error('Progress API has been removed')),
   submitFeedback: (d: any) => httpClient.post('/api/feedback', d),
   endSimulation: (sessionId: string) => simulationService.endSession(sessionId),
 

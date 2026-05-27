@@ -58,73 +58,11 @@ const LeaderboardPage: React.FC = () => {
     }
   };
 
-  const fetchLeaderboard = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      // Fetch real leaderboard data from API
-      const data = await api.getLeaderboard(selectedSpecialty, 20);
-      
-      // Validate and process the data
-      if (!Array.isArray(data)) {
-        console.error('Invalid leaderboard data format:', data);
-        setError('Invalid data format received from server');
-        setLeaderboard([]);
-        return;
-      }
-      
-      // Add rank numbers and ensure proper data structure
-      const rankedData = data.map((entry: any, index: number) => {
-        // Validate required fields with score validation per memory requirements
-        const totalCases = typeof entry.totalCases === 'number' ? entry.totalCases : 0;
-        const excellentCount = typeof entry.excellentCount === 'number' ? entry.excellentCount : 0;
-        const averageScore = entry.averageScore && entry.averageScore !== 'N/A' ? 
-          parseFloat(entry.averageScore) : 0;
-        const excellentRate = entry.excellentRate && entry.excellentRate !== 'N/A' ? 
-          parseFloat(entry.excellentRate) : 0;
-
-        // Handle user identification properly
-        const userId = entry.userId || entry.userId?._id || 'unknown';
-        const userName = entry.name || entry.displayName || 'Anonymous User';
-        
-        const isAnonymous = entry.isAnonymous || !entry.showRealName || entry.privacyLevel === 'private';
-        const displayName = isAnonymous 
-          ? `Student ${String.fromCharCode(65 + (index % 26))}${Math.floor(index / 26) + 1}` 
-          : userName;
-        
-        return {
-          ...entry,
-          rank: index + 1,
-          userId: userId,
-          name: userName,
-          displayName,
-          isAnonymous,
-          totalCases,
-          excellentCount,
-          excellentRate: excellentRate.toFixed(1),
-          averageScore: averageScore.toFixed(1),
-          privacyLevel: entry.privacyLevel || 'public'
-        };
-      });
-
-      setLeaderboard(rankedData);
-    } catch (error: any) {
-      console.error('Error fetching leaderboard:', error);
-      // Following Frontend API Error Handling Standard from memory
-      // Display clear error message instead of falling back to mock data
-      if (error.message?.includes('Authentication')) {
-        setError('Please log in to view the leaderboard');
-      } else if (error.message?.includes('403')) {
-        setError('You do not have permission to view this leaderboard');
-      } else if (error.message?.includes('404')) {
-        setError('Leaderboard service is currently unavailable');
-      } else {
-        setError('Failed to load leaderboard data. Please try again later.');
-      }
-      setLeaderboard([]);
-    } finally {
-      setLoading(false);
-    }
+    const fetchLeaderboard = async () => {
+    // Leaderboard API has been removed from the backend
+    setLoading(false);
+    setError('Leaderboard is currently unavailable');
+    setLeaderboard([]);
   };
 
   const getRankIcon = (rank: number) => {

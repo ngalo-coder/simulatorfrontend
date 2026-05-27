@@ -1,15 +1,6 @@
 /**
- * Progress, Performance & Achievement services
- * Uses the unified /api/progress resource endpoint.
- *
- * UPDATED: Removed non-existent backend endpoints:
- * - getAchievements, getActivity, getLearningEfficiency, adjustDifficulty,
- *   assessLearningStyle, getContextualHelp, searchHelp, getHelpCategories,
- *   downloadProgressReport
- *
- * Consolidated: getMetrics/ getPerformanceSummary -> unified getPerformanceData
- *
- * See: frontend-optimization-plan.md
+ * Progress, Performance & Achievement services (stub)
+ * All /api/progress endpoints have been removed from the backend.
  */
 import { httpClient } from './httpClient';
 import type { PerformanceMetrics } from '../types';
