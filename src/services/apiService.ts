@@ -10,7 +10,6 @@
 import { authService } from './authService';
 import { simulationService } from './simulationService';
 import { userService } from './userService';
-import { performanceService } from './performanceService';
 import { adminService } from './adminService';
 import { httpClient } from './httpClient';
 

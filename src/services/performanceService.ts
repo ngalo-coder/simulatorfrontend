@@ -6,30 +6,13 @@ import { httpClient } from './httpClient';
 import type { PerformanceMetrics } from '../types';
 
 export const performanceService = {
-  // ── Progress / Performance ──
-
-  /**
-   * Unified performance data method.
-   * If userId is provided, fetches performance summary for that user.
-   * Otherwise, fetches general performance data.
-   */
-  getPerformanceData: (userId?: string) =>
-    userId
-      ? httpClient.get<{ success: boolean; data: PerformanceMetrics[] }>(`/api/progress/performance-summary/${userId}`)
-      : httpClient.get<{ success: boolean; data: any }>('/api/progress'),
-
-  evaluate: (sessionId: string) =>
-    httpClient.post<{ success: boolean; data: any }>('/api/progress/record-evaluation', { sessionId }),
-
-  // ── Leaderboard ──
-
-  getLeaderboard: (params?: { specialty?: string; limit?: number }) => {
-    const searchParams = new URLSearchParams();
-    if (params?.specialty) searchParams.set('specialty', params.specialty);
-    if (params?.limit) searchParams.set('limit', String(params.limit));
-    const qs = searchParams.toString();
-    return httpClient.get<{ success: boolean; data: any[] }>(`/api/progress/leaderboard${qs ? `?${qs}` : ''}`);
-  },
+  // All /api/progress endpoints have been removed from the backend
+  getPerformanceData: (_userId?: string) =>
+    Promise.reject(new Error('Progress API has been removed')),
+  evaluate: (_sessionId: string) =>
+    Promise.reject(new Error('Progress API has been removed')),
+  getLeaderboard: (_params?: { specialty?: string; limit?: number }) =>
+    Promise.reject(new Error('Leaderboard API has been removed')),
 };
 
 export default performanceService;
